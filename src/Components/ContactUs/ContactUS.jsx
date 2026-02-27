@@ -123,9 +123,9 @@ const ContactUS = () => {
               {translate("getInTouch")}
               <span className="hero-highlight">{translate("withUs")}</span>
             </h1>
-            <p className="hero-description text-dark">
+            {/* <p className="hero-description text-dark">
               {translate("contactDescription")}
-            </p>
+            </p> */}
             <div className="hero-decoration text-dark">
               <span className="decoration-dot bg-dark"></span>
               <span className="decoration-dot bg-dark"></span>
