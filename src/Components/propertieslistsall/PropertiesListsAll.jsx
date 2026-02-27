@@ -53,6 +53,7 @@ const PropertiesListsAll = () => {
   } = router.query;
 
   const [properties, setProperties] = useState([]);
+  console.log(properties, "properties in main component")
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [scrapedUrl, setScrapedUrl] = useState(null);
@@ -60,68 +61,64 @@ const PropertiesListsAll = () => {
   const [grid, setGrid] = useState(true);
 
   // Backend se properties lao
-    useEffect(() => {
-      if (!router.isReady) return;
+  useEffect(() => {
+    if (!router.isReady) return;
 
-      // Category + citySlug/areaSlug required for /api/searchscrape
-      if (!category || (!citySlug && !areaSlug)) {
-        setLoading(false);
-        setError("Missing category or location in URL.");
-        return;
-      }
+    // Category + citySlug/areaSlug required for /api/searchscrape
+    if (!category || (!citySlug && !areaSlug)) {
+      setLoading(false);
+      setError("Missing category or location in URL.");
+      return;
+    }
 
-      async function load() {
-        try {
-          setLoading(true);
-          setError("");
+    async function load() {
+      try {
+        setLoading(true);
+        setError("");
 
-          const qs = new URLSearchParams();
-          qs.append("category", category);
-          qs.append("page", String(page || 1));
-          if (areaSlug) qs.append("areaSlug", areaSlug);
-          else if (citySlug) qs.append("citySlug", citySlug);
+        const qs = new URLSearchParams();
+        qs.append("category", category);
+        qs.append("page", String(page || 1));
+        if (areaSlug) qs.append("areaSlug", areaSlug);
+        else if (citySlug) qs.append("citySlug", citySlug);
 
-          const res = await fetch(`/api/searchscrape?${qs.toString()}`);
-          const data = await res.json();
+        const res = await fetch(`/api/searchscrape?${qs.toString()}`);
+        const data = await res.json();
+        // console.log(data, "datatatatat")
 
-          if (!res.ok) {
-            throw new Error(data.error || "Failed to fetch properties");
-          }
-
-          setScrapedUrl(data.url || null);
-           // API se total pages (backend me data.totalPages aa raha hai)
-          setTotalPages(data.totalPages || 1);
-
-          let list = data.properties || [];
-
-          // Optional client-side size filter (e.g. 5 marla / 1 kanal)
-          if (size && sizeUnit) {
-            const targetSize = Number(size);
-            const targetUnit = sizeUnit.toLowerCase();
-            list = list.filter((p) => {
-              const parsed = parseSizeFromText(p.area || "");
-              return (
-                parsed.size === targetSize &&
-                parsed.sizeUnit &&
-                parsed.sizeUnit.toLowerCase() === targetUnit
-              );
-            });
-          }
-
-          // Beds / baths / price filters ko bhi yahan apply kar sakte ho
-          // (p.price string hai "3.1 Crore" isko parse karna alag logic hoga)
-
-          setProperties(list);
-        } catch (err) {
-          console.error("Properties load error:", err);
-          setError(err.message || "Failed to load properties.");
-        } finally {
-          setLoading(false);
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch properties");
         }
-      }
 
-      load();
-    }, [router.isReady, category, citySlug, areaSlug, page, size, sizeUnit, minPrice, maxPrice, beds, baths]);
+        setScrapedUrl(data.url || null);
+        // API se total pages (backend me data.totalPages aa raha hai)
+        setTotalPages(data.totalPages || 1);
+
+        let list = data.properties || [];
+
+        // Optional client-side size filter (e.g. 5 marla / 1 kanal)
+        // if (size && sizeUnit) {
+        //   const target = `${size} ${sizeUnit}`.toLowerCase();
+        //   list = list.filter((p) =>
+        //     (p.area || "").toLowerCase().includes(target)
+        //   );
+        // }
+        // console.log(list, "list properrrr")
+
+        // Beds / baths / price filters ko bhi yahan apply kar sakte ho
+        // (p.price string hai "3.1 Crore" isko parse karna alag logic hoga)
+
+        setProperties(list);
+      } catch (err) {
+        console.error("Properties load error:", err);
+        setError(err.message || "Failed to load properties.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [router.isReady, category, citySlug, areaSlug, page, size, sizeUnit, minPrice, maxPrice, beds, baths]);
 
   const pageNum = Number(page || 1);
 
@@ -216,47 +213,47 @@ const PropertiesListsAll = () => {
         {!loading && !error && properties.length > 0 && (
           // <div className="grid">
           //   {properties.map((p, idx) => (
-              // <article key={p.link || idx} className="card">
-              //   <div className="card-image-wrapper">
-              //     {p.image ? (
-              //       <img
-              //         src={p.image}
-              //         alt={p.title}
-              //         className="card-image"
-              //         loading="lazy"
-              //       />
-              //     ) : (
-              //       <div className="card-image placeholder">
-              //         <span>No image</span>
-              //       </div>
-              //     )}
-              //     {p.added && (
-              //       <span className="badge badge-added">{p.added}</span>
-              //     )}
-              //   </div>
+          // <article key={p.link || idx} className="card">
+          //   <div className="card-image-wrapper">
+          //     {p.image ? (
+          //       <img
+          //         src={p.image}
+          //         alt={p.title}
+          //         className="card-image"
+          //         loading="lazy"
+          //       />
+          //     ) : (
+          //       <div className="card-image placeholder">
+          //         <span>No image</span>
+          //       </div>
+          //     )}
+          //     {p.added && (
+          //       <span className="badge badge-added">{p.added}</span>
+          //     )}
+          //   </div>
 
-              //   <div className="card-body">
-              //     <h2 className="card-title">{p.title}</h2>
+          //   <div className="card-body">
+          //     <h2 className="card-title">{p.title}</h2>
 
-              //     <div className="card-price-row">
-              //       <span className="price">{p.price}</span>
-              //       {p.area && <span className="area-badge">{p.area}</span>}
-              //     </div>
+          //     <div className="card-price-row">
+          //       <span className="price">{p.price}</span>
+          //       {p.area && <span className="area-badge">{p.area}</span>}
+          //     </div>
 
-              //     <p className="location">{p.location}</p>
+          //     <p className="location">{p.location}</p>
 
-              //     <div className="card-footer">
-              //       <a
-              //         href={p.link}
-              //         target="_blank"
-              //         rel="noreferrer"
-              //         className="details-btn"
-              //       >
-              //         View on Zameen
-              //       </a>
-              //     </div>
-              //   </div>
-              // </article>
+          //     <div className="card-footer">
+          //       <a
+          //         href={p.link}
+          //         target="_blank"
+          //         rel="noreferrer"
+          //         className="details-btn"
+          //       >
+          //         View on Zameen
+          //       </a>
+          //     </div>
+          //   </div>
+          // </article>
           //   ))}
           // </div>
           !grid ? (
