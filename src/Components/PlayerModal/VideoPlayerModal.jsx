@@ -16,7 +16,7 @@ const VideoPlayerModal = ({ isOpen, onClose, data }) => {
         <>
             <Modal show={isOpen} onHide={onClose} size="lg" aria-labelledby="contained-modal-title-vcenter" centered className="videoPlayer-modal" backdrop="static">
                 <Modal.Header>
-                    <Modal.Title>{truncate(videoData.title, 100)}</Modal.Title>
+                    <Modal.Title>{truncate(videoData?.title, 100)}</Modal.Title>
                     <RiCloseCircleLine className="close-icon" size={40} onClick={onClose} />
                 </Modal.Header>
                 <Modal.Body>

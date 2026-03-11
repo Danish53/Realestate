@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 // Tooltip hata diya
 import { FiMapPin, FiMaximize } from "react-icons/fi";
+import { MdSquareFoot } from "react-icons/md"; // modern area icon
 import { FaBed, FaBath } from "react-icons/fa"
 import {
   translate,
@@ -19,7 +20,7 @@ import { useState } from "react";
  *   beds, baths, propertyType
  * }
  */
-function VerticalCardAI({ ele }) { // debug line to check if icons are imported correctly
+function VerticalCardAI({ ele, category }) { // debug line to check if icons are imported correctly
   const router = useRouter();
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -31,6 +32,7 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
       const path = u.pathname; // "/Property/...-53557154-1448-1.html"
       slug = path
         .replace(/^\/Property\//, "")
+        .replace(/^\/property\//, "")
         .replace(/\.html$/, "")
         .split("?")[0];
     } catch {
@@ -56,13 +58,76 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
   // --- Features logic: plot vs house/flat ---
   const type = ele?.propertyType
     ? ele.propertyType.toLowerCase()
-    : null;
+    : category ? category.toLowerCase() : null;
 
-  const isHouseOrFlat = type === "house" || type === "flat";
-  const isPlot = type === "plot";
+  const houseTypes = [
+  "house",
+  "houses",
+  "home",
+  "homes",
+  "flat",
+  "apartment",
+  "villa",
+  "bungalow",
+  "penthouse"
+];
+
+function formatArea(area, unit = null) {
+  if (area == null || area === "") return "";
+
+  // If backend ever sends { value, unit }
+  if (typeof area === "object" && area.value != null) {
+    unit = area.unit || unit;
+    area = area.value;
+  }
+
+  // If string contains a unit, return nicely
+  if (typeof area === "string") {
+    const s = area.replace(/\s+/g, " ").trim();
+
+    // If already has units, just return it
+    if (/(marla|kanal|sq\s?ft|square\s?feet|sq\s?yd|square\s?yards?|sq\s?m|sqm|square\s?meter)/i.test(s)) {
+      return s;
+    }
+
+    // else try parse number
+    const n = parseFloat(s.replace(/,/g, ""));
+    if (!Number.isFinite(n)) return s;
+    area = n;
+  }
+
+  const v = Number(area);
+  if (!Number.isFinite(v)) return "";
+
+  const u = (unit || "").toLowerCase();
+
+  // Explicit unit handling
+  if (u === "sqft" || u === "sq ft") return `${Math.round(v)} sqft`;
+  if (u === "sqyd") return `${v} sq yd`;
+  if (u === "sqm") return `${v.toFixed(2)} sqm`;
+  if (u === "kanal") return `${v} Kanal`;
+  if (u === "marla") return v === 20 ? "1 Kanal" : `${v} Marla`;
+
+  // Heuristic fallback (when unit is missing)
+  if (v >= 1000) return `${Math.round(v)} sqft`;     // likely sqft
+  if (v === 20) return "1 Kanal";                    // your special case
+  if (v > 0 && v <= 200) return `${v} Marla`;        // likely marla
+
+  return String(v);
+}
+
+const isHouseOrFlat = houseTypes.includes(type);
+  const plotTypes = ["plot", "plots", "residential_plot", "commercial_plot"];
+
+const isPlot = plotTypes.includes(type);
+
+const officeTypes = ["office", "offices"];
+const retailTypes = ["shop", "shops", "retail_shop", "retail_shops"];
+const isOffice = officeTypes.includes(type?.toLowerCase());
+const isRetail = retailTypes.includes(type?.toLowerCase());
 
   const features = [];
-  console.log("features Type:", features);
+  // console.log("features Type:", features);
 
   if (isHouseOrFlat) {
     if (ele?.beds) {
@@ -72,24 +137,65 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
       features.push({ icon: FaBath, value: ele.baths, label: "baths" });
     }
     if (ele?.area) {
-      features.push({ icon: FiMaximize, value: ele.area, label: "area" });
+      features.push({ icon: MdSquareFoot, value: formatArea(ele.area), label: "area" });
     }
   } else if (isPlot) {
     if (ele?.area) {
-      features.push({ icon: FiMaximize, value: ele.area, label: "area" });
+      features.push({ icon: MdSquareFoot, value: formatArea(ele.area), label: "area" });
+    } else if (isOffice || isRetail) {
+      if (ele?.area) {
+        features.push({ icon: FiMaximize, value: formatArea(ele.area), label: "area" });
+      }
     }
   } else {
     if (ele?.area) {
-      features.push({ icon: FiMaximize, value: ele.area, label: "area" });
+      features.push({ icon: MdSquareFoot, value: formatArea(ele.area), label: "area" });
     }
   }
 
-  const propertyTypeLabel = ele?.propertyType
+  const propertyTypeLabel = ele?.propertyType 
     ? translate(ele.propertyType)
-    : translate("property");
+    : category ? translate(category)
+    : null;
 
   // Fallback image src (agar ele.image null ho)
   const imgSrc = ele?.image || placeholderImage || "/images/property-placeholder.jpg";
+
+function formatPrice(price) {
+  if (price == null || price === "") return "";
+
+  // If already a meaningful string, keep it
+  if (typeof price === "string") {
+    const s = price.replace(/\s+/g, " ").trim();
+
+    // special cases
+    if (/price on call|call|contact/i.test(s)) return s;
+
+    // if already in crore/lakh/lac/cr => return as-is
+    if (/(crore|cr\b|lakh|lac)/i.test(s)) return s;
+
+    // extract numeric from "PKR 12,500,000" / "Rs. 12,500,000"
+    const numeric = s.replace(/[^0-9.]/g, ""); // keep digits + dot only
+    const n = parseFloat(numeric);
+    if (!Number.isFinite(n)) return s;
+
+    price = n;
+  }
+
+  // number formatting
+  if (typeof price === "number" && Number.isFinite(price)) {
+    if (price >= 10000000) {
+      return (price / 10000000).toFixed(2).replace(/\.00$/, "") + " Crore";
+    }
+    if (price >= 100000) {
+      return (price / 100000).toFixed(2).replace(/\.00$/, "") + " Lakh";
+    }
+    // below lakh: show with commas
+    return Math.round(price).toLocaleString("en-PK");
+  }
+
+  return String(price);
+}
 
   return (
     <div className="property-card" onClick={handleCardClick}>
@@ -133,11 +239,12 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
             </span>
           </div>
 
-          <h3 className="property-title">{truncate(ele?.title || "", 80)}</h3>
+{/* dummy title */}
+          <h3 className="property-title">{truncate(ele?.title || `${translate(ele?.propertyType || "property")} ${translate("for")} ${formatPrice(ele?.price) || ""}`, 80)}</h3>
 
           {/* Location */}
           <div className="property-location">
-            <FiMapPin className="location-icon" size={14} />
+            <FiMapPin className="" size={14} />
             <span className="location-text">
               {ele?.location || ""}
             </span>
@@ -150,7 +257,7 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
                 const Icon = feature.icon;
                 if (!Icon) return null; // safety guard
                 return (
-                  <div className="feature-item" key={index}>
+                  <div className="" key={index}>
                     <Icon className="feature-icon" size={16} />
                     <span className="feature-value">{feature.value}</span>
                   </div>
@@ -172,7 +279,7 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
               <div className="price-section">
                 <span className="price-label">{translate("price")}</span>
                 <span className="price-value">
-                  {ele.price}
+                  {formatPrice(ele.price)}
                 </span>
               </div>
             )}
@@ -201,5 +308,12 @@ function VerticalCardAI({ ele }) { // debug line to check if icons are imported 
     </div>
   );
 }
+
+<style jsx>{`
+        .location-icon {
+          color: #F36E61 !important;
+          margin-right: 4px;
+        }
+  `}</style>
 
 export default VerticalCardAI;
