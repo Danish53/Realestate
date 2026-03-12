@@ -330,13 +330,11 @@ const PropertyDetailsAI = () => {
                       {item.area && <span>{item.area}</span>}
                       {item.beds &&
                         item.beds !== "-" &&
-                        ` • ${item.beds} ${
-                          translate ? translate("beds") : "Beds"
+                        ` • ${item.beds} ${translate ? translate("beds") : "Beds"
                         }`}
                       {item.baths &&
                         item.baths !== "-" &&
-                        ` • ${item.baths} ${
-                          translate ? translate("baths") : "Baths"
+                        ` • ${item.baths} ${translate ? translate("baths") : "Baths"
                         }`}
                     </div>
                     {item.added && (
@@ -529,7 +527,7 @@ const PropertyDetailsAI = () => {
                   <div className="card-header">
                     {translate ? translate("contact") : "Contact"}
                   </div>
-                  <div className="card-body">
+                  {/* <div className="card-body">
                     {detail.agent?.phone ? (
                       <>
                         <div className="mb-2">
@@ -549,7 +547,13 @@ const PropertyDetailsAI = () => {
                           : "Phone number not available"}
                       </div>
                     )}
-                  </div>
+                  </div> */}
+                  <a
+                    href={`tel:03238450741`}
+                    className="btn btn-success w-100"
+                  >
+                    03238450741
+                  </a>
                 </div>
 
                 {/* Mortgage Calculator – same style as original */}

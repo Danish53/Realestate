@@ -118,7 +118,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
         timestamp: new Date().toISOString()
       }]);
     }
-  }, []);
+  }, [ isOpen ]);
 
   // Save messages whenever they change
   useEffect(() => {
@@ -202,6 +202,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
       });
 
       const data = await response.json();
+      console.log(data, "errororoororororo")
 
       if (data.error) {
         console.error("API Error:", data.error);

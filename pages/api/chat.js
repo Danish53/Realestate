@@ -28,7 +28,7 @@ function parseSizeFromText(text = "") {
 function detectPropertyType(text = "") {
   const t = text.toLowerCase();
   if (/\b(plot|plots|file)\b/.test(t)) return "plot";
-  if (/\b(house|home|villa|portion)\b/.test(t)) return "house";
+  if (/\b(house|home|villa|portion|houses)\b/.test(t)) return "house";
   if (/\b(flat|flats|apartment|apartments)\b/.test(t)) return "flat";
   if (/\b(shop|office|commercial)\b/.test(t)) return "commercial";
   return null;
@@ -271,23 +271,23 @@ const GRAANA_CITY_SLUGS = {
 
 const GRAANA_AREA_SLUGS = {
   // Lahore
-"bahria town": "bahria-town-lahore-2-492",
-"dha": "defence-housing-authority-dha-lahore-2-638",
-"johar town": "johar-town-lahore-2-6459",
-"gulberg": "gulberg-lahore-2-9577",
-"wapda town": "wapda-town-lahore-2-321",
-"valencia town": "valencia-housing-society-lahore-2-654",
-"lake city": "lake-city-lahore-2-800",
-"paragon city": "paragon-city-lahore-2-801",
-"askari": "askari-lahore-2-9579",
-"faisal town": "faisal-town-lahore-2-803",
-"model town": "model-town-lahore-2-536",
-"pak arab housing society": "pak-arab-housing-society-lahore-2-805",
-"state life housing society": "state-life-housing-society-lahore-2-806",
-"paradise town": "paradise-town-lahore-2-807",
-"raiwind": "raiwind-road-lahore-2-2349",
+  "bahria town": "bahria-town-lahore-2-492",
+  "dha": "defence-housing-authority-dha-lahore-2-638",
+  "johar town": "johar-town-lahore-2-6459",
+  "gulberg": "gulberg-lahore-2-9577",
+  "wapda town": "wapda-town-lahore-2-321",
+  "valencia town": "valencia-housing-society-lahore-2-654",
+  "lake city": "lake-city-lahore-2-800",
+  "paragon city": "paragon-city-lahore-2-801",
+  "askari": "askari-lahore-2-9579",
+  "faisal town": "faisal-town-lahore-2-803",
+  "model town": "model-town-lahore-2-536",
+  "pak arab housing society": "pak-arab-housing-society-lahore-2-805",
+  "state life housing society": "state-life-housing-society-lahore-2-806",
+  "paradise town": "paradise-town-lahore-2-807",
+  "raiwind": "raiwind-road-lahore-2-2349",
 
-    // Karachi
+  // Karachi
   "dha karachi": "dha-defence-karachi-169-210",
   "clifton karachi": "clifton-karachi-169-211",
   "gulshan e iqbal karachi": "gulshan-e-iqbal-karachi-169-212",
@@ -375,13 +375,13 @@ function mapPropertyTypeToCategory(propertyType, purpose, text = "") {
   const txt = (text || "").toLowerCase();
 
   // --- 1. Detect plot type more precisely ---
-if (t === "plot") {
-  if (/\bcommercial\s+plots?\b/.test(txt)) return "Commercial_Plots";
-  return "Residential_Plots";
-}
+  if (t === "plot" || t === "plots") {
+    if (/\bcommercial\s+plots?\b/.test(txt)) return "Commercial_Plots";
+    return "Residential_Plots";
+  }
 
   // --- 2. Houses / Flats ---
-  if (t === "house" || t === "home" || t === "villa" || t === "portion") return "Houses";
+  if (t === "house" || t === "home" || t === "villa" || t === "portion" || t === "houses") return "Houses";
   if (t === "flat" || t === "apartment" || t === "flats") return "Flats";
 
   // --- 3. Office / Shop / Commercial detection ---
@@ -427,7 +427,7 @@ function extractSearchParams(text, userLocation = null, isNearMe = false) {
       ? userLocation.city.toLowerCase()
       : null);
 
-        // --- ADD THIS (Graana slugs) ---
+  // --- ADD THIS (Graana slugs) ---
   const graanaAreaSlug = detectGraanaAreaFromText(t);
   const graanaCitySlug = mapGraanaCitySlug(city);
 
@@ -526,7 +526,7 @@ function getGraanaTypeFromParams(params = {}) {
   if (pt === "house") return "house";
   if (pt === "flat") return "flat";
   if (pt === "plot") return "plot";
-  
+
 
 
   return "residential-properties";
@@ -654,17 +654,19 @@ export default async function handler(req, res) {
     let userLocation = null;
 
     // Agar message JSON hai { text, location } to handle karo
-    try {
-      const parsed = JSON.parse(lastUserContent);
-      if (parsed && typeof parsed === "object" && parsed.text) {
-        userMessage = parsed.text;
-        if (parsed.location) {
-          userLocation = parsed.location;
+    const raw = String(lastUserContent || "").trim();
+
+    if (raw.startsWith("{") && raw.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && typeof parsed.text === "string") {
+          userMessage = parsed.text;
+          if (parsed.location) userLocation = parsed.location;
+          messages[lastIndex].content = parsed.text; // OpenRouter ko plain text
         }
-        messages[lastIndex].content = parsed.text;
+      } catch {
+        // silently ignore
       }
-    } catch (e) {
-      console.error("Failed to parse user message as JSON:", e);
     }
 
     const isPropSearch = isPropertySearchQuery(userMessage);
@@ -822,11 +824,27 @@ Use this only to understand intent better; do not expose as filter text.
     );
 
     const data = await response.json();
+    console.log(data, "data reposnes")
+    console.log("OPENROUTER message:", JSON.stringify(data?.choices?.[0]?.message, null, 2));
     if (!response.ok) {
       throw new Error(data?.error?.message || "OpenRouter API error");
     }
 
-    let aiText = data.choices?.[0]?.message?.content || "";
+    // let aiText = data.choices?.[0]?.message?.content || "";
+    const msg = data?.choices?.[0]?.message;
+let aiText = "";
+
+if (typeof msg?.content === "string") {
+  aiText = msg.content;
+} else if (Array.isArray(msg?.content)) {
+  // for multimodal style content arrays
+  aiText = msg.content.map(part => part?.text || "").join("");
+}
+
+// fallback debug
+if (!aiText) {
+  console.log("No aiText. msg=", JSON.stringify(msg, null, 2));
+}
 
     // --------- Link generation only for property search ---------
     let params = null;
@@ -880,6 +898,11 @@ Use this only to understand intent better; do not expose as filter text.
         pageLink: pageLink || null,
       });
     }
+    return res.status(200).json({
+      text: aiText || "How can I help you with real estate today?",
+      params: null,
+      pageLink: null,
+    });
   } catch (err) {
     console.error("AI handler error:", err);
     return res.status(500).json({ error: err.message || "Server error" });
