@@ -73,7 +73,7 @@ const ProprtiesNearbyCity = ({ isLoading, getNearByCitysData, language, sectionT
                                 <div className="rightside_prop_city_header">
                                     {getNearByCitysData.length > 6 ?
                                         <Link href="/properties-nearby-city">
-                                            <button className="learn-more" id="viewall">
+                                            <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                                                 <span aria-hidden="true" className="circle">
                                                     <div className="icon_div">
                                                         <span className="icon arrow">

@@ -276,11 +276,11 @@ const SearchPage = () => {
                             />
                         </div>
                         <div id="leftside-buttons">
-                            <button className="filter" onClick={() => setShowFilterModal(true)}>
+                            <button type="button" className="filter ds-btn ds-btn-outline" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
                                 <BiFilter size={25} />
                                 {translate("filter")}
                             </button>
-                            <button className="find" onClick={handleSearch}>
+                            <button type="button" className="find ds-btn ds-btn-primary" onClick={handleSearch} aria-label={translate("search")}>
                                 {translate("search")}
                             </button>
                         </div>
@@ -302,7 +302,7 @@ const SearchPage = () => {
                                             <BiFilter size={24} />
                                         </div>
                                         <h3 className="filter-modal-title">{translate("filterProp")}</h3>
-                                        <button className="close-modal-btn" onClick={handleHideFilterModal}>
+                                        <button type="button" className="close-modal-btn" onClick={handleHideFilterModal} aria-label="Close filter">
                                             <FiX size={24} />
                                         </button>
                                         {/* <RiCloseCircleLine className="close-icon" size={40} onClick={handleHideFilterModal} /> */}
@@ -424,11 +424,11 @@ const SearchPage = () => {
                 
                                     {/* Modal Footer */}
                                     <div className="filter-modal-footer">
-                                        <button className="clear-filter-btn" onClick={handleClearFilter}>
+                                        <button type="button" className="clear-filter-btn ds-btn ds-btn-text" onClick={handleClearFilter} aria-label={translate("clearFilter")}>
                                             <GrRefresh size={16} />
                                             <span>{translate("clearFilter")}</span>
                                         </button>
-                                        <button className="apply-filter-btn" onClick={handleApplyFilter}>
+                                        <button type="button" className="apply-filter-btn ds-btn ds-btn-primary" onClick={handleApplyFilter} aria-label={translate("applyFilter")}>
                                             <FiCheck size={16} />
                                             <span>{translate("applyFilter")}</span>
                                             <div className="btn-shine"></div>
@@ -457,7 +457,7 @@ const SearchPage = () => {
                     )}
                     {searchData && searchData.length > 0 && hasMoreData ? (
                         <div className="col-12 loadMoreDiv" id="loadMoreDiv">
-                            <button className='loadMore' onClick={handleLoadMore}>{translate("loadmore")}</button>
+                            <button type="button" className="loadMore ds-btn ds-btn-primary" onClick={handleLoadMore}>{translate("loadmore")}</button>
                         </div>
                     ) : null}
                 </div>

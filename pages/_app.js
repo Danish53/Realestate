@@ -12,12 +12,17 @@ import PushNotificationLayout from "@/Components/firebaseNotification/PushNotifi
 import InspectElement from "@/Components/InspectElement/InspectElement";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import "../public/css/design-tokens.css";
+import "../public/css/ui.css";
+import "../public/css/layout.css";
+import "../public/css/pages.css";
 import "../public/css/style.css";
 import "../public/css/responsive.css";
 import "@/Components/Cards/subscriptioncard.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "react-loading-skeleton/dist/skeleton.css";
 import "nprogress/nprogress.css";
+import "../public/css/design-overrides.css";
 import Loader from "@/Components/Loader/Loader";
 import { getCurrentLocationData } from "@/utils/locationHelper";
 import Head from "next/head";

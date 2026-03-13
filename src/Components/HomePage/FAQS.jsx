@@ -30,7 +30,7 @@ const FAQS = ({ language, data, sectionTitle }) => {
                     </span>
                     {data?.length > 5 &&
                       <Link href={'/faqs'}>
-                        <button className="learn-more" id="viewall">
+                        <button type="button" className="learn-more" id="viewall" aria-label="View all FAQs">
                           <span aria-hidden="true" className="circle">
                             <div className="icon_div">
                               <span className="icon arrow">
@@ -73,7 +73,7 @@ const FAQS = ({ language, data, sectionTitle }) => {
                     {data?.length > 5 &&
                       <div className="visible">
                         <Link href={'/faqs'}>
-                          <button className="learn-more" id="viewall">
+                          <button type="button" className="learn-more" id="viewall" aria-label="View all FAQs">
                             <span aria-hidden="true" className="circle">
                               <div className="icon_div">
                                 <span className="icon arrow">

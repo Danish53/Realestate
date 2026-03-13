@@ -493,7 +493,7 @@ const LocationModal = ({
               placeholder={translate("enterLocationManually") || "Enter Location Manually"}
             />
           </div>
-          <button className="find-location-btn" onClick={handleCurrentLocation}>
+          <button type="button" className="find-location-btn ds-btn ds-btn-primary" onClick={handleCurrentLocation} aria-label={translate("findMyLocation") || "Find My Location"}>
             <FiMapPin /> {translate("findMyLocation") || "Find My Location"}
           </button>
         </div>

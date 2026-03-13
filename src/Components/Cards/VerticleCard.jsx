@@ -187,7 +187,8 @@ function VerticalCard({ ele, removeCard, onImageLoad, isUserProperty }) {
             )}
 
             {/* Like Button */}
-            <button 
+            <button
+              type="button"
               className={`like-button ${isLiked ? 'liked' : ''}`}
               onClick={isLiked ? handleDislike : handleLike}
               aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}

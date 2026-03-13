@@ -58,7 +58,7 @@ const NearByProperty = ({
               {nearbyCityData?.length > 4 && (
                 <div className="rightside_most_fav_header">
                   <Link href={`/properties/city/${userCurrentLocation}`}>
-                    <button className="learn-more" id="viewall">
+                    <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                       <span aria-hidden="true" className="circle">
                         <div className="icon_div">
                           <span className="icon arrow">

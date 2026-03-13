@@ -59,7 +59,7 @@ const FeaturedProperty = ({
                   <div className="rightside_header">
                     {getFeaturedListing.length > 8 ? (
                       <Link href="/featured-properties">
-                        <button className="learn-more" id="viewall">
+                        <button type="button" className="learn-more ds-btn ds-btn-outline" id="viewall" aria-label={translate("seeAllProp")}>
                           <span aria-hidden="true" className="circle">
                             <div className="icon_div">
                               <span className="icon arrow">
@@ -131,7 +131,7 @@ const FeaturedProperty = ({
                       <div className="rightside_header">
                         {getFeaturedListing.length > 8 ? (
                           <Link href="/featured-properties">
-                            <button className="learn-more" id="viewall">
+                            <button type="button" className="learn-more ds-btn ds-btn-outline" id="viewall" aria-label={translate("seeAllProp")}>
                               <span aria-hidden="true" className="circle">
                                 <div className="icon_div">
                                   <span className="icon arrow">

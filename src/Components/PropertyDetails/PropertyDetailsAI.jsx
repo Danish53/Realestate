@@ -501,8 +501,9 @@ const PropertyDetailsAI = () => {
                       {detail.description.length > 400 && (
                         <button
                           type="button"
-                          className="btn btn-link p-0 mt-2"
+                          className="btn btn-link p-0 mt-2 ds-btn ds-btn-text"
                           onClick={() => setExpanded(!expanded)}
+                          aria-label={expanded ? "Show less" : "Show more"}
                         >
                           <span>{expanded ? "Show Less" : "Show More"}</span>
                           {expanded ? (
@@ -550,9 +551,10 @@ const PropertyDetailsAI = () => {
                   </div> */}
                   <a
                     href={`tel:03238450741`}
-                    className="btn btn-success w-100"
+                    className="btn btn-success w-100 ds-btn ds-btn-primary"
+                    aria-label="Call now"
                   >
-                    03238450741
+                    Call Now
                   </a>
                 </div>
 

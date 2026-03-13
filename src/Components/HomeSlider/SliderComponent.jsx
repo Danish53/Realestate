@@ -386,27 +386,42 @@ const SliderComponent = ({ sliderData }) => {
         </div>
 
         {/* Navigation Arrows */}
-        <button className="nav-arrow prev" onClick={handlePrev}>
+        <button type="button" className="nav-arrow prev" onClick={handlePrev} aria-label="Previous slide">
           <ChevronLeft />
         </button>
-        <button className="nav-arrow next" onClick={handleNext}>
+        <button type="button" className="nav-arrow next" onClick={handleNext} aria-label="Next slide">
           <ChevronRight />
         </button>
 
         {/* Play/Pause Button */}
-        <button className="play-pause-btn" onClick={togglePlayPause}>
+        <button type="button" className="play-pause-btn" onClick={togglePlayPause} aria-label={isPlaying ? "Pause" : "Play"}>
           {isPlaying ? <FaPause /> : <FaPlay />}
         </button>
 
         {/* Progress Bar */}
-        {/* <div className="progress-container">
-          <div 
-            className="progress-bar" 
+        <div className="hero-progress-track">
+          <div
+            className="hero-progress-fill"
             style={{ width: `${progress}%` }}
-          ></div>
-        </div> */}
+          />
+        </div>
 
-        {/* Thumbnails/Dots */}
+        {/* Pagination dots (mobile) */}
+        <div className="hero-dots" role="tablist" aria-label="Slider pagination">
+          {sliderData.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              role="tab"
+              aria-selected={index === currentSlide}
+              aria-label={`Go to slide ${index + 1}`}
+              className={`hero-dot ${index === currentSlide ? "active" : ""}`}
+              onClick={() => handleSlideClick(index)}
+            />
+          ))}
+        </div>
+
+        {/* Thumbnails (desktop) */}
         <div className="thumbnails-container">
           {sliderData.map((slide, index) => (
             <div
@@ -429,17 +444,18 @@ const SliderComponent = ({ sliderData }) => {
       <style jsx>{`
         .modern-slider-wrapper {
           width: 100%;
+          max-width: 1400px;
           margin: 0 auto;
-          padding: 0 10px;
+          padding: 0 16px 24px;
         }
 
         .modern-slider-container {
           position: relative;
           width: 100%;
-          height: 480px;
-          border-radius: 14px;
+          height: 520px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 20px 60px -15px rgba(29, 42, 91, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
         }
 
         .slides-container {
@@ -455,12 +471,13 @@ const SliderComponent = ({ sliderData }) => {
           width: 100%;
           height: 100%;
           opacity: 0;
-          transition: opacity 0.5s ease-in-out;
+          transition: opacity 0.6s ease-in-out;
           cursor: pointer;
         }
 
         .slide.active {
           opacity: 1;
+          z-index: 1;
         }
 
         .slide-bg {
@@ -471,11 +488,11 @@ const SliderComponent = ({ sliderData }) => {
           height: 100%;
           background-size: cover;
           background-position: center;
-          transition: transform 0.5s ease;
+          transition: transform 6s ease-out;
         }
 
         .slide.active .slide-bg {
-          transform: scale(1.05);
+          transform: scale(1.08);
         }
 
         .overlay {
@@ -485,10 +502,11 @@ const SliderComponent = ({ sliderData }) => {
           width: 100%;
           height: 100%;
           background: linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.7) 0%,
-            rgba(0, 0, 0, 0.4) 50%,
-            rgba(0, 0, 0, 0.2) 100%
+            105deg,
+            rgba(29, 42, 91, 0.85) 0%,
+            rgba(29, 42, 91, 0.5) 35%,
+            rgba(0, 0, 0, 0.25) 70%,
+            transparent 100%
           );
         }
 
@@ -497,20 +515,20 @@ const SliderComponent = ({ sliderData }) => {
           height: 100%;
           display: flex;
           align-items: center;
-          padding: 0 80px;
+          padding: 0 64px 100px;
           color: white;
           z-index: 2;
         }
 
         .content-wrapper {
-          max-width: 600px;
-          animation: slideUp 0.5s ease forwards;
+          max-width: 560px;
+          animation: heroSlideUp 0.6s ease forwards;
         }
 
-        @keyframes slideUp {
+        @keyframes heroSlideUp {
           from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(24px);
           }
           to {
             opacity: 1;
@@ -520,156 +538,183 @@ const SliderComponent = ({ sliderData }) => {
 
         .price-tag {
           display: inline-block;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 12px 24px;
-          border-radius: 50px;
-          font-size: 28px;
+          background: var(--primary-color);
+          color: #fff;
+          padding: 10px 22px;
+          border-radius: 12px;
+          font-size: 1.5rem;
           font-weight: 700;
-          margin-bottom: 20px;
-          box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          margin-bottom: 16px;
+          letter-spacing: 0.02em;
+          box-shadow: 0 8px 24px -8px rgba(241, 93, 45, 0.45);
         }
 
         .title {
-          font-size: 42px;
-          font-weight: 800;
-          margin-bottom: 20px;
-          line-height: 1.2;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+          font-size: clamp(1.75rem, 4vw, 2.75rem);
+          font-weight: 700;
+          margin-bottom: 16px;
+          line-height: 1.25;
+          letter-spacing: -0.02em;
+          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
         }
 
         .parameters {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-bottom: 30px;
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.9);
+          gap: 8px 16px;
+          margin-bottom: 28px;
+          font-size: 0.95rem;
+          color: rgba(255, 255, 255, 0.92);
         }
 
         .parameter {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 4px;
         }
 
         .separator {
-          margin-left: 10px;
+          margin-left: 4px;
           opacity: 0.5;
         }
 
         .actions {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
         }
 
         .view-btn {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 10px;
-          background: white;
-          color: #333;
+          background: var(--primary-color);
+          color: #fff;
           border: none;
-          padding: 15px 30px;
-          border-radius: 50px;
-          font-size: 16px;
+          padding: 14px 28px;
+          border-radius: 12px;
+          font-size: 1rem;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+          transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 8px 24px -8px rgba(241, 93, 45, 0.4);
         }
 
         .view-btn:hover {
+          background: var(--primary-hover);
           transform: translateY(-2px);
-          box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 12px 28px -8px rgba(241, 93, 45, 0.5);
+        }
+
+        .view-btn:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
+        }
+
+        .view-btn .icon {
+          width: 18px;
+          height: 18px;
         }
 
         .play-btn {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 50px;
-          height: 50px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          border: 2px solid white;
+          width: 52px;
+          height: 52px;
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.4);
           border-radius: 50%;
           color: white;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
         }
 
         .play-btn:hover {
-          background: white;
-          color: #333;
-          transform: scale(1.1);
+          background: var(--primary-color);
+          border-color: var(--primary-color);
+          transform: scale(1.08);
+        }
+
+        .play-btn:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
         }
 
         .play-btn .icon {
-          width: 24px;
-          height: 24px;
+          width: 26px;
+          height: 26px;
         }
 
         .nav-arrow {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          width: 50px;
-          height: 50px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          border: 2px solid rgba(255, 255, 255, 0.3);
+          width: 52px;
+          height: 52px;
+          background: rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.25);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
           z-index: 10;
         }
 
         .nav-arrow:hover {
-          background: white;
-          color: #333;
-          border-color: white;
+          background: var(--primary-color);
+          border-color: var(--primary-color);
+          color: white;
+        }
+
+        .nav-arrow:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
         }
 
         .nav-arrow.prev {
-          left: 20px;
+          left: 24px;
         }
 
         .nav-arrow.next {
-          right: 20px;
+          right: 24px;
         }
 
         .play-pause-btn {
           position: absolute;
-          bottom: 80px;
-          right: 20px;
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          border: 2px solid rgba(255, 255, 255, 0.3);
+          bottom: 88px;
+          right: 24px;
+          width: 44px;
+          height: 44px;
+          background: rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.25);
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           color: white;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.25s ease;
           z-index: 10;
         }
 
         .play-pause-btn:hover {
-          background: white;
-          color: #333;
+          background: var(--primary-color);
+          border-color: var(--primary-color);
         }
 
-        .progress-container {
+        .play-pause-btn:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
+        }
+
+        .hero-progress-track {
           position: absolute;
           bottom: 0;
           left: 0;
@@ -679,39 +724,80 @@ const SliderComponent = ({ sliderData }) => {
           z-index: 10;
         }
 
-        .progress-bar {
+        .hero-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #667eea, #764ba2);
+          background: var(--primary-color);
           transition: width 0.05s linear;
+        }
+
+        .hero-dots {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 10px;
+          z-index: 10;
+        }
+
+        .hero-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(255, 255, 255, 0.4);
+          cursor: pointer;
+          transition: all 0.25s ease;
+          padding: 0;
+        }
+
+        .hero-dot:hover {
+          background: rgba(255, 255, 255, 0.7);
+        }
+
+        .hero-dot.active {
+          background: var(--primary-color);
+          transform: scale(1.2);
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .hero-dot:focus-visible {
+          outline: 2px solid white;
+          outline-offset: 2px;
         }
 
         .thumbnails-container {
           position: absolute;
           bottom: 20px;
-          left: 88%;
+          left: 50%;
           transform: translateX(-50%);
           display: flex;
           gap: 10px;
           z-index: 10;
-          padding: 10px;
-          border-radius: 50px;
+          padding: 8px 14px;
+          background: rgba(0, 0, 0, 0.35);
+          backdrop-filter: blur(10px);
+          border-radius: 14px;
         }
 
         .thumbnail {
           position: relative;
-          width: 100px;
-          height: 55px;
-          border-radius: 6px;
+          width: 88px;
+          height: 50px;
+          border-radius: 8px;
           overflow: hidden;
           cursor: pointer;
-          border-color: gray;
-          transition: all 0.3s ease;
           border: 2px solid transparent;
+          transition: all 0.25s ease;
         }
 
         .thumbnail.active {
-          border-color: #F1592A;
-          // transform: scale(1.1);
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .thumbnail:hover {
+          border-color: rgba(255, 255, 255, 0.4);
         }
 
         .thumbnail-img {
@@ -727,59 +813,92 @@ const SliderComponent = ({ sliderData }) => {
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(0, 0, 0, 0.3);
-          transition: all 0.3s ease;
+          background: rgba(0, 0, 0, 0.25);
+          transition: background 0.25s ease;
         }
 
         .thumbnail:hover .thumbnail-overlay {
-          background: rgba(0, 0, 0, 0.1);
+          background: rgba(0, 0, 0, 0.05);
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-          .modern-slider-container {
-            height: 400px;
-            border-radius: 16px;
-          }
-
-          .slide-content {
-            padding: 0 40px;
-          }
-
-          .price-tag {
-            font-size: 20px;
-            padding: 8px 16px;
-          }
-
-          .title {
-            font-size: 28px;
-          }
-
-          .parameters {
-            font-size: 14px;
-          }
-
-          .view-btn {
-            padding: 12px 24px;
-            font-size: 14px;
-          }
-
+        @media (max-width: 992px) {
           .thumbnails-container {
             display: none;
           }
 
+          .hero-dots {
+            display: flex;
+          }
+        }
+
+        @media (min-width: 993px) {
+          .hero-dots {
+            display: none;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .modern-slider-container {
+            height: 420px;
+            border-radius: 16px;
+          }
+
+          .slide-content {
+            padding: 0 24px 80px;
+          }
+
+          .price-tag {
+            font-size: 1.2rem;
+            padding: 8px 18px;
+          }
+
+          .title {
+            font-size: 1.5rem;
+          }
+
+          .parameters {
+            font-size: 0.875rem;
+            margin-bottom: 20px;
+          }
+
+          .view-btn {
+            padding: 12px 22px;
+            font-size: 0.9rem;
+          }
+
           .play-pause-btn {
-            bottom: 60px;
+            bottom: 72px;
+            right: 16px;
+          }
+
+          .nav-arrow {
+            width: 44px;
+            height: 44px;
+            left: 12px;
+          }
+
+          .nav-arrow.next {
+            right: 12px;
           }
         }
 
         @media (max-width: 480px) {
+          .modern-slider-wrapper {
+            padding: 0 12px 16px;
+          }
+
           .modern-slider-container {
-            height: 350px;
+            height: 360px;
+            border-radius: 12px;
           }
 
           .slide-content {
-            padding: 0 20px;
+            padding: 0 16px 64px;
+          }
+
+          .actions {
+            flex-wrap: wrap;
+            gap: 12px;
           }
 
           .nav-arrow {

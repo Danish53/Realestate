@@ -291,7 +291,7 @@ const MobileOffcanvas = ({
 
           {/* Add Property Button */}
           {signupData?.data?.data?.name && settingData && (
-            <button className="mobile-add-property" onClick={(e) => handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router)}>
+            <button type="button" className="mobile-add-property ds-btn ds-btn-primary" onClick={(e) => handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router)} aria-label={translate('addProp')}>
               <FiPlusCircle size={20} className="mobile-icon" />
               {translate('addProp')}
             </button>

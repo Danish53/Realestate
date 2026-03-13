@@ -55,7 +55,7 @@ const MostViewedProperty = ({ isLoading, getMostViewedProp, language, sectionTit
                   </div>
                   <div className="rightside_prop_header">
                     <Link href="/most-viewed-properties">
-                      <button className="learn-more" id="viewall">
+                      <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                         <span aria-hidden="true" className="circle">
                           <div className="icon_div">
                             <span className="icon arrow">
@@ -123,7 +123,7 @@ const MostViewedProperty = ({ isLoading, getMostViewedProp, language, sectionTit
                   <div className="rightside_prop_header">
                     {getMostViewedProp.length > 6 ? (
                       <Link href="/most-viewed-properties">
-                        <button className="learn-more" id="viewall">
+                        <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                           <span aria-hidden="true" className="circle">
                             <div className="icon_div">
                               <span className="icon arrow">

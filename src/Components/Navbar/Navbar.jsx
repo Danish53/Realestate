@@ -383,8 +383,10 @@ const Nav = () => {
                   {/* Location Selector */}
                   <div className="location-selector">
                     <button
+                      type="button"
                       className="location-selector-button"
                       onClick={handleToggleLocationPopup}
+                      aria-label={translate("location")}
                     >
                       <span className="location-icon">
                         <BiMapPin size={20} />
@@ -405,9 +407,15 @@ const Nav = () => {
                     />
                   </div>
 
-                  <span onClick={handleShow} id="hamburg" className="mobile-menu-button">
+                  <button
+                    type="button"
+                    onClick={handleShow}
+                    id="hamburg"
+                    className="mobile-menu-button"
+                    aria-label="Open menu"
+                  >
                     <GiHamburgerMenu size={30} />
-                  </span>
+                  </button>
                 </div>
 
               </div>
@@ -591,9 +599,11 @@ const Nav = () => {
                     {signupData?.data?.data.name && settingData && (
                       <li className="nav-item">
                         <button
-                          className="btn add-property-btn"
+                          type="button"
+                          className="btn add-property-btn ds-btn ds-btn-primary"
                           id="addbutton"
                           onClick={(e) => handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router)}
+                          aria-label={translate("addProp")}
                         >
                           <FiPlusCircle
                             size={20}

@@ -164,7 +164,7 @@ const ContactUS = () => {
                           type="text"
                           id="firstName"
                           name="firstName"
-                          className="form-input"
+                          className="form-input ds-input"
                           placeholder={translate("enterFirstName")}
                           value={formData.firstName}
                           onChange={handleInputChange}
@@ -187,7 +187,7 @@ const ContactUS = () => {
                           type="text"
                           id="lastName"
                           name="lastName"
-                          className="form-input"
+                          className="form-input ds-input"
                           placeholder={translate("enterLastName")}
                           value={formData.lastName}
                           onChange={handleInputChange}
@@ -210,7 +210,7 @@ const ContactUS = () => {
                           type="email"
                           id="email"
                           name="email"
-                          className="form-input"
+                          className="form-input ds-input"
                           placeholder={translate("enterEmail")}
                           value={formData.email}
                           onChange={handleInputChange}
@@ -233,7 +233,7 @@ const ContactUS = () => {
                           type="text"
                           id="subject"
                           name="subject"
-                          className="form-input"
+                          className="form-input ds-input"
                           placeholder={translate("enterSubject")}
                           value={formData.subject}
                           onChange={handleInputChange}
@@ -256,7 +256,7 @@ const ContactUS = () => {
                           id="message"
                           name="message"
                           rows={6}
-                          className="form-textarea"
+                          className="form-textarea ds-input"
                           placeholder={translate("enterMessage")}
                           value={formData.message}
                           onChange={handleInputChange}
@@ -274,8 +274,9 @@ const ContactUS = () => {
                       <div className="form-submit">
                         <button
                           type="submit"
-                          className="submit-btn"
+                          className="submit-btn ds-btn ds-btn-primary"
                           disabled={isloading}
+                          aria-label={translate("sendMessage")}
                         >
                           {isloading ? (
                             <div className="loader-container">

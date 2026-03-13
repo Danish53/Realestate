@@ -1,0 +1,207 @@
+/**
+ * Shared layout: Navbar (header) + Footer
+ * Premium, sticky, design-token driven. No logic changes.
+ */
+
+/* ========== TOP BAR (contact + language + social) ========== */
+.new-header-dark-top-bar {
+  background-color: var(--primary-color);
+  padding: 10px 0;
+  color: #fff;
+  font-size: 14px;
+}
+
+.new-header-contact-item:focus-visible,
+.new-header-social-icon:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* ========== HEADER / NAVBAR ========== */
+.header {
+  background-color: var(--ds-surface) !important;
+  box-shadow: var(--ds-shadow);
+  padding: 0 !important;
+}
+
+.header .navbar {
+  padding: var(--ds-space-sm) 0;
+  min-height: 72px;
+}
+
+.navbar-brand {
+  padding-top: 0;
+}
+
+.header .nav-item .nav-link,
+.header .nav-link {
+  color: var(--ds-text) !important;
+  font-weight: 500;
+  font-size: 15px;
+  padding: 8px 14px !important;
+  border-radius: var(--ds-radius-sm);
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.header .nav-item .nav-link:hover,
+.header .nav-link:hover {
+  color: var(--primary-color) !important;
+  background-color: rgba(241, 93, 45, 0.06);
+}
+
+.header .nav-item .nav-link.active {
+  color: var(--primary-color) !important;
+}
+
+/* Sticky header */
+.is-sticky {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  background-color: var(--ds-surface) !important;
+  width: 100% !important;
+  min-height: 70px;
+  box-shadow: var(--ds-shadow-md);
+  animation: headerSlideDown 0.3s ease forwards;
+}
+
+.is-sticky .nav-item .nav-link,
+.is-sticky .nav-link {
+  color: var(--ds-text) !important;
+}
+
+.is-sticky .nav-item .nav-link:hover,
+.is-sticky .nav-link:hover {
+  color: var(--primary-color) !important;
+}
+
+/* Add property button in nav */
+#addbutton,
+.add-property-btn {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+  border: none;
+  border-radius: var(--ds-radius);
+  padding: 10px 20px !important;
+  font-weight: 600;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+#addbutton:hover,
+.add-property-btn:hover {
+  background-color: var(--primary-hover) !important;
+  box-shadow: var(--ds-shadow-md);
+  color: #fff !important;
+}
+
+#addbutton:focus-visible,
+.add-property-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Dropdown menu in nav */
+.navbar-nav .dropdown-menu {
+  border-radius: var(--ds-radius);
+  border: 1px solid var(--ds-border);
+  box-shadow: var(--ds-shadow-md);
+  margin-top: 6px;
+  padding: 4px !important;
+}
+
+.dropdown-item .links:hover,
+.dropdown-item .perent_link:hover .links {
+  color: var(--primary-color) !important;
+}
+
+/* Location selector button */
+.location-selector-button {
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.location-selector-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* ========== FOOTER ========== */
+#footer {
+  background-color: var(--secondary-color);
+  color: #fff;
+  padding-top: var(--ds-space-3xl);
+  margin-top: 0;
+}
+
+#footer_deatils {
+  gap: 24px 0;
+  padding-bottom: var(--ds-space-xl);
+}
+
+#footer_headlines {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: var(--ds-space-md);
+  letter-spacing: 0.02em;
+}
+
+#footer a,
+.prop_links,
+.page_links {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+#footer a:hover,
+.prop_links:hover,
+.page_links:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+#footer a:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.rights_footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: var(--ds-space-lg) 0;
+}
+
+.rights_footer p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ========== CONTAINER CONSISTENCY ========== */
+#footer .container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1400px) {
+  #footer .container {
+    max-width: 1320px;
+  }
+}
+
+.header .container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1400px) {
+  .header .container {
+    max-width: 1320px;
+  }
+}

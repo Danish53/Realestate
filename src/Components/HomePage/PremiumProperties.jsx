@@ -57,7 +57,7 @@ const PremiumProperties = ({
                   <div className="rightside_header">
                     {getFeaturedListing.length > 8 ? (
                       <Link href="/premium-properties">
-                        <button className="learn-more" id="viewall">
+                        <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                           <span aria-hidden="true" className="circle">
                             <div className="icon_div">
                               <span className="icon arrow">
@@ -129,7 +129,7 @@ const PremiumProperties = ({
                       <div className="rightside_header">
                         {getFeaturedListing.length > 8 ? (
                           <Link href="/premium-properties">
-                            <button className="learn-more" id="viewall">
+                            <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                               <span aria-hidden="true" className="circle">
                                 <div className="icon_div">
                                   <span className="icon arrow">

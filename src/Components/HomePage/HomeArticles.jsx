@@ -27,7 +27,7 @@ const HomeArticles = ({isLoading, getArticles, language, sectionTitle}) => {
                         <div className="rightside_article_headlin">
                             {getArticles.length > 4 ? (
                                 <Link href="/articles">
-                                    <button className="learn-more" id="viewall">
+                                    <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                                         <span aria-hidden="true" className="circle">
                                             <div className="icon_div">
                                                 <span className="icon arrow">
@@ -75,7 +75,7 @@ const HomeArticles = ({isLoading, getArticles, language, sectionTitle}) => {
                                 <div className="rightside_article_headlin">
                                     {getArticles && getArticles?.length > 4 ? (
                                         <Link href="/articles">
-                                            <button className="learn-more" id="viewall">
+                                            <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                                                 <span aria-hidden="true" className="circle">
                                                     <div className="icon_div">
                                                         <span className="icon arrow">

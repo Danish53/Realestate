@@ -207,15 +207,15 @@ const SearchTab = () => {
                         />
                     </div>
                     <div id="leftside-buttons">
-                        <button className="map_add" onClick={() => router.push('/properties-on-map')}>
+                        <button type="button" className="map_add ds-btn ds-btn-outline" onClick={() => router.push('/properties-on-map')} aria-label={translate("map")}>
                             <BsPinMap size={20} className="ms-2" />
                             <span>{translate("map")}</span>
                         </button>
-                        <button className="map_add" onClick={() => setShowFilterModal(true)}>
+                        <button type="button" className="map_add ds-btn ds-btn-outline" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
                             <BiFilter size={25} className="ms-2" />
                             <span>{translate("filter")}</span>
                         </button>
-                        <button className="find" onClick={handleSearch}>
+                        <button type="button" className="find ds-btn ds-btn-primary" onClick={handleSearch}>
                             <span>{translate("search")}</span>
                         </button>
                     </div>
@@ -237,7 +237,7 @@ const SearchTab = () => {
                             <BiFilter size={24} />
                         </div>
                         <h3 className="filter-modal-title">{translate("filterProp")}</h3>
-                        <button className="close-modal-btn" onClick={handleHideFilterModal}>
+                        <button type="button" className="close-modal-btn" onClick={handleHideFilterModal} aria-label="Close filter">
                             <FiX size={24} />
                         </button>
                         {/* <RiCloseCircleLine className="close-icon" size={40} onClick={handleHideFilterModal} /> */}
@@ -359,11 +359,11 @@ const SearchTab = () => {
 
                     {/* Modal Footer */}
                     <div className="filter-modal-footer">
-                        <button className="clear-filter-btn" onClick={handleClearFilter}>
+                        <button type="button" className="clear-filter-btn ds-btn ds-btn-text" onClick={handleClearFilter} aria-label={translate("clearFilter")}>
                             <GrRefresh size={16} />
                             <span>{translate("clearFilter")}</span>
                         </button>
-                        <button className="apply-filter-btn" onClick={handleApplyFilter}>
+                        <button type="button" className="apply-filter-btn ds-btn ds-btn-primary" onClick={handleApplyFilter} aria-label={translate("applyFilter")}>
                             <FiCheck size={16} />
                             <span>{translate("applyFilter")}</span>
                             <div className="btn-shine"></div>

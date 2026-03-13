@@ -79,10 +79,10 @@ const FilterForm = (props) => {
     }));
   };
   return (
-    <div className="card" id="filter-card">
+    <div className="card ds-card" id="filter-card">
       <div className="card title" id="filter-title">
         <span>{translate("filterProp")}</span>
-        <button onClick={props.handleClearFilter}>
+        <button type="button" className="ds-btn ds-btn-text" onClick={props.handleClearFilter}>
           {translate("clearFilter")}
         </button>
       </div>
@@ -227,8 +227,10 @@ const FilterForm = (props) => {
         <div className="facilities-toggle filter_label_title">
           <span>{translate("facilities")}</span>
           <button
+            type="button"
             onClick={() => setShowFacilities(!showFacilities)}
-            className="toggle-button"
+            className="toggle-button ds-btn ds-btn-text"
+            aria-label={showFacilities ? translate("hide") : translate("show")}
             style={{
               background: "none",
               border: "none",
@@ -285,11 +287,10 @@ const FilterForm = (props) => {
           </div>
         </div>
         <div onClick={props.handleApplyfilter}>
-          {/* <button id="apply-filter-button">{translate("applyFilter")}</button> */}
-          <button id="apply-filter-button" className="find">
-                            <span>{translate("applyFilter")}</span>
-          <ArrowForward size={25} className="ms-2" />
-                        </button>
+          <button type="button" id="apply-filter-button" className="find ds-btn ds-btn-primary">
+            <span>{translate("applyFilter")}</span>
+            <ArrowForward size={25} className="ms-2" />
+          </button>
         </div>
 
       </div>

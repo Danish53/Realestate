@@ -289,16 +289,16 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           </div>
         </div>
         <div className="header-actions">
-          <button className="header-btn" onClick={handleNewChat} title="New Chat">
+          <button type="button" className="header-btn" onClick={handleNewChat} title="New Chat" aria-label="New Chat">
             <MessageCircle size={16} />
           </button>
-          <button className="header-btn" onClick={handleClearChat} title="Clear History">
+          <button type="button" className="header-btn" onClick={handleClearChat} title="Clear History" aria-label="Clear History">
             <Trash2 size={16} />
           </button>
-          <button className="header-btn" onClick={() => setIsMinimized(!isMinimized)}>
+          <button type="button" className="header-btn" onClick={() => setIsMinimized(!isMinimized)} aria-label={isMinimized ? "Maximize" : "Minimize"}>
             {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
           </button>
-          <button className="header-btn close-btn" onClick={onClose}>
+          <button type="button" className="header-btn close-btn" onClick={onClose} aria-label="Close chat">
             <X size={16} />
           </button>
         </div>
@@ -358,6 +358,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           type="submit"
           className="send-btn"
           disabled={isLoading || !input.trim()}
+          aria-label="Send message"
         >
           <Send size={18} />
           <span className="btn-tooltip">Send message</span>

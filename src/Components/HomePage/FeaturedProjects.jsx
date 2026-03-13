@@ -83,7 +83,7 @@ const FeaturedProjects = ({
                   <div className="rightside_header">
                     {featuredProjects.length > 4 ? (
                       <Link href="/featured-projects">
-                        <button className="learn-more" id="viewall">
+                        <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                           <span aria-hidden="true" className="circle">
                             <div className="icon_div">
                               <span className="icon arrow">

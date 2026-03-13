@@ -231,7 +231,7 @@ const MortgageCalculator = ({ data }) => {
         </div>
         <div className="card_footer">
           <div className="w-100">
-            <button onClick={handleCalculate} className="find">{translate("Calculate")}</button>
+            <button type="button" onClick={handleCalculate} className="find ds-btn ds-btn-primary" aria-label={translate("Calculate")}>{translate("Calculate")}</button>
           </div>
         </div>
       </div>
@@ -377,7 +377,7 @@ const EMIModal = ({
               <span className="title">{translate("accessTable")}</span>
               <span className="text">{translate("viewTable")}</span>
             </div>
-            <button onClick={handleSubscribe}>
+            <button type="button" className="ds-btn ds-btn-primary" onClick={handleSubscribe} aria-label={translate("subScribeNow")}>
               {translate("subScribeNow")}
             </button>
           </div>

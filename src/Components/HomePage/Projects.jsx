@@ -89,8 +89,10 @@ const Projects = ({
                   {getProjects.length > 4 ? (
                     <Link href="/all-projects">
                       <button
+                        type="button"
                         className="learn-more-project"
                         id="viewall_projects"
+                        aria-label={translate("seeAllProjects")}
                       >
                         <span aria-hidden="true" className="circle">
                           <div className="icon_div">
@@ -121,7 +123,7 @@ const Projects = ({
                   <div>
                     {getProjects.length > 4 ? (
                       <Link href="/all-projects">
-                        <button className="mobileViewArrowProject">
+                        <button type="button" className="mobileViewArrowProject" aria-label={translate("seeAllProjects")}>
                           <IoIosArrowForward size={25} />
                         </button>
                       </Link>

@@ -34,7 +34,7 @@ const MostFavProperty = ({
               <div className="rightside_most_fav_header">
                 {getMostFavProperties.length > 6 ? (
                   <Link href="/most-favorite-properties">
-                    <button className="learn-more" id="viewall">
+                    <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                       <span aria-hidden="true" className="circle">
                         <div className="icon_div">
                           <span className="icon arrow">
@@ -93,7 +93,7 @@ const MostFavProperty = ({
               <div className="rightside_most_fav_header">
                 {getMostFavProperties.length > 6 ? (
                   <Link href="/most-favorite-properties">
-                    <button className="learn-more" id="viewall">
+                    <button type="button" className="learn-more" id="viewall" aria-label={translate("seeAllProp")}>
                       <span aria-hidden="true" className="circle">
                         <div className="icon_div">
                           <span className="icon arrow">
