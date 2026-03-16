@@ -1,21 +1,18 @@
-"use client"
+"use client";
 import React from "react";
-import NoDataFound from "../../assets/no_data_found_illustrator.svg";
-import { placeholderImage, translate } from "@/utils/helper";
-import Image from "next/image";
+import { translate } from "@/utils/helper";
+import { FiInbox } from "react-icons/fi";
 
 const NoData = () => {
-    return (
-        <div className="col-12 text-center">
-            <div>
-                <Image loading="lazy" src={NoDataFound.src} alt="no_img" width={200} height={200}  onError={placeholderImage}/>
-            </div>
-            <div className="no_data_found_text">
-                <h3>{translate("noData")}</h3>
-                <span>{translate("noDatatext")}</span>
-            </div>
-        </div>
-    );
+  return (
+    <div className="no-data-found">
+      <div className="no-data-found-icon">
+        <FiInbox size={48} strokeWidth={1.5} />
+      </div>
+      <h3 className="no-data-found-title">{translate("noData")}</h3>
+      <p className="no-data-found-text">{translate("noDatatext")}</p>
+    </div>
+  );
 };
 
 export default NoData;

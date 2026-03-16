@@ -94,93 +94,111 @@ const AllPropertieCard = ({ ele }) => {
     ).slice(0, 3);
     return (
         <>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 group">
+                <div className="flex flex-col sm:flex-row h-full">
+                    {/* Image Section */}
+                    <div className="relative w-full sm:w-2/5 md:w-1/3 lg:w-2/5 aspect-[4/3] sm:aspect-auto sm:min-h-[220px] overflow-hidden">
+                        <Image 
+                            loading="lazy" 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                            src={ele?.title_image} 
+                            alt={ele?.title || "Property image"} 
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            onError={placeholderImage} 
+                        />
+                        
+                        {/* Promoted Badge */}
+                        {ele.promoted ? (
+                            <div className="absolute top-4 left-4 bg-primary-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm z-10">
+                                {translate("featured")}
+                            </div>
+                        ) : null}
 
-                <Card id="all_prop_main_card" className="row" key={ele.id}>
-                    <div className="col-md-4 img_div" id="all_prop_main_card_rows_cols">
-                        <Image loading="lazy" className="card-img" id="all_prop_card_img" src={ele?.title_image} alt="no_img" width={20} height={20} onError={placeholderImage} />
-                        {ele.promoted ? <span className="all_prop_feature">{translate("featured")}</span> : null}
+                        {/* Property Type Badge (Sell/Rent) */}
+                        {ele.property_type && (
+                            <div className="absolute top-4 right-4 bg-gray-900/80 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm z-10 capitalize">
+                                {translate(ele.property_type)}
+                            </div>
+                        )}
+
+                        {/* Like Button */}
+                        <button 
+                            className="absolute bottom-4 right-4 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-transform z-10"
+                            onClick={isLiked ? handleDislike : handleLike}
+                        >
+                            {isLiked ? (
+                                <AiFillHeart size={18} className="text-red-500" />
+                            ) : (
+                                <AiOutlineHeart size={18} className="text-gray-600" />
+                            )}
+                        </button>
                     </div>
-                    <div className="col-md-8" id="all_prop_main_card_rows_cols">
-                        <Card.Body id="all_prop_card_body">
-                            <span className="all_prop_like">
-                                {isLiked ? (
-                                    <AiFillHeart size={20} className="liked_property" onClick={handleDislike} />
-                                ) : isDisliked ? (
-                                    <AiOutlineHeart size={20} className="disliked_property" onClick={handleLike} />
-                                ) : (
-                                    <AiOutlineHeart size={20} onClick={handleLike} />
-                                )}
-                            </span>
 
-                            <div className="first_div">
-                                {ele.category &&
-                                    <div id="all_prop_sub_body">
-                                        <div className="cate_image">
+                    {/* Content Section */}
+                    <div className="p-5 flex flex-col justify-between w-full sm:w-3/5 md:w-2/3 lg:w-3/5">
+                        <div>
+                            {/* Category & Price Row */}
+                            <div className="flex justify-between items-start mb-2 gap-4">
+                                {ele.category && (
+                                    <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-50 rounded-lg shrink-0">
+                                        <div className="w-4 h-4 relative opacity-70">
                                             {themeEnabled ? (
-                                                <ImageToSvg imageUrl={ele.category && ele.category.image} className="custom-svg" />
+                                                <ImageToSvg imageUrl={ele.category && ele.category.image} className="w-full h-full" />
                                             ) : (
-                                                <Image loading="lazy" src={ele?.category.image} alt="no_img" width={20} height={20} onError={placeholderImage} />
+                                                <Image loading="lazy" src={ele?.category?.image} alt="category" fill className="object-cover" onError={placeholderImage} />
                                             )}
                                         </div>
-                                        <span className="sub_body_title"> {ele.category.category}</span>
+                                        <span className="text-xs font-semibold text-gray-700 uppercase tracking-wider">{ele.category.category}</span>
                                     </div>
-                                }
-                                <div id="sub_body_middletext">
-                                    <span>{truncate(ele?.title, 40)}</span>
-                                    <p>
-                                        {truncate(`${ele?.city ? ele?.city + ', ' : ''}${ele?.state ? ele?.state + ', ' : ''}${ele?.country || ''}`, 20)}
-                                    </p>
-                                </div>
+                                )}
+                                {ele?.price && (
+                                    <div className="text-lg sm:text-xl font-bold text-primary-600 whitespace-nowrap">
+                                        {formatPriceAbbreviated(ele?.price)}
+                                    </div>
+                                )}
                             </div>
-                            {validParameters.length > 0 ? (
-                                <div className="category_params">
-                                    <div className="row">
-                                        {validParameters.slice(0, 3).map((elem, index) => (
-                                            <Tooltip title={Array.isArray(elem?.name) ? elem.name.slice(0, 1).join(', ') : elem?.name} placement={language.rtl === 1 ? "topRight" : "topLeft"}>
-                                                <div className="col-lg-3 parmas_div" key={index}>
 
-                                                    <div className="cat_content">
-                                                        <div className="param_img">
-                                                            {themeEnabled ? (
-                                                                <ImageToSvg imageUrl={elem?.image && elem?.image} className="custom-svg" />
-                                                            ) : (
-                                                                <Image loading="lazy" src={elem?.image} alt="no_img" width={0} height={0} onError={placeholderImage} />
-                                                            )}
-                                                        </div>
-                                                        <div className="param_name">
-                                                            <span>
-                                                                <span>
-                                                                    {Array.isArray(elem?.value) ? truncate(elem.value.slice(0, 1).join(', '), 5) : truncate(elem.value, 5)}
-                                                                </span>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </Tooltip>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : null}
-                            <Card.Footer id="all_prop_card_footer" style={{ height: validParameters.length > 0 ? "auto" : "120px" }}>
-                                {ele.property_type && <span className={`${ele?.property_type === "sell" ? "for_sale" : "for_rent"} `}>  {""}{translate(ele.property_type)}</span>}
-                                {ele?.price &&
-                                    <span className="price_tag">
-                                        <span>
-                                            {formatPriceAbbreviated(ele?.price)}
-                                        </span>
-                                    </span>
-                                }
-                            </Card.Footer>
-                        </Card.Body>
+                            {/* Title & Location */}
+                            <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-primary-600 transition-colors">
+                                {ele?.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 line-clamp-1 mb-4 flex items-center gap-1">
+                                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {truncate(`${ele?.city ? ele?.city + ', ' : ''}${ele?.state ? ele?.state + ', ' : ''}${ele?.country || ''}`, 40)}
+                            </p>
+                        </div>
+
+                        {/* Parameters */}
+                        {validParameters.length > 0 && (
+                            <div className="flex items-center gap-4 border-t border-gray-100 pt-4 mt-auto">
+                                {validParameters.map((elem, index) => (
+                                    <Tooltip key={index} title={Array.isArray(elem?.name) ? elem.name.join(', ') : elem?.name} placement="top">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-5 h-5 relative opacity-60">
+                                                {themeEnabled ? (
+                                                    <ImageToSvg imageUrl={elem?.image} className="w-full h-full" />
+                                                ) : (
+                                                    <Image loading="lazy" src={elem?.image} alt="icon" fill className="object-cover" onError={placeholderImage} />
+                                                )}
+                                            </div>
+                                            <span className="text-sm font-semibold text-gray-700">
+                                                {Array.isArray(elem?.value) ? truncate(elem.value.slice(0, 1).join(', '), 5) : truncate(elem.value, 5)}
+                                            </span>
+                                        </div>
+                                    </Tooltip>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                </Card>
-            {/* </div> */}
+                </div>
+            </div>
 
-            {showModal &&
-                <LoginModal isOpen={showModal} onClose={handleCloseModal} />
-            }
+            {showModal && <LoginModal isOpen={showModal} onClose={handleCloseModal} />}
         </>
-
     );
 };
 

@@ -47,7 +47,7 @@ const NearByProperty = ({
     <>
       {/* Nearby City Section  Section  */}
       {isLoading ? (
-        <section id="nearbyCityProperties">
+        <section id="nearbyCityProperties" className="py-16 lg:py-24 bg-gray-50/50">
           <div className="container">
             <div className="most_fav_header">
               <span className="headline">
@@ -114,7 +114,7 @@ const NearByProperty = ({
       ) : (
         nearbyCityData &&
         nearbyCityData?.length > 0 && (
-          <section id="nearbyCityProperties">
+          <section id="nearbyCityProperties" className="py-16 lg:py-24 bg-white overflow-hidden">
             <div className="container">
               <NearbyCityswiper
                 data={nearbyCityData}

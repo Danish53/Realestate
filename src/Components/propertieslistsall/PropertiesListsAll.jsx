@@ -1043,10 +1043,12 @@
 "use client";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import ViewPageImg from "@/assets/Images/Breadcrumbs.jpg";
 import Layout from "@/Components/Layout/Layout";
+import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
 import VerticalCardSkeleton from "../Skeleton/VerticalCardSkeleton";
 import VerticalCardAI from "../Cards/VerticalCardAI";
+import NoData from "@/Components/NoDataFound/NoData";
+import { translate } from "@/utils/helper";
 
 const PaginationSkeleton = () => (
   <div
@@ -1243,133 +1245,91 @@ const PropertiesListsAll = () => {
     });
   };
 
+  const breadCrumbTitle = translate("allProperties");
+
   return (
     <Layout>
-      <div id="breadcrumb" style={{ backgroundImage: `url(${ViewPageImg.src})` }}>
-        <div className="container" id="breadcrumb-headline">
-          <h3 className="headline">All Properties</h3>
-        </div>
-      </div>
+      <Breadcrumb title={breadCrumbTitle} />
 
-      <div className="my-5 container">
-        {loadingProps && (
-          <div className="row">
-            {Array.from({ length: 9 }).map((_, index) => (
-              <div className="col-12 col-md-6 col-lg-4" key={index}>
-                <VerticalCardSkeleton />
+      <section id="all-prop-containt" className="prop-lists-all-page">
+        <div className="container all-properties prop-lists-all-container">
+          <div className="prop-lists-all-main">
+            {loadingProps && (
+              <div className="prop-lists-all-grid">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div className="prop-lists-all-card-wrap" key={index}>
+                    <VerticalCardSkeleton />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {!loadingProps && (statusCode === 404 || properties.length === 0) && (
-          <div className="no-results-container">
-            <div className="no-results-icon">🏠</div>
-            <h3 className="no-results-title">No Properties Found</h3>
-            <p className="no-results-text">
-              Sorry, there are no active properties matching your criteria at the moment.
-            </p>
-            <button
-              className="reset-btn find"
-              onClick={() => router.push({ pathname: router.pathname, query: { category, citySlug: citySlug || areaSlug } })}
-            >
-              Clear All Filters
-            </button>
-          </div>
-        )}
-
-        {!loadingProps && error && statusCode !== 404 && (
-          <p className="status-text error text-center">{error}</p>
-        )}
-
-        {!loadingProps && properties && (
-          <div className="row" id="all-prop-col-cards">
-            {properties.map((ele, index) => (
-              <div className="col-12 col-md-6 col-lg-4 my-4" key={index}>
-                <VerticalCardAI ele={ele} category={category} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {!loadingProps && !error && properties.length > 0 && (
-          <>
-            {loadingPagination ? (
-              <PaginationSkeleton />
-            ) : (
-              <div className="pagination">
+            {!loadingProps && (statusCode === 404 || properties.length === 0) && (
+              <div className="prop-lists-all-empty">
+                <NoData />
                 <button
-                  className="page-btn"
-                  onClick={() => goToPage(pageNum - 1)}
-                  disabled={pageNum <= 1 || loadingPagination}
+                  type="button"
+                  className="loadMore prop-lists-all-clear-btn"
+                  onClick={() => router.push({ pathname: router.pathname, query: { category, citySlug: citySlug || areaSlug } })}
                 >
-                  ‹ Previous
-                </button>
-                <span className="page-current">
-                  Page {pageNum} of {totalPages}
-                </span>
-                <button
-                  className="page-btn"
-                  onClick={() => goToPage(pageNum + 1)}
-                  disabled={loadingPagination || pageNum >= totalPages}
-                >
-                  Next ›
+                  {translate("clearFilter")}
                 </button>
               </div>
             )}
-          </>
-        )}
-      </div>
 
-      <style jsx>{`
-        .no-results-container {
-          text-align: center;
-          padding: 60px 20px;
-          background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-          margin: 40px auto;
-          max-width: 600px;
-        }
-        .no-results-icon {
-          font-size: 64px;
-          margin-bottom: 20px;
-        }
-        .no-results-title {
-          font-size: 24px;
-          font-weight: 700;
-          color: #1f2937;
-        }
-        .no-results-text {
-          color: #6b7280;
-          margin-bottom: 24px;
-        }
-        .pagination {
-          margin-top: 24px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 12px;
-        }
-        .page-btn {
-          padding: 6px 12px;
-          font-size: 13px;
-          border-radius: 999px;
-          border: 1px solid #d1d5db;
-          background: white;
-          color: #111827;
-          cursor: pointer;
-          min-width: 90px;
-        }
-        .page-btn:disabled {
-          opacity: 0.4;
-          cursor: default;
-        }
-        .page-current {
-          font-size: 13px;
-          color: #4b5563;
-        }
-      `}</style>
+            {!loadingProps && error && statusCode !== 404 && (
+              <p className="prop-lists-all-error">{error}</p>
+            )}
+
+            {!loadingProps && properties && properties.length > 0 && (
+              <>
+                <div className="all-prop-toolbar prop-lists-all-toolbar">
+                  <div className="all-prop-toolbar-count">
+                    <span>{properties.length} {translate("propFound")}</span>
+                  </div>
+                </div>
+                <div className="prop-lists-all-grid">
+                  {properties.map((ele, index) => (
+                    <div className="prop-lists-all-card-wrap" key={ele?.link || index}>
+                      <VerticalCardAI ele={ele} category={category} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!loadingProps && !error && properties.length > 0 && (
+              <div className="prop-lists-all-pagination-wrap">
+                {loadingPagination ? (
+                  <PaginationSkeleton />
+                ) : (
+                  <div className="prop-lists-all-pagination">
+                    <button
+                      type="button"
+                      className="prop-lists-all-page-btn"
+                      onClick={() => goToPage(pageNum - 1)}
+                      disabled={pageNum <= 1 || loadingPagination}
+                    >
+                      ‹ Previous
+                    </button>
+                    <span className="prop-lists-all-page-current">
+                      Page {pageNum} of {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="prop-lists-all-page-btn"
+                      onClick={() => goToPage(pageNum + 1)}
+                      disabled={loadingPagination || pageNum >= totalPages}
+                    >
+                      {translate("next")} ›
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
     </Layout>
   );
 };

@@ -169,53 +169,45 @@ const SearchTab = () => {
     };
 
     return (
-        <div>
-            <div id="searchbox" className="container">
-                <ButtonGroup className="group_radio">
-                    <ul className="nav nav-tabs" id="tabs">
-                        <li className="">
-                            <a 
-                              className={`nav-link ${activeTab === 0 ? "tab-0" : ""}`} 
-                              aria-current="page" 
-                              id="sellbutton" 
-                              onClick={() => handleTabClick("sell")}
-                            >
-                                {translate("sell")}
-                            </a>
-                        </li>
-                        <li className="">
-                            <a 
-                              className={`nav-link ${activeTab === 1 ? "tab-1" : ""}`} 
-                              onClick={() => handleTabClick("rent")} 
-                              aria-current="page" 
-                              id="rentbutton"
-                            >
-                                {translate("rent")}
-                            </a>
-                        </li>
-                    </ul>
+        <div className="w-full max-w-5xl mx-auto px-4">
+            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-4 sm:p-5">
+                <ButtonGroup className="flex border-b border-gray-100 mb-4 w-fit">
+                    <button
+                        type="button"
+                        className={`px-6 py-2.5 text-sm font-semibold rounded-t-lg transition-colors border-b-2 ${activeTab === 0 ? "text-primary-600 border-primary-600 bg-primary-50/50" : "text-gray-500 border-transparent hover:text-gray-700"}`}
+                        onClick={() => handleTabClick("sell")}
+                    >
+                        {translate("sell")}
+                    </button>
+                    <button
+                        type="button"
+                        className={`px-6 py-2.5 text-sm font-semibold rounded-t-lg transition-colors border-b-2 ${activeTab === 1 ? "text-primary-600 border-primary-600 bg-primary-50/50" : "text-gray-500 border-transparent hover:text-gray-700"}`}
+                        onClick={() => handleTabClick("rent")}
+                    >
+                        {translate("rent")}
+                    </button>
                 </ButtonGroup>
-                <div id="searchcard">
-                    <div id="searchbuttoon">
-                        <FiSearch size={20} />
+                <div className="flex flex-col md:flex-row gap-3">
+                    <div className="flex-1 relative flex items-center bg-gray-50 rounded-xl px-4 py-3 border border-gray-200 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-primary-500 transition-all">
+                        <FiSearch size={22} className="text-gray-400 shrink-0" />
                         <input 
-                          className="searchinput" 
-                          placeholder={translate("searchYourProperty")} 
-                          name="propertySearch" 
-                          value={searchInput} 
-                          onChange={(e) => setSearchInput(e.target.value)} 
+                            className="w-full bg-transparent border-none outline-none px-3 text-gray-700 placeholder:text-gray-400 text-base"
+                            placeholder={translate("searchYourProperty")} 
+                            name="propertySearch" 
+                            value={searchInput} 
+                            onChange={(e) => setSearchInput(e.target.value)} 
                         />
                     </div>
-                    <div id="leftside-buttons">
-                        <button type="button" className="map_add ds-btn ds-btn-outline" onClick={() => router.push('/properties-on-map')} aria-label={translate("map")}>
-                            <BsPinMap size={20} className="ms-2" />
-                            <span>{translate("map")}</span>
+                    <div className="flex flex-wrap md:flex-nowrap gap-3 shrink-0">
+                        <button type="button" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors" onClick={() => router.push('/properties-on-map')} aria-label={translate("map")}>
+                            <BsPinMap size={18} className="text-primary-500" />
+                            <span className="md:hidden lg:inline">{translate("map")}</span>
                         </button>
-                        <button type="button" className="map_add ds-btn ds-btn-outline" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
-                            <BiFilter size={25} className="ms-2" />
-                            <span>{translate("filter")}</span>
+                        <button type="button" className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
+                            <BiFilter size={22} className="text-primary-500" />
+                            <span className="md:hidden lg:inline">{translate("filter")}</span>
                         </button>
-                        <button type="button" className="find ds-btn ds-btn-primary" onClick={handleSearch}>
+                        <button type="button" className="w-full text-white md:w-auto flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-primary-600 font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30" onClick={handleSearch}>
                             <span>{translate("search")}</span>
                         </button>
                     </div>
@@ -227,32 +219,33 @@ const SearchTab = () => {
               onHide={handleHideFilterModal} 
               size="lg" 
               centered 
-              backdrop="static" 
-              className="filter-modal"
+              backdrop="static"
+              contentClassName="bg-transparent border-none"
             >
-                <div className="filter-modal-content">
+                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full">
                     {/* Modal Header */}
-                    <div className="filter-modal-header">
-                        <div className="header-icon-wrapper">
-                            <BiFilter size={24} />
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 items-center justify-center hidden sm:flex">
+                                <BiFilter size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 m-0">{translate("filterProp")}</h3>
                         </div>
-                        <h3 className="filter-modal-title">{translate("filterProp")}</h3>
-                        <button type="button" className="close-modal-btn" onClick={handleHideFilterModal} aria-label="Close filter">
-                            <FiX size={24} />
+                        <button type="button" className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-500 hover:bg-red-50 transition-colors outline-none" onClick={handleHideFilterModal} aria-label="Close filter">
+                            <FiX size={20} />
                         </button>
-                        {/* <RiCloseCircleLine className="close-icon" size={40} onClick={handleHideFilterModal} /> */}
                     </div>
 
                     {/* Modal Body */}
-                    <div className="filter-modal-body">
-                        <form>
+                    <div className="p-6 max-h-[70vh] overflow-y-auto">
+                        <form className="space-y-6">
                             {/* Property Type */}
-                            <div className="filter-section">
-                                <label className="filter-label">
-                                    <FiHome className="label-icon" size={16} />
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                    <FiHome className="text-primary-500" size={16} />
                                     {translate("propTypes")}
                                 </label>
-                                <div className="filter-input-wrapper form-input py-1">
+                                <div className="bg-gray-50 rounded-xl">
                                     <Autocomplete
                                         disablePortal
                                         options={categoryData}
@@ -265,24 +258,31 @@ const SearchTab = () => {
                                                 variant="outlined"
                                                 fullWidth
                                                 placeholder={translate("selectPropType")}
-                                                // className="form-input"
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        border: 'none',
+                                                        '& fieldset': { border: 'none' },
+                                                        '&:hover fieldset': { border: 'none' },
+                                                        '&.Mui-focused fieldset': { border: 'none' },
+                                                    }
+                                                }}
                                             />
                                         )}
                                         loading={isLoading}
                                         value={categoryData.find(cat => cat.id === formData.propType) || null}
-                                        popupIcon={<FiChevronDown size={18} />}
+                                        popupIcon={<FiChevronDown size={18} className="text-gray-400" />}
                                     />
                                 </div>
                             </div>
 
                             {/* Location */}
-                            <div className="filter-section">
-                                <label className="filter-label">
-                                    <FiMapPin className="label-icon" size={16} />
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                    <FiMapPin className="text-primary-500" size={16} />
                                     {translate("selectYourLocation")}
                                 </label>
-                                <div className="filter-input-wrapper mt-0 form-input py-2">
-                                    <LocationSearchBox
+                                <div className="bg-gray-50">
+                                    <LocationSearchBox className=""
                                         onLocationSelected={handleLocationSelected} 
                                         clearfilterLocation={clearfilterLocation} 
                                     />
@@ -290,17 +290,17 @@ const SearchTab = () => {
                             </div>
 
                             {/* Budget Range */}
-                            <div className="filter-section">
-                                <label className="filter-label">
-                                    <FiDollarSign className="label-icon" size={16} />
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                    <FiDollarSign className="text-primary-500" size={16} />
                                     {translate("budget")}
                                 </label>
-                                <div className="budget-range">
-                                    <div className="budget-input-group">
-                                        <span className="currency-symbol">$</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1 flex items-center bg-gray-50   transition-all overflow-hidden">
+                                        <span className="text-gray-500 font-medium">$</span>
                                         <input
                                             type="number"
-                                            className="budget-input form-input py-2"
+                                            className="w-full bg-transparent border-none outline-none px-3 py-3 text-gray-700 placeholder:text-gray-400"
                                             placeholder={translate("minPrice")}
                                             name="minPrice"
                                             value={formData.minPrice}
@@ -308,14 +308,14 @@ const SearchTab = () => {
                                             min="0"
                                         />
                                     </div>
-                                    <span className="range-separator">
+                                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-400 shrink-0">
                                         <FiMinus size={14} />
                                     </span>
-                                    <div className="budget-input-group">
-                                        <span className="currency-symbol">$</span>
+                                    <div className="flex-1 flex items-center bg-gray-50 transition-all overflow-hidden">
+                                        <span className="text-gray-500 font-medium">$</span>
                                         <input
                                             type="number"
-                                            className="budget-input form-input py-2"
+                                            className="w-full bg-transparent border-none outline-none px-3 py-3 text-gray-700 placeholder:text-gray-400"
                                             placeholder={translate("maxPrice")}
                                             name="maxPrice"
                                             value={formData.maxPrice}
@@ -327,29 +327,28 @@ const SearchTab = () => {
                             </div>
 
                             {/* Posted Since */}
-                            <div className="filter-section">
-                                <label className="filter-label">
-                                    <FiClock className="label-icon" size={16} />
+                            <div>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                                    <FiClock className="text-primary-500" size={16} />
                                     {translate("postedSince")}
                                 </label>
-                                <div className="radio-group">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     {[
                                         { value: "anytime", label: "anytime", icon: FiCalendar },
                                         { value: "lastWeek", label: "lastWeek", icon: FiClock },
                                         { value: "yesterday", label: "yesterday", icon: FiSun }
                                     ].map((option) => (
-                                        <label key={option.value} className="radio-option">
+                                        <label key={option.value} className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border cursor-pointer transition-all ${formData.postedSince === option.value ? 'bg-primary-50 border-primary-500 text-primary-600 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                                             <input
                                                 type="radio"
                                                 name="postedSince"
                                                 value={option.value}
+                                                className="hidden"
                                                 checked={formData.postedSince === option.value}
                                                 onChange={() => handlePostedSinceChange(option.value)}
                                             />
-                                            <span className="radio-custom">
-                                                <option.icon size={14} />
-                                            </span>
-                                            <span className="radio-label">{translate(option.label)}</span>
+                                            <option.icon size={16} className={formData.postedSince === option.value ? 'text-primary-500' : 'text-gray-400'} />
+                                            <span className="text-sm font-semibold">{translate(option.label)}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -358,15 +357,14 @@ const SearchTab = () => {
                     </div>
 
                     {/* Modal Footer */}
-                    <div className="filter-modal-footer">
-                        <button type="button" className="clear-filter-btn ds-btn ds-btn-text" onClick={handleClearFilter} aria-label={translate("clearFilter")}>
+                    <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                        <button type="button" className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors" onClick={handleClearFilter} aria-label={translate("clearFilter")}>
                             <GrRefresh size={16} />
                             <span>{translate("clearFilter")}</span>
                         </button>
-                        <button type="button" className="apply-filter-btn ds-btn ds-btn-primary" onClick={handleApplyFilter} aria-label={translate("applyFilter")}>
-                            <FiCheck size={16} />
+                        <button type="button" className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-600 text-white font-semibold hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30" onClick={handleApplyFilter} aria-label={translate("applyFilter")}>
+                            <FiCheck size={18} />
                             <span>{translate("applyFilter")}</span>
-                            <div className="btn-shine"></div>
                         </button>
                     </div>
                 </div>

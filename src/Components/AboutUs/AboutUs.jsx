@@ -1,60 +1,61 @@
-"use client"
-import React, { useEffect, useState } from 'react'
+"use client";
+import React, { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { translate } from "@/utils/helper";
 import { languageData } from "@/store/reducer/languageSlice";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
 import { settingsData } from "@/store/reducer/settingsSlice";
 import { useSelector } from "react-redux";
-import Layout from '../Layout/Layout';
-
+import Layout from "../Layout/Layout";
 
 const AboutUs = () => {
-
   const lang = useSelector(languageData);
-
-  useEffect(() => { }, [lang]);
-
-  const AboutUs = useSelector(settingsData);
-  const AboutUsData = AboutUs?.about_us;
+  const settings = useSelector(settingsData);
+  const aboutUsData = settings?.about_us;
   const [aboutData, setAboutData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    // Simulate data fetching delay
-    setTimeout(() => {
-      // Simulate fetched data (replace with actual data fetching)
-      const simulatedData = AboutUsData;
-      setAboutData(simulatedData);
-      setIsLoading(false);
-    }, 2000);
-  }, []);
-  const stripHtmlTags = (htmlString) => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlString;
-    return tempDiv.textContent || tempDiv.innerText || "";
-  };
 
-  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAboutData(aboutUsData ?? "");
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [aboutUsData]);
+
   return (
     <Layout>
       <Breadcrumb title={translate("aboutUs")} />
-      <section id="termsSect">
-        <div className="container">
-          <div className="card">
+
+      <section className="about-us-page" aria-label={translate("aboutUs")}>
+        <div className="about-us-container">
+          {/* Hero / intro */}
+          <header className="about-us-hero">
+            <p className="about-us-hero__eyebrow">{translate("aboutUs")}</p>
+            <h1 className="about-us-hero__title">{translate("aboutUs")}</h1>
+          </header>
+
+          {/* Main content card */}
+          <div className="about-us-content">
             {isLoading ? (
-              // Show skeleton loading when data is being fetched
-              <div className="col-12 loading_data">
-                <Skeleton height={20} count={20} />
+              <div className="about-us-content__loading">
+                <Skeleton height={16} count={2} style={{ marginBottom: 16 }} />
+                <Skeleton height={14} count={8} style={{ marginBottom: 12 }} />
+                <Skeleton height={14} count={6} style={{ marginBottom: 12 }} />
+                <Skeleton height={16} count={2} style={{ marginBottom: 16 }} />
+                <Skeleton height={14} count={10} />
               </div>
             ) : (
-              // Render the privacy policy data when not loading
-              <div dangerouslySetInnerHTML={{ __html: aboutData || "" }} />
+              <div
+                className="about-us-content__body prose"
+                dangerouslySetInnerHTML={{ __html: aboutData || "" }}
+              />
             )}
           </div>
         </div>
       </section>
     </Layout>
-  )
-}
+  );
+};
 
-export default AboutUs
+export default AboutUs;

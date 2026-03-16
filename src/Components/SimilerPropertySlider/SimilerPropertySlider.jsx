@@ -38,27 +38,12 @@ const SimilerPropertySlider = ({ data, isLoading, isUserProperty, currentPropert
     const enableLoop = planCount >= baseSlidesPerView;
 
     const breakpoints = {
-        320: {
-            slidesPerView: 1,
-        },
-        375: {
-            slidesPerView: 1.5,
-        },
-        576: {
-            slidesPerView: 2,
-        },
-        768: {
-            slidesPerView: 2,
-        },
-        992: {
-            slidesPerView: 3,
-        },
-        1200: {
-            slidesPerView: 3,
-        },
-        1400: {
-            slidesPerView: 3,
-        },
+        320: { slidesPerView: 1 },
+        576: { slidesPerView: 2 },
+        768: { slidesPerView: 2 },
+        992: { slidesPerView: 3 },
+        1200: { slidesPerView: 3 },
+        1400: { slidesPerView: 3 },
     };
 
     const language = store.getState().Language.languages;
@@ -72,20 +57,19 @@ const SimilerPropertySlider = ({ data, isLoading, isUserProperty, currentPropert
     };
 
     return (
-        <div id="similer-properties">
+        <div id="similer-properties" className="mt-12">
             {data?.length > 0 ? (
                 <>
-                    <div className="similer-headline">
-                        <span className="headline">
+                    <div className="mb-6">
+                        <h2 className="text-2xl font-bold text-gray-900">
                             {translate("compareWithSimilar")} {" "}
-                            <span>
-                                <span className=""> {translate("properties")}</span>
-                            </span>
-                        </span>
+                            <span className="text-primary-500">{translate("properties")}</span>
+                        </h2>
                     </div>
-                    <div className="property-comparison-container">
-                        <div className="property-slider-container">
-                            {data?.length > 3 ? (
+                    
+                    <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+                        <div className="flex-1 min-w-0">
+                            {data?.length > 4 ? (
                                 <Swiper
                                     dir={language.rtl === 1 ? "rtl" : "ltr"}
                                     slidesPerView={baseSlidesPerView}
@@ -96,13 +80,13 @@ const SimilerPropertySlider = ({ data, isLoading, isUserProperty, currentPropert
                                     }}
                                     loop={enableLoop}
                                     modules={[FreeMode, Pagination]}
-                                    className="similer-swiper"
+                                    className="pb-12" // Padding bottom for pagination dots
                                     breakpoints={breakpoints}
                                 >
                                     {isLoading ? (
                                         Array.from({ length: 6 }).map((_, index) => (
                                             <SwiperSlide key={index}>
-                                                <div className="loading_data">
+                                                <div className="h-full">
                                                     <VerticalCardSkeleton />
                                                 </div>
                                             </SwiperSlide>
@@ -110,34 +94,39 @@ const SimilerPropertySlider = ({ data, isLoading, isUserProperty, currentPropert
                                     ) : (
                                         data &&
                                         data.map((ele, index) => (
-                                            <SwiperSlide id="similer-swiper-slider" key={index}>
+                                            <SwiperSlide key={index} className="h-auto">
                                                 <VerticalCard ele={ele} isUserProperty={isUserProperty} />
                                             </SwiperSlide>
                                         ))
                                     )}
                                 </Swiper>
                             ) : (
-                                <div className="row">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                     {data.map((ele, index) => (
-                                        <div className="col-sm-12 col-md-6 col-lg-4" key={index}>
+                                        <div key={index} className="h-full">
                                             <VerticalCard ele={ele} isUserProperty={isUserProperty} />
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
-                        <div className="comparison-card">
-                            <div className="comparison-card-inner">
-                                <div className="comparison-icon">
-                                    <FaArrowRightArrowLeft size={20} />
+
+                        {/* Comparison Card inside the row */}
+                        {/* <div className="w-full xl:w-[320px] shrink-0 xl:h-auto">
+                            <div className="bg-primary-50/50 border border-primary-100/50 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-full min-h-[300px] shadow-sm transform transition-all hover:-translate-y-1 hover:shadow-md">
+                                <div className="w-16 h-16 bg-white shrink-0 rounded-full flex items-center justify-center text-primary-500 shadow-sm mb-6">
+                                    <FaArrowRightArrowLeft size={24} />
                                 </div>
-                                <h3>{translate("compareTitle")}</h3>
-                                <p>{translate("compareDesc")}</p>
-                                <button className="compare-now-btn" onClick={handleOpenCompareModal}>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{translate("compareTitle")}</h3>
+                                <p className="text-gray-500 mb-8">{translate("compareDesc")}</p>
+                                <button 
+                                    className="mt-auto bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-6 rounded-xl shadow-sm hover:shadow transition-all w-full md:w-auto" 
+                                    onClick={handleOpenCompareModal}
+                                >
                                     {translate("compareNow")}
                                 </button>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Property Compare Modal */}

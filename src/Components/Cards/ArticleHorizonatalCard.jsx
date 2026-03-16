@@ -18,48 +18,61 @@ const ArticleHorizonatalCard = ({ ele, expandedStates, index }) => {
   
 
     return (
-        <div>
-            <div className="card" id="article_horizontal_card">
-                <div className="row">
-                    <div className="col-sm-12 col-md-6 col-lg-3">
-                        <div className="article_card_image">
-                            <Image loading="lazy" variant="top" alt="no_img" className="article_Img" src={ele?.image} onError={placeholderImage} width={200} height={200} />
-                        </div>
+        <article className="group cursor-pointer flex flex-col sm:flex-row gap-4 h-full bg-white rounded-2xl overflow-hidden hover:shadow-card-hover border border-gray-100 transition-all duration-300">
+            <Link 
+                href="/article-details/[slug]" 
+                as={`/article-details/${ele.slug_id}`} 
+                className="flex flex-col sm:flex-row gap-4 h-full w-full outline-none"
+            >
+                {/* Image Section */}
+                <div className="relative w-full sm:w-[280px] shrink-0 aspect-[4/3] sm:aspect-[20/19] overflow-hidden bg-gray-200">
+                    <Image 
+                        loading="lazy" 
+                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                        src={ele?.image || placeholderImage} 
+                        alt={ele?.title || "Article"} 
+                        fill
+                        sizes="(max-width: 768px) 100vw, 280px"
+                        onError={placeholderImage} 
+                    />
+                    
+                    {/* Category Badge */}
+                    <div className="absolute top-3 left-3 z-10">
+                        <span className="bg-white/95 backdrop-blur-sm text-gray-900 text-[13px] font-semibold px-3 py-1 rounded-full shadow-sm flex items-center gap-1 border border-black/5">
+                            {ele.category?.category || translate("General")}
+                        </span>
                     </div>
-                    <div className="col-sm-12 col-md-6 col-lg-9">
-                        <div className="article-card-content">
-                            {ele.category?.category && ele.category?.category ? <span className="article-apartment-tag">{ele.category?.category}</span> : <span className="article-apartment-tag">{translate("General")}</span>}
-                            <div className="article-card-headline">
-                                <span> {stripHtmlTags(ele.title).substring(0, 30)}</span>
-                                {ele && ele.description && (
-                                    <>
-                                        <p>{expandedStates[index] ? stripHtmlTags(ele.description) : stripHtmlTags(ele.description).substring(0, 100) + "..."}</p>
-                                        {ele.description.length > 100 && (
-                                            <div className="article-readmore">
-                                                <Link href="/article-details/[slug]" as={`/article-details/${ele.slug_id}`} passHref>
-                                                    <button className="article-readmore-button">
-                                                        {translate("showMore")} <AiOutlineArrowRight className="article-arrow-icon" size={18} />
-                                                    </button>
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
+                </div>
+
+                {/* Content Section */}
+                <div className="flex flex-col py-3 pr-4 flex-grow px-4 sm:px-0">
+                    <h3 className="text-gray-900 font-semibold text-[17px] leading-snug line-clamp-2 mb-2">
+                        {stripHtmlTags(ele.title)}
+                    </h3>
+                    
+                    <div className="text-gray-500 text-[15px] line-clamp-2 md:line-clamp-3 mb-4">
+                        {stripHtmlTags(ele.description)}
+                    </div>
+
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0">
+                                <Image loading="lazy" src={systemsettingsData?.admin_image || placeholderImage} alt="admin" width={40} height={40} className="w-full h-full object-cover" onError={placeholderImage}/>
                             </div>
-                            <div className="card-footer" id="article-card-footer">
-                                <div id="admin_pic">
-                                    <Image loading="lazy" src={systemsettingsData?.admin_image} alt="no_img" className="admin" width={200} height={200} onError={placeholderImage}/>
-                                </div>
-                                <div className="article_footer_text">
-                                    <span className="byadmin"> {translate("by")} {systemsettingsData?.admin_name}</span>
-                                    <p>{ele.created_at}</p>
-                                </div>
+                            <div className="flex flex-col">
+                                <span className="text-gray-900 text-[14px] font-semibold leading-tight">{translate("by")} {systemsettingsData?.admin_name || "Admin"}</span>
+                                <span className="text-gray-500 text-[13px]">{ele.created_at}</span>
                             </div>
+                        </div>
+
+                        <div className="text-gray-900 font-medium text-[14px] hidden sm:flex items-center gap-1 group-hover:text-primary-600 transition-colors">
+                            {translate("showMore")} 
+                            <AiOutlineArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </Link>
+        </article>
     );
 };
 

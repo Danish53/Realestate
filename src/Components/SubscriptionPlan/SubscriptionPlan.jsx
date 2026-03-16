@@ -360,11 +360,11 @@ const SubscriptionPlan = () => {
         <Layout>
             <Breadcrumb title={translate("subscriptionPlan")} />
 
-            <section id="subscription" className="mb-5">
-                <div className="container">
+            <section id="subscription" className="subscription-plan-page">
+                <div className="subscription-plan-container">
                     <SubscriptionHeader />
 
-                    <div className="subsCards-Wrapper">
+                    <div className="subscription-plan-cards-wrap">
                         <SubscriptionSwiper
                             loading={loading}
                             packagedata={packagedata}

@@ -12,7 +12,8 @@ import {
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
-import { FiMapPin, FiHome, FiMaximize, FiBath, FiBed, FiArrowRight } from "react-icons/fi";
+import { FiMapPin, FiHome, FiMaximize, FiArrowRight } from "react-icons/fi";
+import { BiBed, BiBath } from "react-icons/bi";
 import { useSelector } from "react-redux";
 import Image from "next/image";
 import { ImageToSvg } from "./ImageToSvg";
@@ -92,8 +93,8 @@ const HorizontalCard = ({ ele }) => {
   const getFeatures = () => {
     const features = [];
     const paramMap = {
-      beds: { icon: FiBed, label: 'beds' },
-      baths: { icon: FiBath, label: 'baths' },
+      beds: { icon: BiBed, label: 'beds' },
+      baths: { icon: BiBath, label: 'baths' },
       area: { icon: FiMaximize, label: 'sqft' }
     };
     
@@ -117,188 +118,76 @@ const HorizontalCard = ({ ele }) => {
 
   return (
     <div
-      className="horizontal-property-card"
+      className="group cursor-pointer flex flex-col sm:flex-row gap-4 w-full"
       onClick={(e) => handlePackageCheck(e, PackageTypes.PREMIUM_PROPERTIES, router, ele?.id, ele)}
     >
-      <div className="horizontal-card-inner">
-        {/* Image Section */}
-        <div className="card-image-section">
-          <div className="image-wrapper">
-            {!imageLoaded && <div className="image-skeleton"></div>}
-            <Image
-              loading="lazy"
-              className={`property-image ${imageLoaded ? 'loaded' : ''}`}
-              src={ele?.title_image || placeholderImage}
-              alt={ele?.title || "Property"}
-              width={400}
-              height={300}
-              onLoad={() => setImageLoaded(true)}
-              onError={placeholderImage}
-            />
-            
-            <div className="image-overlay"></div>
-            
-            {/* Badges */}
-            <div className="card-badges">
-              {ele?.promoted && (
-                <span className="badge featured-badge">
-                  <span className="badge-dot"></span>
-                  {translate("featured")}
-                </span>
-              )}
-              {ele?.is_premium && (
-                <Tooltip title={translate("premiumProperty")} placement="top">
-                  <div className="badge premium-badge">
-                    <Image
-                      loading="lazy"
-                      src={premiumIcon.src}
-                      alt="premium"
-                      width={14}
-                      height={14}
-                    />
-                    <span>Premium</span>
-                  </div>
-                </Tooltip>
-              )}
-            </div>
-
-            {/* Property Type */}
-            {ele.property_type && (
-              <span className={`property-badge ${ele?.property_type}`}>
-                {translate(ele.property_type)}
-              </span>
-            )}
-          </div>
+      {/* Image Section */}
+      <div className="relative w-full sm:w-[320px] shrink-0 aspect-[4/3] sm:aspect-[20/19] overflow-hidden rounded-xl bg-gray-200">
+        {!imageLoaded && <div className="absolute inset-0 animate-pulse bg-gray-300"></div>}
+        <Image
+          loading="lazy"
+          className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+          src={ele?.title_image || placeholderImage}
+          alt={ele?.title || "Property"}
+          fill
+          sizes="(max-width: 768px) 100vw, 320px"
+          onLoad={() => setImageLoaded(true)}
+          onError={placeholderImage}
+        />
+        
+        {/* Top Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+          {(ele?.promoted || ele?.is_premium) && (
+            <span className="bg-white/95 backdrop-blur-sm text-gray-900 text-[13px] font-semibold px-3 py-1 rounded-full shadow-sm flex items-center gap-1 border border-black/5">
+              {ele?.promoted ? translate("featured") : "Premium"}
+            </span>
+          )}
         </div>
 
-        {/* Content Section */}
-        <div className="card-content-section">
-          {/* Like Button */}
-          <button 
-            className={`like-button ${isLiked ? 'liked' : ''}`}
-            onClick={isLiked ? handleDislike : handleLike}
-            aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
-          >
-            {isLiked ? (
-              <AiFillHeart size={20} className="heart-icon filled" />
-            ) : (
-              <AiOutlineHeart size={20} className="heart-icon" />
+        {/* Like Button */}
+        <button
+          type="button"
+          className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center hover:scale-110 active:scale-95 transition-all drop-shadow-sm"
+          onClick={isLiked ? handleDislike : handleLike}
+          aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
+        >
+          {isLiked ? (
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation" focusable="false" style={{display: 'block', fill: 'rgb(255, 56, 92)', height: '24px', width: '24px', stroke: 'white', strokeWidth: 2, overflow: 'visible'}}><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-6.94c-3.2 0-6 1.83-7 4.93-1-3.1-3.8-4.93-7-4.93A6.98 6.98 0 0 0 2 11c0 7 7 12.27 14 17z"></path></svg>
+          ) : (
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="presentation" focusable="false" style={{display: 'block', fill: 'rgba(0, 0, 0, 0.5)', height: '24px', width: '24px', stroke: 'white', strokeWidth: 2, overflow: 'visible'}}><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-6.94c-3.2 0-6 1.83-7 4.93-1-3.1-3.8-4.93-7-4.93A6.98 6.98 0 0 0 2 11c0 7 7 12.27 14 17z"></path></svg>
+          )}
+        </button>
+      </div>
+
+      {/* Content Section */}
+      <div className="flex flex-col py-1 flex-1 px-1 sm:px-0">
+        <div className="flex justify-between items-start gap-4">
+            <h3 className="text-gray-900 font-semibold text-[17px] leading-snug line-clamp-2">
+                {ele?.title}
+            </h3>
+            {ele?.property_type && (
+                <span className="flex items-center gap-1 text-[14px] text-gray-900 shrink-0 mt-1">
+                    ★ {translate(ele.property_type)}
+                </span>
             )}
-          </button>
+        </div>
+        
+        <div className="text-gray-500 text-[15px] mt-2">
+            {ele?.city ? `${ele.city}, ${ele.state || ''}` : ele?.category?.category}
+        </div>
 
-          {/* Category */}
-          {ele.category && (
-            <div className="category-row">
-              <div className="category-icon-wrapper">
-                {themeEnabled ? (
-                  <ImageToSvg
-                    imageUrl={ele.category.image}
-                    className="category-svg"
-                  />
-                ) : (
-                  <Image
-                    loading="lazy"
-                    src={ele.category.image}
-                    alt={ele.category.category}
-                    width={16}
-                    height={16}
-                    onError={placeholderImage}
-                  />
-                )}
-              </div>
-              <span className="category-name">{ele.category.category}</span>
+        {features.length > 0 && (
+            <div className="text-gray-500 text-[15px] mt-1">
+                {features.map((f, i) => (
+                    <span key={i}>{f.value} {f.label}{i < features.length - 1 ? ' · ' : ''}</span>
+                ))}
             </div>
-          )}
+        )}
 
-          {/* Title */}
-          <h3 className="property-title">{truncate(ele?.title, 20)}</h3>
-
-          {/* Location */}
-          <div className="location-row">
-            <FiMapPin className="location-icon" size={14} />
-            <span className="location-text">
-              {truncate(
-                `${ele?.city || ""}${ele?.city && ele?.state ? ", " : ""}${
-                  ele?.state || ""
-                }${(ele?.city || ele?.state) && ele?.country ? ", " : ""}${
-                  ele?.country || ""
-                }`,
-                30
-              )}
-            </span>
-          </div>
-
-          {/* Features */}
-          {features.length > 0 && (
-            <div className="features-grid">
-              {features.map((feature, index) => (
-                <Tooltip
-                  key={index}
-                  title={translate(feature.label)}
-                  placement="top"
-                >
-                  <div className="feature-item">
-                    <feature.icon className="feature-icon" size={14} />
-                    <span className="feature-value">{feature.value}</span>
-                  </div>
-                </Tooltip>
-              ))}
-            </div>
-          )}
-
-          {/* Parameters (if no features) */}
-          {!features.length && validParameters?.length > 0 && (
-            <div className="parameters-grid">
-              {validParameters.map((elem, index) => (
-                <Tooltip
-                  key={index}
-                  title={Array.isArray(elem?.name) ? elem.name[0] : elem?.name}
-                  placement="top"
-                >
-                  <div className="parameter-item">
-                    <div className="parameter-icon">
-                      {themeEnabled ? (
-                        <ImageToSvg
-                          imageUrl={elem?.image}
-                          className="parameter-svg"
-                        />
-                      ) : (
-                        <Image
-                          loading="lazy"
-                          src={elem?.image}
-                          alt={elem?.name}
-                          width={14}
-                          height={14}
-                          onError={placeholderImage}
-                        />
-                      )}
-                    </div>
-                    <span className="parameter-value">
-                      {Array.isArray(elem?.value)
-                        ? truncate(elem.value.join(", "), 5)
-                        : truncate(elem.value, 5)}
-                    </span>
-                  </div>
-                </Tooltip>
-              ))}
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="card-footer-section">
-            <div className="price-wrapper">
-              <span className="price-label">{translate("price")}</span>
-              <span className="price-value">
+        <div className="mt-auto pt-4 flex items-baseline gap-1">
+            <span className="text-gray-900 font-semibold text-[17px]">
                 {formatPriceAbbreviated(ele?.price)}
-              </span>
-              <div className="view-details mt-3">
-              <span className="view-text">{translate("viewDetails")}</span>
-              <FiArrowRight className="arrow-icon" size={16} />
-            </div>
-            </div>
-            
-            
-          </div>
+            </span>
         </div>
       </div>
 

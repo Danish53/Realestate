@@ -1,18 +1,17 @@
-import React from 'react';
-import { translate } from '@/utils/helper';
+import React from "react";
+import { translate } from "@/utils/helper";
 
 const SubscriptionHeader = () => {
   return (
-    <div>
-      <span className="headline">
+    <header className="subscription-plan-header">
+      <p className="subscription-plan-header__eyebrow">{translate("subscriptionPlan")}</p>
+      <h1 className="subscription-plan-header__title">
         {translate("chooseA")}{" "}
-        <span>
-          <span className=""> {translate("plan")}</span>
-        </span>{" "}
+        <span className="subscription-plan-header__title-accent">{translate("plan")}</span>{" "}
         {translate("thatsRightForYou")}
-      </span>
-    </div>
+      </h1>
+    </header>
   );
 };
 
-export default SubscriptionHeader; 
+export default SubscriptionHeader;

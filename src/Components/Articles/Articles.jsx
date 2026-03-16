@@ -82,131 +82,102 @@ const Articles = () => {
     return (
         <Layout>
             <Breadcrumb title={translate("articles")} />
-            <div className="all-articles">
-                <div id="all-articles-content">
-                    <div className="container">
-                        <div className="row" id="main-content">
-                            <div className="col-12 col-md-6 col-lg-9">
-                                <div className="all-article-rightside">
-                                    {total ? (
-                                        <>
-                                            <div className="card">
-                                                <div className="card-body" id="all-article-headline-card">
-                                                    <div>
-                                                        <span>
-                                                            {total > 0 ? total : 0} {translate("articleFound")}
-                                                        </span>
-                                                    </div>
-                                                    <div className="grid-buttons">
-                                                        <button id="layout-buttons" onClick={toggleGrid}>
-                                                        {grid ? <AiOutlineUnorderedList size={25} /> : <RiGridFill size={25} />}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                      null
-                                    )}
-                                    {getArticles && getArticles.length > 0 ? (
-                                        !grid ? (
-                                            // Row cards
-                                            <div className="all-prop-cards" id="rowCards">
-                                                <div className="row" id="all-articles-cards">
-                                                    {isLoading
-                                                        ? // Show skeleton loading when data is being fetched
-                                                        Array.from({ length: getArticles ? getArticles.length : 6 }).map((_, index) => (
-                                                            <div className="col-sm-12 col-md-6 col-lg-4 loading_data" key={index}>
-                                                                <ArticleCardSkeleton />
-                                                            </div>
-                                                        ))
-                                                        : getArticles?.map((ele, index) => (
-                                                            <div className="col-12 col-md-6 col-lg-4" key={index}>
-                                                                <ArticleCard ele={ele} expandedStates={expandedStates} language={lang}/>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div id="columnCards">
-                                                <div className="row">
-                                                    {isLoading
-                                                        ? // Show skeleton loading when data is being fetched
-                                                        Array.from({ length: getArticles ? getArticles.length : 6 }).map((_, index) => (
-                                                            <div className="col-sm-12 col-md-6 col-lg-4 loading_data" key={index}>
-                                                                <ArticleCardSkeleton />
-                                                            </div>
-                                                        ))
-                                                        : getArticles?.map((ele, index) => (
-                                                            <div className="col-12 " id="horizonatal_articles" key={index}>
-                                                                <ArticleHorizonatalCard ele={ele} expandedStates={expandedStates} index={index} PlaceHolderImg={PlaceHolderImg} />
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div className="noDataFoundDiv">
-                                            <NoData />
-                                        </div>
-                                    )}
-                                    {hasMoreData && (
-                                        <div className="col-12 loadMoreDiv" id="loadMoreDiv">
-                                            <button className='loadMore' onClick={() => loadArticles(false)}>{translate("loadmore")}</button>
-                                        </div>
-                                    )}
+            <section className="articles-page">
+                <div className="articles-page__container">
+                    <div className="articles-page__layout">
+                        <div className="articles-page__main">
+                            {total != null && total > 0 && (
+                                <div className="articles-page__toolbar">
+                                    <span className="articles-page__count">
+                                        {total} {translate("articleFound")}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="articles-page__view-toggle"
+                                        onClick={toggleGrid}
+                                        aria-label={grid ? "List view" : "Grid view"}
+                                    >
+                                        {grid ? <AiOutlineUnorderedList size={22} /> : <RiGridFill size={22} />}
+                                    </button>
                                 </div>
-                            </div>
-                            <div className="col-12 col-md-6 col-lg-3">
-                                <div className="all-articles-leftside">
-                                    <div className="cate-card">
-                                        <div className="card">
-                                            <div className="card-header">{translate("categories")}</div>
-                                            <div className="card-body">
-                                                <div className="cate-list">
-                                                    <span>{translate("General")}</span>
-                                                    {lang?.rtl === 1 ? (
-
-                                                            <IoMdArrowDropleft size={25} className="cate_list_arrow" onClick={getGeneralArticles} />
-                                                        ):(
-
-                                                            <IoMdArrowDropright size={25} className="cate_list_arrow" onClick={getGeneralArticles} />
-                                                        )
-                                                    }
-                                                </div>
-                                                {Categorydata &&
-                                                    Categorydata.map((elem, index) => (
-                                                        <div className="cate-list" key={index}>
-                                                            <span>{elem.category}</span>
-                                                            {lang?.rtl === 1 ? (
-                                                                <IoMdArrowDropleft
-                                                                    size={25}
-                                                                    className="cate_list_arrow"
-                                                                    onClick={() => {
-                                                                        getArticleByCategory(elem.id);
-                                                                    }}
-                                                                />
-                                                            ):(
-                                                                <IoMdArrowDropright
-                                                                    size={25}
-                                                                    className="cate_list_arrow"
-                                                                    onClick={() => {
-                                                                        getArticleByCategory(elem.id);
-                                                                    }}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                            </div>
+                            )}
+                            {getArticles && getArticles.length > 0 ? (
+                                !grid ? (
+                                    <div className="articles-page__cards" id="rowCards">
+                                        <div className="articles-page__grid">
+                                            {isLoading
+                                                ? Array.from({ length: getArticles?.length || 6 }).map((_, index) => (
+                                                    <div className="articles-page__card-wrap" key={index}>
+                                                        <ArticleCardSkeleton />
+                                                    </div>
+                                                ))
+                                                : getArticles?.map((ele, index) => (
+                                                    <div className="articles-page__card-wrap" key={index}>
+                                                        <ArticleCard ele={ele} expandedStates={expandedStates} language={lang} />
+                                                    </div>
+                                                ))}
                                         </div>
                                     </div>
-                                   
+                                ) : (
+                                    <div className="articles-page__list" id="columnCards">
+                                        {isLoading
+                                            ? Array.from({ length: getArticles?.length || 6 }).map((_, index) => (
+                                                <div className="articles-page__list-item" key={index}>
+                                                    <ArticleCardSkeleton />
+                                                </div>
+                                            ))
+                                            : getArticles?.map((ele, index) => (
+                                                <div className="articles-page__list-item" key={index}>
+                                                    <ArticleHorizonatalCard ele={ele} expandedStates={expandedStates} index={index} PlaceHolderImg={PlaceHolderImg} />
+                                                </div>
+                                            ))}
+                                    </div>
+                                )
+                            ) : (
+                                <div className="articles-page__empty">
+                                    <NoData />
                                 </div>
-                            </div>
+                            )}
+                            {hasMoreData && getArticles?.length > 0 && (
+                                <div className="articles-page__load-more">
+                                    <button type="button" className="articles-page__load-more-btn" onClick={() => loadArticles(false)}>
+                                        {translate("loadmore")}
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                        <aside className="articles-page__sidebar">
+                            <div className="articles-page__sidebar-card">
+                                <h3 className="articles-page__sidebar-title">{translate("categories")}</h3>
+                                <ul className="articles-page__categories">
+                                    <li className="articles-page__category-item">
+                                        <button type="button" className="articles-page__category-btn" onClick={getGeneralArticles}>
+                                            <span>{translate("General")}</span>
+                                            {lang?.rtl === 1 ? <IoMdArrowDropleft size={20} className="articles-page__category-arrow" /> : <IoMdArrowDropright size={20} className="articles-page__category-arrow" />}
+                                        </button>
+                                    </li>
+                                    {Categorydata?.map((elem, index) => (
+                                        <li className="articles-page__category-item" key={index}>
+                                            <button
+                                                type="button"
+                                                className="articles-page__category-btn"
+                                                onClick={() => getArticleByCategory(elem.id)}
+                                            >
+                                                <span>{elem.category}</span>
+                                                {lang?.rtl === 1 ? (
+                                                    <IoMdArrowDropleft size={20} className="articles-page__category-arrow" />
+                                                ) : (
+                                                    <IoMdArrowDropright size={20} className="articles-page__category-arrow" />
+                                                )}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </aside>
                     </div>
                 </div>
-            </div>
+            </section>
         </Layout>
     )
 }

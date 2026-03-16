@@ -225,7 +225,7 @@ const LocationSearchBox = ({
                     <input
                         style={{ ...style }}
                         type="text"
-                        className="searchLocationInput"
+                        className="searchLocationInput px-1 py-2"
                         placeholder={translate("enterLocation")}
                         onKeyPress={handleKeyPress}
                         onChange={handleInputChange}

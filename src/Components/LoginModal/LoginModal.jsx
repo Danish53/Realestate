@@ -31,21 +31,21 @@ import Swal from "sweetalert2";
 
 // Reusable Google Sign-In Button
 const GoogleSignInButton = ({ onClick, icon, text }) => (
-  <div className="google_signup mt-3" onClick={onClick}>
-    <button className="google_signup_button">
-      <div className="google_icon">{icon}</div>
-      <span className="google_text">{text}</span>
+  <div className="mt-4 w-full" onClick={onClick}>
+    <button className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-3.5 px-4 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm active:scale-[0.98]">
+      <div className="flex items-center justify-center bg-gray-50 p-1.5 rounded-full">{icon}</div>
+      <span className="text-base text-gray-800 font-semibold">{text}</span>
     </button>
   </div>
 );
 
 // Reusable Footer Links
 const FooterLinks = () => (
-  <span>
+  <span className="text-xs text-gray-500">
     {translate("byclick")}{" "}
-    <Link href="/terms-and-condition">{translate("terms&condition")}</Link>{" "}
+    <Link href="/terms-and-condition" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">{translate("terms&condition")}</Link>{" "}
     <span className="mx-1"> {translate("and")} </span>{" "}
-    <Link href="/privacy-policy"> {translate("privacyPolicy")} </Link>
+    <Link href="/privacy-policy" className="text-primary-600 hover:text-primary-700 font-medium transition-colors"> {translate("privacyPolicy")} </Link>
   </span>
 );
 
@@ -61,35 +61,36 @@ const PhoneLoginForm = ({
   ShowPhoneLogin,
   showLoader,
 }) => (
-  <>
+  <div className="w-full space-y-6">
     <form
       onSubmit={(e) => {
         e.preventDefault();
         onSignUp(e);
       }}
+      className="space-y-6"
     >
-      <div className="modal-body-heading">
-        <h4>{translate("enterMobile")}</h4>
-        <span>{translate("sendCode")}</span>
+      <div className="text-center space-y-2 mb-8">
+        <h4 className="text-2xl font-bold text-gray-900">{translate("enterMobile")}</h4>
+        <p className="text-gray-500 text-sm">{translate("sendCode")}</p>
       </div>
-      <div className="mobile-number">
-        <label className="is_require" htmlFor="phone">
-          {translate("phoneNumber")}
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-gray-700" htmlFor="phone">
+          {translate("phoneNumber")} <span className="text-red-500">*</span>
         </label>
-        <PhoneInput
-          defaultCountry={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
-          international
-          value={value}
-          onChange={setValue}
-          className="custom-phone-input"
-        />
+        <div className="relative">
+          <PhoneInput
+            defaultCountry={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
+            international
+            value={value}
+            onChange={setValue}
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all !bg-gray-50"
+          />
+        </div>
       </div>
-      <div className="continue">
-        <button type="submit" className="continue-button" disabled={showLoader}>
+      <div className="w-full mt-6">
+        <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold flex justify-center items-center py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed" disabled={showLoader}>
           {showLoader ? (
-            <div className="loader-container-otp">
-              <div className="loader-otp"></div>
-            </div>
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           ) : (
             translate("continue")
           )}
@@ -98,37 +99,37 @@ const PhoneLoginForm = ({
     </form>
 
     {ShowGoogleLogin && (
-      <div className="or_devider">
-        <hr style={{ borderStyle: "dashed" }} />
-        <span className="or_divider">{translate("or")}</span>
-        <hr style={{ borderStyle: "dashed" }} />
+      <div className="flex items-center justify-center space-x-4 my-8">
+        <div className="flex-1 h-px bg-gray-200"></div>
+        <span className="text-sm text-gray-400 font-medium px-2">{translate("or")}</span>
+        <div className="flex-1 h-px bg-gray-200"></div>
       </div>
     )}
 
     <GoogleSignInButton
       onClick={handleEmailLoginshow}
-      icon={<RiMailSendFill size={25} />}
+      icon={<RiMailSendFill size={20} className="text-primary-600" />}
       text={translate("CWE")}
     />
 
     {ShowGoogleLogin && (
       <>
         {!ShowPhoneLogin && (
-          <div className="modal-body-heading">
-            <h4>
+          <div className="text-center space-y-2 mt-8">
+            <h4 className="text-xl font-bold text-gray-900">
               {translate("loginTo")} {CompanyName}
             </h4>
-            <span>{translate("connectWithGoogle")}</span>
+            <p className="text-gray-500 text-sm">{translate("connectWithGoogle")}</p>
           </div>
         )}
         <GoogleSignInButton
           onClick={handleGoogleSignup}
-          icon={<FcGoogle size={25} />}
+          icon={<FcGoogle size={20} />}
           text={translate("CWG")}
         />
       </>
     )}
-  </>
+  </div>
 );
 
 // OTP Form Component
@@ -250,39 +251,37 @@ const OTPForm = ({
   };
 
   return (
-    <form>
-      <div className="modal-body-heading">
-        <h4>{translate("otpVerification")}</h4>
+    <form className="w-full space-y-8 py-4">
+      <div className="text-center space-y-3">
+        <h4 className="text-3xl font-bold text-gray-900">{translate("otpVerification")}</h4>
+        <p className="text-gray-500 text-sm">
+          {email ? translate("enterOtpSentToEmail") : translate("enterOtp")}
+          <br/>
+          <span className="font-semibold text-gray-800 text-base block mt-2">{email ? email : phonenum}</span>
+        </p>
+        
         {email ? (
-          <span>{translate("enterOtpSentToEmail")}</span>
-        ) : (
-          <span>{translate("enterOtp")}</span>
-        )}
-        <span>
-          {""} {email ? email : phonenum}{" "}
-        </span>
-        {email ? (
-          <p className="wrong_number" onClick={wrongEmail}>
+          <button type="button" className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors mt-2" onClick={wrongEmail}>
             {translate("wrongEmail")}
-          </p>
+          </button>
         ) : (
-          <p className="wrong_number" onClick={wrongNumber}>
+          <button type="button" className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors mt-2" onClick={wrongNumber}>
             {translate("wrongNumber")}
-          </p>
+          </button>
         )}
       </div>
 
       {/* OTP Input Fields */}
-      <div className="userInput">
+      <div className="flex justify-center gap-2 sm:gap-4 my-8" dir="ltr">
         {Array.from({ length: 6 }).map((_, index) => (
           <input
             key={index}
-            className={`otp-field ${focusedIndex === index ? "focused" : ""}`} // Add "focused" class conditionally
+            className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold text-gray-900 bg-gray-50 border ${focusedIndex === index ? "border-primary-500 ring-4 ring-primary-500/20 bg-white" : "border-gray-200"} rounded-xl focus:outline-none transition-all`}
             type="text"
             maxLength={1}
             value={
               isEmailOtpEnabled
-                ? emailOtp[index] || "" // Ensure emailOtp[index] is safe to access
+                ? emailOtp[index] || "" 
                 : otp[index] || ""
             }
             onChange={
@@ -295,57 +294,52 @@ const OTPForm = ({
                 ? (e) => handleEmailOtpKeyDown(e, index)
                 : (e) => handlePhoneOtpKeyDown(e, index)
             }
-            onFocus={() => setFocusedIndex(index)} // Set focused index on focus
-            onBlur={() => setFocusedIndex(-1)} // Reset focused index on blur
-            ref={(inputRef) => (inputRefs.current[index] = inputRef)} // Assign refs correctly
+            onFocus={() => setFocusedIndex(index)} 
+            onBlur={() => setFocusedIndex(-1)} 
+            ref={(inputRef) => (inputRefs.current[index] = inputRef)} 
           />
         ))}
       </div>
 
       {/* Resend OTP Section */}
-      <div className="resend-code">
+      <div className="text-center text-sm font-medium">
         {isEmailOtpEnabled ? (
           !isEmailCounting ? (
-            <span
-              id="re-text"
+            <button
+              type="button"
               onClick={handleResendOTP}
-              style={{ cursor: "pointer", color: "blue" }}
+              className="text-primary-600 hover:text-primary-700 transition-colors"
             >
               {translate("resendOtp")}
-            </span>
+            </button>
           ) : (
-            <>
-              <span id="re-text">{formatTime(emailTimeLeft)}</span>
-            </>
+            <span className="text-gray-500 cursor-not-allowed">{formatTime(emailTimeLeft)}</span>
           )
         ) : // Phone OTP Resend
         !isCounting ? (
-          <span
-            id="re-text"
+          <button
+            type="button"
             onClick={handleResendOTP}
-            style={{ cursor: "pointer", color: "blue" }}
+            className="text-primary-600 hover:text-primary-700 transition-colors"
           >
             {translate("resendOtp")}
-          </span>
+          </button>
         ) : (
-          <span id="re-text">{formatTime(timeLeft)}</span>
+          <span className="text-gray-500 cursor-not-allowed">{formatTime(timeLeft)}</span>
         )}
       </div>
 
       {/* Continue Button */}
-      <div className="continue">
+      <div className="mt-8">
         <button
-          type="submit"
-          className="continue-button"
+          type="button"
+          className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-4 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
           onClick={(e) =>
             isEmailOtpEnabled ? handleEmailOtpVerification(e) : handleConfirm(e)
           }
-          
         >
           {showLoader ? (
-            <div className="loader-container-otp">
-              <div className="loader-otp"></div>
-            </div>
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           ) : (
             <span>{translate("confirm")}</span>
           )}
@@ -368,11 +362,14 @@ const RegisterForm = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <div className="register-form">
-      <form onSubmit={handleRegisterUser}>
-        <div className="form-group">
-          <label className="is_require" htmlFor="name">
-            {translate("username")}
+    <div className="w-full space-y-6">
+      <div className="text-center space-y-2 mb-8">
+        <h4 className="text-2xl font-bold text-gray-900">{translate("registerNow")}</h4>
+      </div>
+      <form onSubmit={handleRegisterUser} className="space-y-5">
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="name">
+            {translate("username")} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -382,12 +379,13 @@ const RegisterForm = ({
             value={registerFormData?.name}
             onChange={handleRegisterInputChange}
             required
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
           />
         </div>
 
-        <div className="form-group">
-          <label className="is_require" htmlFor="email">
-            {translate("email")}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="email">
+            {translate("email")} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -397,25 +395,26 @@ const RegisterForm = ({
             value={registerFormData?.email}
             onChange={handleRegisterInputChange}
             required
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="phone">{translate("phoneNumber")}</label>
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="phone">{translate("phoneNumber")}</label>
           <PhoneInput
             defaultCountry={process.env.NEXT_PUBLIC_DEFAULT_COUNTRY}
             international
             value={registerFormData?.phone}
             onChange={handleRegisterPhoneChange}
-            className="custom-phone-input"
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-primary-500 focus-within:border-transparent transition-all !bg-gray-50 focus-within:!bg-white"
           />
         </div>
 
-        <div className="form-group">
-          <label className="is_require" htmlFor="password">
-            {translate("password")}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="password">
+            {translate("password")} <span className="text-red-500">*</span>
           </label>
-          <div className="password-input-container">
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               id="password"
@@ -424,22 +423,23 @@ const RegisterForm = ({
               value={registerFormData?.password}
               onChange={handleRegisterInputChange}
               required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
             />
             <button
               type="button"
-              className="password-toggle-button"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
             </button>
           </div>
         </div>
 
-        <div className="form-group">
-          <label className="is_require" htmlFor="confirmPassword">
-            {translate("confirmPassword")}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="confirmPassword">
+            {translate("confirmPassword")} <span className="text-red-500">*</span>
           </label>
-          <div className="password-input-container">
+          <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
@@ -448,32 +448,33 @@ const RegisterForm = ({
               value={registerFormData?.confirmPassword}
               onChange={handleRegisterInputChange}
               required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
             />
             <button
               type="button"
-              className="password-toggle-button"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
             </button>
           </div>
         </div>
 
-        <button type="submit" className="register-button" disabled={showLoader}>
-          {showLoader ? (
-            <div className="loader-container-otp">
-              <div className="loader-otp"></div>
-            </div>
-          ) : (
-            translate("register")
-          )}
-        </button>
+        <div className="pt-4">
+          <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold flex justify-center items-center py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed" disabled={showLoader}>
+            {showLoader ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              translate("register")
+            )}
+          </button>
+        </div>
 
-        <p className="sign-up-text">
+        <p className="text-center text-sm font-medium text-gray-600 mt-6">
           {translate("alreadyHaveAccount")}{" "}
-          <span className="sign-up" onClick={handleSignIn}>
+          <button type="button" className="text-primary-600 hover:text-primary-700 font-bold transition-colors" onClick={handleSignIn}>
             {translate("signIn")}
-          </span>
+          </button>
         </p>
       </form>
     </div>
@@ -490,16 +491,16 @@ const ForgotPasswordForm = ({ onSubmit, showLoader, onBackToLogin }) => {
   };
 
   return (
-    <div className="register-form">
-      <form onSubmit={handleSubmit}>
-        <div className="modal-body-heading">
-          <h4>{translate("forgotPassword")}</h4>
-          <span>{translate("enterEmailForReset")}</span>
+    <div className="w-full space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="text-center space-y-2 mb-8">
+          <h4 className="text-2xl font-bold text-gray-900">{translate("forgotPassword")}</h4>
+          <p className="text-gray-500 text-sm">{translate("enterEmailForReset")}</p>
         </div>
 
-        <div className="form-group">
-          <label className="is_require" htmlFor="forgot-email">
-            {translate("email")}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="forgot-email">
+            {translate("email")} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -509,21 +510,24 @@ const ForgotPasswordForm = ({ onSubmit, showLoader, onBackToLogin }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
           />
         </div>
 
-        <button type="submit" className="register-button" disabled={showLoader}>
-          {showLoader ? (
-            <div className="loader-container-otp">
-              <div className="loader-otp"></div>
-            </div>
-          ) : (
-            translate("submit")
-          )}
-        </button>
+        <div className="pt-4">
+          <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold flex justify-center items-center py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed" disabled={showLoader}>
+            {showLoader ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              translate("submit")
+            )}
+          </button>
+        </div>
 
-        <p className="back-to-login">
-          <span onClick={onBackToLogin}>← {translate("backToLogin")}</span>
+        <p className="text-center text-sm font-medium mt-6">
+          <button type="button" onClick={onBackToLogin} className="text-primary-600 hover:text-primary-700 font-bold transition-colors">
+            ← {translate("backToLogin")}
+          </button>
         </p>
       </form>
     </div>
@@ -548,11 +552,14 @@ const EmailLoginForm = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="register-form">
-      <form>
-        <div className="form-group">
-          <label className="is_require" htmlFor="email">
-            {translate("email")}
+    <div className="w-full space-y-6">
+      <div className="text-center space-y-2 mb-8">
+        <h4 className="text-2xl font-bold text-gray-900">{translate("signIn")}</h4>
+      </div>
+      <form className="space-y-5">
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="email">
+            {translate("email")} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -562,14 +569,15 @@ const EmailLoginForm = ({
             value={signInFormData?.email}
             onChange={handleSignInInputChange}
             required
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
           />
         </div>
 
-        <div className="form-group">
-          <label className="is_require" htmlFor="password">
-            {translate("password")}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700" htmlFor="password">
+            {translate("password")} <span className="text-red-500">*</span>
           </label>
-          <div className="password-input-container">
+          <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
               id="password"
@@ -578,78 +586,84 @@ const EmailLoginForm = ({
               value={signInFormData?.password}
               onChange={handleSignInInputChange}
               required
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white"
             />
             <button
               type="button"
-              className="password-toggle-button"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+              {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
             </button>
           </div>
         </div>
 
-        <div className="forgot-password-container">
-          <span
-            className="forgot-password-link"
+        <div className="text-right">
+          <button
+            type="button"
+            className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
             onClick={onForgotPasswordClick}
           >
             {translate("forgotPassword")}
-          </span>
+          </button>
         </div>
 
-        {emailReverify ? (
-          <button
-            type="button"
-            className="register-button"
-            onClick={handleResendOTP}
-            disabled={showLoader}
-          >
-            {showLoader ? (
-              <div className="loader-container-otp">
-                <div className="loader-otp"></div>
-              </div>
-            ) : (
-              translate("resendVerificationCode")
-            )}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="register-button"
-            onClick={(e) => SignInWithEmail(e)}
-          >
-            {translate("signIn")}
-          </button>
-        )}
+        <div className="pt-4">
+          {emailReverify ? (
+            <button
+              type="button"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold flex justify-center items-center py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={handleResendOTP}
+              disabled={showLoader}
+            >
+              {showLoader ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                translate("resendVerificationCode")
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold flex justify-center items-center py-3.5 px-4 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={(e) => SignInWithEmail(e)}
+            >
+              {showLoader ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                translate("signIn")
+              )}
+            </button>
+          )}
+        </div>
 
-        <p className="sign-up-text">
+        <p className="text-center text-sm font-medium text-gray-600 mt-6">
           {translate("dontHaveAccount")}{" "}
-          <span className="sign-up" onClick={handlesignUp}>
+          <button type="button" className="text-primary-600 hover:text-primary-700 font-bold transition-colors" onClick={handlesignUp}>
             {translate("registerNow")}
-          </span>
+          </button>
         </p>
       </form>
 
-      <div>
+      <div className="mt-6">
         {ShowGoogleLogin && (
-          <div className="or_devider">
-            <hr style={{ borderStyle: "dashed" }} />
-            <span className="or_divider">{translate("or")}</span>
-            <hr style={{ borderStyle: "dashed" }} />
+          <div className="flex items-center justify-center space-x-4 my-8">
+            <div className="flex-1 h-px bg-gray-200"></div>
+            <span className="text-sm text-gray-400 font-medium px-2">{translate("or")}</span>
+            <div className="flex-1 h-px bg-gray-200"></div>
           </div>
         )}
         {ShowPhoneLogin && (
           <GoogleSignInButton
             onClick={handlePhoneLogin}
-            icon={<FcPhoneAndroid size={25} />}
+            icon={<FcPhoneAndroid size={20} />}
             text={translate("CWP")}
           />
         )}
         {ShowGoogleLogin && (
           <GoogleSignInButton
             onClick={handleGoogleSignup}
-            icon={<FcGoogle size={25} />}
+            icon={<FcGoogle size={20} />}
             text={translate("CWG")}
           />
         )}
@@ -1468,30 +1482,19 @@ const LoginModal = ({ isOpen, onClose }) => {
         centered
         className="auth-modal"
         backdrop="static"
+        contentClassName="rounded-3xl border-0 shadow-2xl overflow-hidden pointer-events-auto"
+        dialogClassName="max-w-md mx-auto pointer-events-none"
       >
-        <Modal.Header>
-          {showLoginContent && (
-            <Modal.Title>{translate("login&Register")}</Modal.Title>
-          )}
-          {showOTPContent && (
-            <Modal.Title>{translate("verification")}</Modal.Title>
-          )}
-          {showRegisterContent && (
-          <Modal.Title>{translate("registerAccount")}</Modal.Title>
-          )}
-          {showEmailContent && (
-            <Modal.Title>{translate("loginWithEmail")}</Modal.Title>
-          )}
-          {showForgotPassword && (
-            <Modal.Title>{translate("resetPassword")}</Modal.Title>
-          )}
-          <RiCloseCircleLine
-            className="close-icon"
-            size={40}
+        <div className="absolute top-4 right-4 z-10">
+          <button
             onClick={onCloseLogin}
-          />
-        </Modal.Header>
-        <Modal.Body>
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700 bg-white/50 backdrop-blur-sm"
+          >
+            <RiCloseCircleLine size={28} />
+          </button>
+        </div>
+        
+        <Modal.Body className="p-6 sm:p-10 pt-12 relative bg-white">
           {showForgotPassword ? (
             <ForgotPasswordForm
               onSubmit={handleForgotPasswordSubmit}
@@ -1562,7 +1565,7 @@ const LoginModal = ({ isOpen, onClose }) => {
             />
           ) : null}
         </Modal.Body>
-        <Modal.Footer>
+        <Modal.Footer className="border-t border-gray-100 bg-gray-50/80 p-5 sm:p-6 text-center justify-center m-0">
           <FooterLinks />
         </Modal.Footer>
         <div id="recaptcha-container" style={{ display: "none" }}></div>

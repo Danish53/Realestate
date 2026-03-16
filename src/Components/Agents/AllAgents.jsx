@@ -114,7 +114,7 @@ const AllAgents = () => {
 
             {agentsList && agentsList.length > 0 && hasMoreData ? (
               <div className="col-12 loadMoreDiv" id="loadMoreDiv">
-                <button className="loadMore" onClick={handleLoadMore}>
+                <button type="button" className="loadMore ds-btn ds-btn-primary" onClick={handleLoadMore}>
                   {translate("loadmore")}
                 </button>
               </div>

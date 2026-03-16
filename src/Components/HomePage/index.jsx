@@ -257,18 +257,18 @@ const index = () => {
     const { type, title, data } = section;
 
     switch (type) {
-      case 'agents_list_section':
-        return (
-          <Agent
-            key={type}
-            isLoading={isLoading}
-            agentsData={data}
-            language={language}
-            sectionTitle={title}
-            handlecheckPremiumUserAgent={handlecheckPremiumUserAgent}
-            breakpointsAgents={breakpointsAgents}
-          />
-        );
+      // case 'agents_list_section':
+      //   return (
+      //     <Agent
+      //       key={type}
+      //       isLoading={isLoading}
+      //       agentsData={data}
+      //       language={language}
+      //       sectionTitle={title}
+      //       handlecheckPremiumUserAgent={handlecheckPremiumUserAgent}
+      //       breakpointsAgents={breakpointsAgents}
+      //     />
+      //   );
       case 'articles_section':
         return (
           <HomeArticles
@@ -414,16 +414,23 @@ const index = () => {
           marginTop: sliderData && sliderData.length > 0 ? "0px" : "0px",
         }}
       >
-        {/* Dynamic sections based on API response */}
+        {/* Force Agent Section immediately after Hero */}
+        {sections && sections.length > 0 && sections.find(s => s.type === 'agents_list_section') && (
+            renderSectionByType(sections.find(s => s.type === 'agents_list_section'))
+        )}
+
+        {/* Remaining dynamic sections based on API response */}
         {sections && sections.length > 0 && (
-          sections.map((section) => renderSectionByType(section))
+          sections.filter(s => s.type !== 'agents_list_section').map((section) => renderSectionByType(section))
         )}
 
         {/* Fixed Position ChatBot */}
       <div className="chat-icon-container">
-        <button 
+        <button
+          type="button"
           className={`chat-icon-btn ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close chat" : "Open chat"}
         >
           {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
         </button>

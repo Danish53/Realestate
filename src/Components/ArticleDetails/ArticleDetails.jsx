@@ -12,7 +12,6 @@ import "swiper/css/pagination";
 import Image from "next/image";
 import { IoMdArrowDropright } from "react-icons/io";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
-import Loader from "@/Components/Loader/Loader";
 import Skeleton from "react-loading-skeleton";
 import { placeholderImage, translate } from "@/utils/helper";
 import { languageData } from "@/store/reducer/languageSlice";
@@ -106,138 +105,105 @@ const ArticleDetails = () => {
 
   return (
     <Layout>
-      <Breadcrumb title={translate("articleDetails")} />
-      <div className="all-articles">
-        <div id="all-articles-deatil-content">
-          <div className="container">
-            <div className="row" id="main-content">
-              <div className="col-12 col-md-6 col-lg-9">
-                <div className="all-article-rightside">
-                  <div className="article_all_deatil_card">
-                    <div className="card">
-                      {isLoading ? (
-                        // Show skeleton loading when data is being fetched
-                        <div className="col-12 loading_data">
-                          <Skeleton height={20} count={20} />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="container">
-                            <div className="article_img_div">
-                              <Image
-                                loading="lazy"
-                                src={articleData && articleData.image}
-                                alt="no_img"
-                                className="article_title_img"
-                                width={200}
-                                height={200}
-                                onError={placeholderImage}
-                              />
-                            </div>
-
-                            <div className="article_title">
-                              {articleData && articleData.title}
-                            </div>
-                            {/* // Render the privacy policy data when not loading */}
-                            <div
-                              className="article_deatils_description"
-                              dangerouslySetInnerHTML={{
-                                __html:
-                                  (articleData && articleData.description) ||
-                                  "",
-                              }}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
+      <Breadcrumb title={articleData?.title || translate("articleDetails")} />
+      <section className="article-detail-page">
+        <div className="article-detail-page__container">
+          <div className="article-detail-page__layout">
+            <div className="article-detail-page__main">
+              <article className="article-detail-page__content">
+                {isLoading ? (
+                  <div className="article-detail-page__skeleton">
+                    <Skeleton height={20} count={20} />
                   </div>
-                </div>
+                ) : articleData ? (
+                  <>
+                    <div className="article-detail-page__hero">
+                      <div className="article-detail-page__image-wrap">
+                        <Image
+                          loading="lazy"
+                          src={articleData.image}
+                          alt={articleData.title || "Article"}
+                          className="article-detail-page__image"
+                          fill
+                          sizes="(max-width: 992px) 100vw, 75vw"
+                          onError={placeholderImage}
+                        />
+                      </div>
+                    </div>
+                    <div className="article-detail-page__body">
+                      <h1 className="article-detail-page__title">{articleData.title}</h1>
+                      <div
+                        className="article-detail-page__prose prose"
+                        dangerouslySetInnerHTML={{
+                          __html: articleData.description || "",
+                        }}
+                      />
+                    </div>
+                  </>
+                ) : null}
+              </article>
+            </div>
+            <aside className="article-detail-page__sidebar">
+              <div className="article-detail-page__sidebar-card">
+                <h3 className="article-detail-page__sidebar-title">{translate("categories")}</h3>
+                <ul className="article-detail-page__categories">
+                  {Categorydata?.map((elem, index) => (
+                    <li className="article-detail-page__category-item" key={index}>
+                      <button
+                        type="button"
+                        className="article-detail-page__category-btn"
+                        onClick={() => getArticlesByCategory(elem.id)}
+                      >
+                        <span>{elem.category}</span>
+                        <IoMdArrowDropright
+                          size={20}
+                          className="article-detail-page__category-arrow"
+                          style={{ transform: language.rtl === 1 ? "rotate(180deg)" : "none" }}
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="col-12 col-md-6 col-lg-3">
-                <div className="all-articles-leftside">
-                  <div className="cate-card">
-                    <div className="card">
-                      <div className="card-header">
-                        {translate("categories")}
-                      </div>
-                      <div className="card-body">
-                        {Categorydata &&
-                          Categorydata.map((elem, index) => (
-                            <div className="cate-list" key={index}>
-                              <span>{elem.category}</span>
-                              <IoMdArrowDropright
-                                size={25}
-                                className="cate_list_arrow"
-                                style={{
-                                  transform: `rotate(${language.rtl === 1 ? "180deg" : "0deg"})`,
-                                }}
-                                onClick={() => getArticlesByCategory(elem.id)}
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                  {/* {process.env.NEXT_PUBLIC_SEO === "true" ? ( */}
-                  <div className="share-card">
-                    <ReactShare
-                      CompanyName={CompanyName}
-                      data={articleData?.title}
-                      handleCopyUrl={handleCopyUrl}
-                      currentUrl={currentUrl}
-                    />
-                  </div>
-                  {/* ) : null} */}
-                </div>
+              <div className="article-detail-page__share">
+                <ReactShare
+                  CompanyName={CompanyName}
+                  data={articleData?.title}
+                  handleCopyUrl={handleCopyUrl}
+                  currentUrl={currentUrl}
+                />
+              </div>
+            </aside>
+          </div>
+          {similerArticles?.length > 0 && (
+            <div className="article-detail-page__related">
+              <h2 className="article-detail-page__related-title">
+                {translate("related")} {translate("articles")}
+              </h2>
+              <div className="article-detail-page__related-slider">
+                <Swiper
+                  key={language.rtl}
+                  dir={language.rtl === 1 ? "rtl" : "ltr"}
+                  slidesPerView={4}
+                  spaceBetween={24}
+                  freeMode
+                  pagination={{ clickable: true }}
+                  modules={[FreeMode, Pagination]}
+                  className="article-detail-page__swiper"
+                  breakpoints={breakpoints}
+                >
+                  {!isLoading &&
+                    similerArticles?.map((ele) => (
+                      <SwiperSlide key={ele.id} className="article-detail-page__slide">
+                        <ArticleCard ele={ele} expandedStates={expandedStates} language={lang} />
+                      </SwiperSlide>
+                    ))}
+                </Swiper>
               </div>
             </div>
-            {similerArticles?.length > 0 && (
-              <div id="related_articles_section">
-                <div className="related-headline">
-                  <span className="headline">
-                    {translate("related")}{" "}
-                    <span>
-                      <span className=""> {translate("articles")}</span>
-                    </span>
-                  </span>
-                </div>
-                <div className="related_articles_slider">
-                  <Swiper
-                    key={language.rtl}
-                    dir={language.rtl === 1 ? "rtl" : "ltr"}
-                    slidesPerView={4}
-                    spaceBetween={30}
-                    freeMode={true}
-                    pagination={{
-                      clickable: true,
-                    }}
-                    modules={[FreeMode, Pagination]}
-                    className="related-swiper"
-                    breakpoints={breakpoints}
-                  >
-                    {isLoading ? (
-                      // Show skeleton loading when data is being fetched
-
-                      <Loader />
-                    ) : (
-                      similerArticles?.map((ele, index) => (
-                        <SwiperSlide id="related-swiper-slider" key={ele.id}>
-                          <ArticleCard
-                            ele={ele}
-                            expandedStates={expandedStates}
-                            language={lang}
-                          />
-                        </SwiperSlide>
-                      ))
-                    )}
-                  </Swiper>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };

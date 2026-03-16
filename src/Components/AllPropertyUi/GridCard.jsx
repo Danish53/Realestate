@@ -19,16 +19,27 @@ const GridCard = (props) => {
 
 
     return (
-        <div className="card">
-            <div className="card-body" id="all-prop-headline-card">
-                <div>
-                    <span>{total && `${total} ${translate("propFound")}`}</span>
-                </div>
-                <div>
-                    <button id="layout-buttons" onClick={toggleGrid}>
-                        {grid ? <AiOutlineUnorderedList size={25} /> : <RiGridFill size={25} />}
-                    </button>
-                </div>
+        <div className="all-prop-toolbar">
+            <div className="all-prop-toolbar-count">
+                <span>{total && `${total} ${translate("propFound")}`}</span>
+            </div>
+            <div className="all-prop-toolbar-actions">
+                <button
+                    type="button"
+                    onClick={() => { if (!grid) setGrid(true); }}
+                    className={`all-prop-view-btn ${grid ? "active" : ""}`}
+                    aria-label="Grid view"
+                >
+                    <RiGridFill size={22} />
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { if (grid) setGrid(false); }}
+                    className={`all-prop-view-btn ${!grid ? "active" : ""}`}
+                    aria-label="List view"
+                >
+                    <AiOutlineUnorderedList size={22} />
+                </button>
             </div>
         </div>
     );

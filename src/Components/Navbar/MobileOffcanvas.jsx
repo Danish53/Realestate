@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Offcanvas } from 'react-bootstrap';
 import Link from 'next/link';
 import Image from 'next/image';
-import { RiArrowRightSLine, RiUserSmileLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiUserLine, RiUserSmileLine } from 'react-icons/ri';
 import { FiPlusCircle } from 'react-icons/fi';
 import { useRouter } from 'next/router';
 import { handlePackageCheck, truncate } from '@/utils/helper';
@@ -57,17 +57,20 @@ const MobileOffcanvas = ({
   };
 
   const MenuItem = ({ title, onClick, hasSubmenu = false, name }) => (
-    <div
-      className={`mobile-menu-item ${expandedItem === name ? 'isSelected' : ''}`}
+    <button
+      className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors font-medium text-sm
+        ${expandedItem === name ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-500' : 'text-text hover:bg-gray-50 border-l-4 border-transparent'}
+      `}
       onClick={onClick}
     >
-      <span>{title}</span>
+      <span className="flex-1 truncate">{title}</span>
       {hasSubmenu && (
         <RiArrowRightSLine
-          className={`mobile-arrow ${expandedItem === name ? 'rotated' : ''}`}
+          size={20}
+          className={`text-gray-400 transition-transform duration-300 ${expandedItem === name ? 'rotate-90 text-primary-500' : ''}`}
         />
       )}
-    </div>
+    </button>
   );
 
   const handlePropertyRoute = (routerPath) => {
@@ -130,8 +133,8 @@ const MobileOffcanvas = ({
 
   return (
     <>
-      <Offcanvas show={show} onHide={handleClose} placement={language.rtl === 1 ? 'start' : 'end'} className="mobile-offcanvas">
-        <Offcanvas.Header closeButton className="mobile-offcanvas-header">
+      <Offcanvas show={show} onHide={handleClose} placement={language.rtl === 1 ? 'start' : 'end'} className="bg-white w-[85%] max-w-sm sm:w-80 shadow-2xl">
+        <Offcanvas.Header closeButton className="border-b border-gray-100 py-4 px-6 flex justify-between items-center">
           <Offcanvas.Title>
             {settingData?.web_footer_logo && (
               <Link href="/">
@@ -140,35 +143,39 @@ const MobileOffcanvas = ({
                   alt="logo"
                   width={150}
                   height={40}
-                  className="mobile-logo"
+                  className="h-8 w-auto object-contain"
                 />
               </Link>
             )}
           </Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body className="mobile-offcanvas-body">
-          <div className="mobile-menu">
+        <Offcanvas.Body className="p-0 flex flex-col h-full overflow-y-auto">
+          <div className="flex-1 pb-24">
             {/* Location Selector */}
             <MenuItem
-              title={<span className="location-item-title">
-                <FiMapPin size={20} />
-                <div className="location-display">
-                  <div className="location-label">{translate('location')}</div>
-                  <div className="location-value">
-                    {formattedLocationText ? formattedLocationText : translate('selectLocation')}
+              title={
+                <span className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary-50 text-primary-500 flex items-center justify-center shrink-0">
+                    <FiMapPin size={16} />
                   </div>
-                </div>
-              </span>}
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">{translate('location')}</span>
+                    <span className="text-sm font-semibold truncate text-text">
+                      {formattedLocationText ? formattedLocationText : translate('selectLocation')}
+                    </span>
+                  </div>
+                </span>
+              }
               onClick={handleToggleLocationPopup}
-              hasSubmenu
+              hasSubmenu={false}
               name="selectLocation"
             />
 
             <MenuItem
               title={translate('home')}
               onClick={() => {
-                router?.push('/'),
-                  handleClose()
+                router?.push('/');
+                handleClose();
               }}
             />
 
@@ -180,19 +187,20 @@ const MobileOffcanvas = ({
               name="properties"
             />
             <div
-              className={`mobile-submenu ${expandedItem === 'properties' ? 'expanded' : ''}`}
+              className={`overflow-hidden transition-all duration-300 bg-gray-50 ${expandedItem === 'properties' ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
               data-name="properties"
             >
-              {PropertyPages.map((property, index) => (
-                <div
-                  key={index}
-                  className="mobile-submenu-item"
-                  onClick={() => handlePropertyRoute(property?.route)}
-                >
-                  <span>{property.name}</span>
-                  <RiArrowRightSLine className="mobile-arrow" />
-                </div>
-              ))}
+              <div className="py-2">
+                {PropertyPages.map((property, index) => (
+                  <button
+                    key={index}
+                    className="w-full text-left px-12 py-3 text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors flex items-center justify-between"
+                    onClick={() => handlePropertyRoute(property?.route)}
+                  >
+                    <span>{property.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Pages Section */}
@@ -203,98 +211,130 @@ const MobileOffcanvas = ({
               name="pages"
             />
             <div
-              className={`mobile-submenu ${expandedItem === 'pages' ? 'expanded' : ''}`}
+              className={`overflow-hidden transition-all duration-300 bg-gray-50 ${expandedItem === 'pages' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
               data-name="pages"
             >
-              {Pages.map((page, index) => (
-                <div
-                  key={index}
-                  className="mobile-submenu-item"
-                  onClick={() => handlePageRoute(page?.route)}
-                >
-                  <span>{page.name}</span>
-                  <RiArrowRightSLine className="mobile-arrow" />
-                </div>
-              ))}
+              <div className="py-2">
+                {Pages.map((page, index) => (
+                  <button
+                    key={index}
+                    className="w-full text-left px-12 py-3 text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors flex items-center justify-between"
+                    onClick={() => handlePageRoute(page?.route)}
+                  >
+                    <span>{page.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Contact and About */}
             <MenuItem
               title={translate('contactUs')}
               onClick={() => {
-                router?.push('/contact-us'),
-                  handleClose(); // Navigate to contact us
+                router?.push('/contact-us');
+                handleClose();
               }}
             />
             <MenuItem
               title={translate('aboutUs')}
               onClick={() => {
-                router?.push('/about-us'),
-                  handleClose(); // Navigate to about us
+                router?.push('/about-us');
+                handleClose();
               }}
             />
 
             {/* Language Section */}
             <MenuItem
-              title={selectedLanguage || defaultlang}
+              title={
+                <span className="flex items-center gap-2">
+                  <span className="text-gray-500 font-normal">Language:</span> {selectedLanguage || defaultlang}
+                </span>
+              }
               onClick={() => toggleExpand('language')}
               hasSubmenu
               name="language"
             />
             <div
-              className={`mobile-submenu ${expandedItem === 'language' ? 'expanded' : ''}`}
+              className={`overflow-hidden transition-all duration-300 bg-gray-50 ${expandedItem === 'language' ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}
               data-name="language"
             >
-              {LanguageList &&
-                LanguageList.map((ele, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleLanguageChange(ele.code)}
-                    className="mobile-submenu-item"
-                  >
-                    <span>{ele.name}</span>
-                    <RiArrowRightSLine className="mobile-arrow" />
-                  </div>
-                ))}
+              <div className="py-2">
+                {LanguageList &&
+                  LanguageList.map((ele, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleLanguageChange(ele.code)}
+                      className="w-full text-left px-12 py-3 text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors"
+                    >
+                      {ele.name}
+                    </button>
+                  ))}
+              </div>
             </div>
 
             {/* User Section */}
             {signupData?.data?.data?.name || signupData?.data?.data?.email || signupData?.data?.data?.mobile ? (
               <>
                 <MenuItem
-                  title={signupData.data.data.name ? truncate(signupData.data.data.name, 15) : translate("welcmGuest")}
+                  title={
+                    <span className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
+                        <RiUserSmileLine size={18} />
+                      </div>
+                      <span className="truncate">{signupData.data.data.name ? truncate(signupData.data.data.name, 15) : translate("welcmGuest")}</span>
+                    </span>
+                  }
                   onClick={() => toggleExpand('user')}
                   hasSubmenu
                   name="user"
                 />
                 <div
-                  className={`mobile-submenu ${expandedItem === 'user' ? 'expanded' : ''}`}
+                  className={`overflow-hidden transition-all duration-300 bg-gray-50 ${expandedItem === 'user' ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
                   data-name="user"
                 >
-                  <div className="mobile-submenu-item" onClick={handleShowDashboard}>
-                    <span>{translate('dashboard')}</span>
-                    <RiArrowRightSLine className="mobile-arrow" />
-                  </div>
-                  <div className="mobile-submenu-item" onClick={handleLogout}>
-                    <span>{translate('logout')}</span>
-                    <RiArrowRightSLine className="mobile-arrow" />
+                  <div className="py-2">
+                    <button className="w-full text-left px-12 py-3 text-sm text-gray-600 hover:text-primary-600 hover:bg-primary-50/50 transition-colors" onClick={handleShowDashboard}>
+                      {translate('dashboard')}
+                    </button>
+                    <button className="w-full text-left px-12 py-3 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors" onClick={handleLogout}>
+                      {translate('logout')}
+                    </button>
                   </div>
                 </div>
               </>
             ) : (
               <MenuItem
-                title={translate('login&Register')}
+                title={
+                  <span className="flex items-center gap-2 text-primary-600 font-semibold">
+                    <RiUserLine size={18} />
+                    {translate('login&Register')}
+                  </span>
+                }
                 onClick={handleOpenModal}
               />
             )}
           </div>
 
-          {/* Add Property Button */}
-          {signupData?.data?.data?.name && settingData && (
-            <button type="button" className="mobile-add-property ds-btn ds-btn-primary" onClick={(e) => handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router)} aria-label={translate('addProp')}>
-              <FiPlusCircle size={20} className="mobile-icon" />
-              {translate('addProp')}
-            </button>
+          {/* Add Property Button (Fixed at bottom) */}
+          {settingData && (
+            <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t border-gray-100 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)]">
+               <button 
+                type="button" 
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl transition-all shadow-md shadow-primary-500/30 active:scale-95" 
+                onClick={(e) => {
+                  if (signupData?.data?.data?.name) {
+                    handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router);
+                  } else {
+                    handleClose();
+                    handleOpenModal();
+                  }
+                }} 
+                aria-label={translate('addProp')}
+               >
+                 <FiPlusCircle size={20} />
+                 <span>{translate('addProp')}</span>
+               </button>
+            </div>
           )}
         </Offcanvas.Body>
       </Offcanvas>

@@ -23,6 +23,7 @@ import "bootstrap/dist/css/bootstrap.css";
 import "react-loading-skeleton/dist/skeleton.css";
 import "nprogress/nprogress.css";
 import "../public/css/design-overrides.css";
+import "../public/css/tailwind.css";
 import Loader from "@/Components/Loader/Loader";
 import { getCurrentLocationData } from "@/utils/locationHelper";
 import Head from "next/head";
@@ -38,15 +39,28 @@ const queryClient = new QueryClient({
 });
 
 function MyApp({ Component, pageProps, data }) {
-  Router.events.on("routeChangeStart", () => {
-    NProgress.start();
-  });
-  Router.events.on("routeChangeError", () => {
-    NProgress.done();
-  });
-  Router.events.on("routeChangeComplete", () => {
-    NProgress.done();
-  });
+  const [isPageLoading, setIsPageLoading] = useState(false);
+
+  useEffect(() => {
+    const handleStart = () => {
+      NProgress.start();
+      setIsPageLoading(true);
+    };
+    const handleStop = () => {
+      NProgress.done();
+      setIsPageLoading(false);
+    };
+
+    Router.events.on("routeChangeStart", handleStart);
+    Router.events.on("routeChangeError", handleStop);
+    Router.events.on("routeChangeComplete", handleStop);
+
+    return () => {
+      Router.events.off("routeChangeStart", handleStart);
+      Router.events.off("routeChangeError", handleStop);
+      Router.events.off("routeChangeComplete", handleStop);
+    };
+  }, []);
 
 
 
@@ -93,6 +107,7 @@ function MyApp({ Component, pageProps, data }) {
           <InspectElement>
             <PushNotificationLayout>
               <Suspense fallback={<Loader />}>
+                {isPageLoading && <Loader fullScreen={true} />}
                 <Component {...pageProps} data={data} />
               </Suspense>
             </PushNotificationLayout>

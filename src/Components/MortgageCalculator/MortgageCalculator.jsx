@@ -159,37 +159,37 @@ const MortgageCalculator = ({ data }) => {
   useEffect(() => {}, [totalEmiData, totalEmiYearlyData]);
 
   return (
-    <div>
-      <div className="mortgage_form_card card">
-        <div className="card_header">
-          <span>{translate("MLC")}</span>
+    <div className="flex flex-col h-full bg-white">
+      {/* Mortgage Form Card */}
+      <div className="flex flex-col h-full">
+        <div className="p-6 border-b border-gray-100">
+          <span className="text-xl font-bold text-gray-900">{translate("MLC")}</span>
         </div>
-        <div className="card_body">
-          <div className="loan_amount">
-            <span className="title">{translate("propAmount")}</span>
-            <div className="loan_price">
-              {""}
-              <span>{formatNumberWithCommas(data?.price)}</span>
+        <div className="p-6 flex flex-col gap-5 flex-1">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-gray-700">{translate("propAmount")}</span>
+            <div className="bg-gray-50/50 border border-gray-200 rounded-lg p-3 text-gray-900 font-semibold shadow-sm">
+              <span>{CurrencySymbol} {formatNumberWithCommas(data?.price)}</span>
             </div>
           </div>
-          <div className="downpayment">
-            <span className="title">{translate("downpayment")}</span>
-            <div className="input_div">
-              <span>{downPaymentType === "price" ? CurrencySymbol : "%"}</span>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-gray-700">{translate("downpayment")}</span>
+            <div className="flex items-center gap-0 w-full rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+              <div className="px-3 bg-gray-50 text-gray-500 border-r border-gray-200 font-medium whitespace-nowrap">
+                {downPaymentType === "price" ? CurrencySymbol : "%"}
+              </div>
               <input
                 type="number"
-                placeholder={`${translate("EnterDownPayment")} ${
-                  downPaymentType === "rate"
-                    ? translate("rate")
-                    : translate("price")
-                }`}
-                className="sliderInput"
+                placeholder={`${translate("EnterDownPayment")}`}
+                className="flex-1 w-full bg-transparent p-2.5 outline-none text-gray-900 font-medium"
                 value={downPayment}
                 onChange={handleInputChangeforDownPayment}
                 min={0}
                 max={downPaymentType === "rate" ? 100 : data?.price}
               />
               <select
+                className="bg-gray-50 text-gray-700 font-medium outline-none p-2.5 border-l border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
                 value={downPaymentType}
                 onChange={(e) => setDownPaymentType(e.target.value)}
               >
@@ -198,14 +198,15 @@ const MortgageCalculator = ({ data }) => {
               </select>
             </div>
           </div>
-          <div className="intrest">
-            <span className="title">{translate("intrestRate")}</span>
-            <div className="input_div">
-              <span>%</span>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-gray-700">{translate("intrestRate")}</span>
+            <div className="flex items-center gap-0 w-full rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+              <div className="px-3 bg-gray-50 text-gray-500 border-r border-gray-200 font-medium">%</div>
               <input
                 type="number"
                 placeholder={translate("enterIntrestRate")}
-                className="sliderInput"
+                className="flex-1 w-full bg-transparent p-2.5 outline-none text-gray-900 font-medium"
                 value={interestRate}
                 onChange={handleInputChangeforInterest}
                 min={minRateInterest}
@@ -213,14 +214,15 @@ const MortgageCalculator = ({ data }) => {
               />
             </div>
           </div>
-          <div className="year">
-            <span className="title">{translate("years")}</span>
-            <div className="input_div">
-              <span>{translate("yrs")}</span>
+          
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-gray-700">{translate("years")}</span>
+            <div className="flex items-center gap-0 w-full rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white focus-within:ring-2 focus-within:ring-primary-500/20 focus-within:border-primary-500 transition-all">
+              <div className="px-3 bg-gray-50 text-gray-500 border-r border-gray-200 font-medium">{translate("yrs")}</div>
               <input
                 type="number"
                 placeholder={translate("enterYears")}
-                className="sliderInput"
+                className="flex-1 w-full bg-transparent p-2.5 outline-none text-gray-900 font-medium"
                 value={years}
                 onChange={handleInputChangeforYear}
                 min={1}
@@ -229,12 +231,19 @@ const MortgageCalculator = ({ data }) => {
             </div>
           </div>
         </div>
-        <div className="card_footer">
-          <div className="w-100">
-            <button type="button" onClick={handleCalculate} className="find ds-btn ds-btn-primary" aria-label={translate("Calculate")}>{translate("Calculate")}</button>
-          </div>
+        
+        <div className="p-6 pt-0 mt-auto">
+          <button 
+            type="button" 
+            onClick={handleCalculate} 
+            className="w-full bg-primary-500 hover:bg-primary-600 text-white font-semibold py-3 px-4 rounded-xl shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5"
+            aria-label={translate("Calculate")}
+          >
+            {translate("Calculate")}
+          </button>
         </div>
       </div>
+
       {showModal && (
         <EMIModal
           show={showModal}
@@ -260,6 +269,7 @@ const MortgageCalculator = ({ data }) => {
 };
 
 export default MortgageCalculator;
+
 const EMIModal = ({
   show,
   handleClose,
@@ -280,7 +290,6 @@ const EMIModal = ({
         icon: "warning",
         allowOutsideClick: false,
         showCancelButton: false,
-        allowOutsideClick: true,
         customClass: {
           confirmButton: "Swal-confirm-buttons",
           cancelButton: "Swal-cancel-buttons",
@@ -294,95 +303,85 @@ const EMIModal = ({
       });
     }
   };
+  
   return (
-    <Modal show={show} onHide={handleClose} centered size="xl">
-      <Modal.Header closeButton>
-        <Modal.Title>{translate("MLCEMIData")}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {data ? (
-          <div className="card total_card">
-            <div className="card-body">
-              <div className="chart-container">
-                <SemiDonutChart
-                  width={400}
-                  height={300}
-                  stroke={50}
-                  data={TotalEMIData}
-                  colors={COLORS}
-                  totalEmiData={data}
-                />
+    <Modal show={show} onHide={handleClose} centered size="xl" contentClassName="bg-transparent border-0 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-2xl font-bold text-gray-900 m-0">{translate("MLCEMIData")}</h2>
+          <button onClick={handleClose} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors focus:outline-none">
+            <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="24" width="24" xmlns="http://www.w3.org/2000/svg"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
 
-                <div className="other_details_total">
-                  <div className="row details_row">
-                    <div className="col-sm-12 col-md-6 col-lg-3">
-                      <div className="total_div">
-                        <span className="total_title_emi">
-                          {translate("MonthlyEMI")}
-                        </span>
-                        <span className="total_value">
-                          {formatNumberWithCommas(data?.monthly_emi)}
-                        </span>
-                      </div>
+        <div className="p-6 overflow-y-auto custom-scrollbar">
+          {data ? (
+            <div className="flex flex-col lg:flex-row gap-8 items-center bg-gray-50/50 rounded-2xl p-6 border border-gray-100">
+                <div className="w-full lg:w-1/3 flex justify-center">
+                  <SemiDonutChart
+                    width={350}
+                    height={280}
+                    stroke={45}
+                    data={TotalEMIData}
+                    colors={COLORS}
+                    totalEmiData={data}
+                  />
+                </div>
+
+                <div className="w-full lg:w-2/3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <span className="text-sm font-semibold text-gray-500 block mb-1">{translate("MonthlyEMI")}</span>
+                        <span className="text-2xl font-bold text-primary-500 tracking-tight">{formatNumberWithCommas(data?.monthly_emi)}</span>
                     </div>
+                    
                     {data?.down_payment && (
-                      <div className="col-sm-12 col-md-6 col-lg-3">
-                        <div className="total_div">
-                          <span className="total_downpayment_emi">
-                            {translate("downpayment")}
-                          </span>
-                          <span className="total_value">
-                            {formatNumberWithCommas(data?.down_payment)}
-                          </span>
-                        </div>
+                      <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <span className="text-sm font-semibold text-gray-500 block mb-1">{translate("downpayment")}</span>
+                          <span className="text-2xl font-bold text-gray-900 tracking-tight">{formatNumberWithCommas(data?.down_payment)}</span>
                       </div>
                     )}
-                    <div className="col-sm-12 col-md-6 col-lg-3">
-                      <div className="total_div">
-                        <span className="total_title_principal">
-                          {translate("PrincipalAmount")}
-                        </span>
-                        <span className="total_value">
-                          {formatNumberWithCommas(data?.principal_amount)}
-                        </span>
-                      </div>
+                    
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <span className="text-sm font-semibold text-gray-500 block mb-1">{translate("PrincipalAmount")}</span>
+                        <span className="text-2xl font-bold text-gray-900 tracking-tight">{formatNumberWithCommas(data?.principal_amount)}</span>
                     </div>
-                    <div className="col-sm-12 col-md-6 col-lg-3">
-                      <div className="total_div">
-                        <span className="total_title_interest">
-                          {translate("InterestPayable")}
-                        </span>
-                        <span className="total_value">
-                          {formatNumberWithCommas(data?.payable_interest)}
-                        </span>
-                      </div>
+                    
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <span className="text-sm font-semibold text-gray-500 block mb-1">{translate("InterestPayable")}</span>
+                        <span className="text-2xl font-bold text-gray-900 tracking-tight">{formatNumberWithCommas(data?.payable_interest)}</span>
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
-          </div>
-        ) : (
-          <p>{translate("NoDataAvailable")}</p>
-        )}
-      </Modal.Body>
-      <Modal.Footer className="mlc_modal_footer">
-        {totalEmiYearlyData && totalEmiYearlyData.length > 0 ? (
-          <>
+          ) : (
+            <div className="py-12 text-center text-gray-500">
+                <p className="text-lg">{translate("NoDataAvailable")}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-gray-100 bg-gray-50/30">
+          {totalEmiYearlyData && totalEmiYearlyData.length > 0 ? (
             <CollapsibleTable data={totalEmiYearlyData} />
-          </>
-        ) : (
-          <div className="access_tabel">
-            <div className="headlines">
-              <span className="title">{translate("accessTable")}</span>
-              <span className="text">{translate("viewTable")}</span>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-between bg-primary-50/50 p-6 rounded-xl border border-primary-100/50">
+              <div className="flex flex-col mb-4 sm:mb-0 text-center sm:text-left">
+                <span className="text-lg font-bold text-gray-900 mb-1">{translate("accessTable")}</span>
+                <span className="text-sm text-gray-600">{translate("viewTable")}</span>
+              </div>
+              <button 
+                type="button" 
+                className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow transition-all w-full sm:w-auto"
+                onClick={handleSubscribe} 
+                aria-label={translate("subScribeNow")}
+              >
+                {translate("subScribeNow")}
+              </button>
             </div>
-            <button type="button" className="ds-btn ds-btn-primary" onClick={handleSubscribe} aria-label={translate("subScribeNow")}>
-              {translate("subScribeNow")}
-            </button>
-          </div>
-        )}
-      </Modal.Footer>
+          )}
+        </div>
+      </div>
     </Modal>
   );
 };

@@ -1,9 +1,8 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
-import { AiFillTwitterCircle } from "react-icons/ai";
-import { BsInstagram, BsPinterest } from "react-icons/bs";
-import { FiMail, FiPhoneCall, FiSend, FiCheckCircle } from "react-icons/fi";
+import { BsInstagram } from "react-icons/bs";
+import { FiMail, FiPhoneCall, FiSend } from "react-icons/fi";
 import { MdLocationPin } from "react-icons/md";
 import { PiFacebookLogoBold } from "react-icons/pi";
 import { toast } from "react-hot-toast";
@@ -114,320 +113,201 @@ const ContactUS = () => {
   return (
     <Layout>
       <Breadcrumb title={translate("contactUs")} />
-      
-      {/* Hero Section */}
-      <section className="mt-3">
-        <div className="container">
-          <div className="hero-content">
-            <h1 className="hero-title text-dark">
-              {translate("getInTouch")}
-              <span className="hero-highlight">{translate("withUs")}</span>
-            </h1>
-            {/* <p className="hero-description text-dark">
-              {translate("contactDescription")}
-            </p> */}
-            <div className="hero-decoration text-dark">
-              <span className="decoration-dot bg-dark"></span>
-              <span className="decoration-dot bg-dark"></span>
-              <span className="decoration-dot bg-dark"></span>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Contact Section */}
-      <section id="contact-us" className="contact-section">
-        <div className="container">
-          <div className="row g-4">
-            {/* Contact Form */}
-            <div className="col-12 col-lg-8">
-              <div className="contact-form-card">
-                <div className="form-header">
-                  <div className="header-icon">
-                    <BiMessageRoundedDetail size={32} />
-                  </div>
-                  <div className="header-content">
-                    <h2>{translate("haveQue")}</h2>
-                    <p>{translate("weWouldLoveToHear")}</p>
+      <section className="contact-us-page" id="contact-us" aria-label={translate("contactUs")}>
+        <div className="contact-us-container">
+          {/* Hero */}
+          <header className="contact-us-hero">
+            <p className="contact-us-hero__eyebrow">{translate("contactUs")}</p>
+            <h1 className="contact-us-hero__title">
+              {translate("getInTouch")} <span className="contact-us-hero__title-accent">{translate("withUs")}</span>
+            </h1>
+          </header>
+
+          {/* Form + Info */}
+          <div className="contact-us-layout">
+            <div className="contact-us-form-wrap">
+              <div className="contact-us-form-card">
+                <div className="contact-us-form-card__header">
+                  <span className="contact-us-form-card__icon" aria-hidden>
+                    <BiMessageRoundedDetail size={28} />
+                  </span>
+                  <div>
+                    <h2 className="contact-us-form-card__title">{translate("haveQue")}</h2>
+                    <p className="contact-us-form-card__subtitle">{translate("weWouldLoveToHear")}</p>
                   </div>
                 </div>
 
-                <form ref={formRef} onSubmit={handleContactUsSubmit} className="contact-form">
-                  <div className="row g-4">
-                    {/* First Name */}
-                    <div className="col-md-6">
-                      <div className={`form-group ${focusedField === 'firstName' ? 'focused' : ''} ${formErrors.firstName ? 'error' : ''}`}>
-                        <label htmlFor="firstName">
-                          {translate("firstName")} <span className="required">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="firstName"
-                          name="firstName"
-                          className="form-input ds-input"
-                          placeholder={translate("enterFirstName")}
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          onFocus={() => handleFocus('firstName')}
-                          onBlur={handleBlur}
-                        />
-                        {formErrors.firstName && (
-                          <span className="error-message">{formErrors.firstName}</span>
-                        )}
-                      </div>
+                <form ref={formRef} onSubmit={handleContactUsSubmit} className="contact-us-form">
+                  <div className="contact-us-form__grid">
+                    <div className={`contact-us-field ${formErrors.firstName ? "contact-us-field--error" : ""}`}>
+                      <label htmlFor="firstName">{translate("firstName")} <span className="contact-us-field__required">*</span></label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        className="contact-us-input"
+                        placeholder={translate("enterFirstName")}
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        onFocus={() => handleFocus("firstName")}
+                        onBlur={handleBlur}
+                      />
+                      {formErrors.firstName && <span className="contact-us-field__error">{formErrors.firstName}</span>}
                     </div>
-
-                    {/* Last Name */}
-                    <div className="col-md-6">
-                      <div className={`form-group ${focusedField === 'lastName' ? 'focused' : ''} ${formErrors.lastName ? 'error' : ''}`}>
-                        <label htmlFor="lastName">
-                          {translate("lastName")} <span className="required">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="lastName"
-                          name="lastName"
-                          className="form-input ds-input"
-                          placeholder={translate("enterLastName")}
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          onFocus={() => handleFocus('lastName')}
-                          onBlur={handleBlur}
-                        />
-                        {formErrors.lastName && (
-                          <span className="error-message">{formErrors.lastName}</span>
-                        )}
-                      </div>
+                    <div className={`contact-us-field ${formErrors.lastName ? "contact-us-field--error" : ""}`}>
+                      <label htmlFor="lastName">{translate("lastName")} <span className="contact-us-field__required">*</span></label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        className="contact-us-input"
+                        placeholder={translate("enterLastName")}
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        onFocus={() => handleFocus("lastName")}
+                        onBlur={handleBlur}
+                      />
+                      {formErrors.lastName && <span className="contact-us-field__error">{formErrors.lastName}</span>}
                     </div>
-
-                    {/* Email */}
-                    <div className="col-md-6">
-                      <div className={`form-group ${focusedField === 'email' ? 'focused' : ''} ${formErrors.email ? 'error' : ''}`}>
-                        <label htmlFor="email">
-                          {translate("email")} <span className="required">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          className="form-input ds-input"
-                          placeholder={translate("enterEmail")}
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          onFocus={() => handleFocus('email')}
-                          onBlur={handleBlur}
-                        />
-                        {formErrors.email && (
-                          <span className="error-message">{formErrors.email}</span>
-                        )}
-                      </div>
+                    <div className={`contact-us-field ${formErrors.email ? "contact-us-field--error" : ""}`}>
+                      <label htmlFor="email">{translate("email")} <span className="contact-us-field__required">*</span></label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        className="contact-us-input"
+                        placeholder={translate("enterEmail")}
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        onFocus={() => handleFocus("email")}
+                        onBlur={handleBlur}
+                      />
+                      {formErrors.email && <span className="contact-us-field__error">{formErrors.email}</span>}
                     </div>
-
-                    {/* Subject */}
-                    <div className="col-md-6">
-                      <div className={`form-group ${focusedField === 'subject' ? 'focused' : ''} ${formErrors.subject ? 'error' : ''}`}>
-                        <label htmlFor="subject">
-                          {translate("subject")} <span className="required">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="subject"
-                          name="subject"
-                          className="form-input ds-input"
-                          placeholder={translate("enterSubject")}
-                          value={formData.subject}
-                          onChange={handleInputChange}
-                          onFocus={() => handleFocus('subject')}
-                          onBlur={handleBlur}
-                        />
-                        {formErrors.subject && (
-                          <span className="error-message">{formErrors.subject}</span>
-                        )}
-                      </div>
+                    <div className={`contact-us-field ${formErrors.subject ? "contact-us-field--error" : ""}`}>
+                      <label htmlFor="subject">{translate("subject")} <span className="contact-us-field__required">*</span></label>
+                      <input
+                        type="text"
+                        id="subject"
+                        name="subject"
+                        className="contact-us-input"
+                        placeholder={translate("enterSubject")}
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        onFocus={() => handleFocus("subject")}
+                        onBlur={handleBlur}
+                      />
+                      {formErrors.subject && <span className="contact-us-field__error">{formErrors.subject}</span>}
                     </div>
-
-                    {/* Message */}
-                    <div className="col-12">
-                      <div className={`form-group ${focusedField === 'message' ? 'focused' : ''} ${formErrors.message ? 'error' : ''}`}>
-                        <label htmlFor="message">
-                          {translate("message")} <span className="required">*</span>
-                        </label>
-                        <textarea
-                          id="message"
-                          name="message"
-                          rows={6}
-                          className="form-textarea ds-input"
-                          placeholder={translate("enterMessage")}
-                          value={formData.message}
-                          onChange={handleInputChange}
-                          onFocus={() => handleFocus('message')}
-                          onBlur={handleBlur}
-                        />
-                        {formErrors.message && (
-                          <span className="error-message">{formErrors.message}</span>
-                        )}
-                      </div>
+                    <div className={`contact-us-field contact-us-field--full ${formErrors.message ? "contact-us-field--error" : ""}`}>
+                      <label htmlFor="message">{translate("message")} <span className="contact-us-field__required">*</span></label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        rows={5}
+                        className="contact-us-input contact-us-textarea"
+                        placeholder={translate("enterMessage")}
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        onFocus={() => handleFocus("message")}
+                        onBlur={handleBlur}
+                      />
+                      {formErrors.message && <span className="contact-us-field__error">{formErrors.message}</span>}
                     </div>
-
-                    {/* Submit Button */}
-                    <div className="col-12">
-                      <div className="form-submit">
-                        <button
-                          type="submit"
-                          className="submit-btn ds-btn ds-btn-primary"
-                          disabled={isloading}
-                          aria-label={translate("sendMessage")}
-                        >
-                          {isloading ? (
-                            <div className="loader-container">
-                              <div className="loader"></div>
-                              <span>{translate("sending")}</span>
-                            </div>
-                          ) : (
-                            <>
-                              <span>{translate("sendMessage")}</span>
-                              <FiSend className="send-icon" />
-                            </>
-                          )}
-                        </button>
-                      </div>
+                    <div className="contact-us-form__submit contact-us-field--full">
+                      <button type="submit" className="contact-us-submit" disabled={isloading} aria-label={translate("sendMessage")}>
+                        {isloading ? (
+                          <span className="contact-us-submit__loading">{translate("sending")}</span>
+                        ) : (
+                          <>
+                            <span>{translate("sendMessage")}</span>
+                            <FiSend size={18} aria-hidden />
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </form>
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className="col-12 col-lg-4">
-              <div className="contact-info-card">
-                <div className="info-header">
-                  <h3>{translate("contactInfo")}</h3>
-                  <div className="header-decoration"></div>
-                </div>
-
-                <div className="info-content">
-                  {/* Office Address */}
-                  <div className="info-item">
-                    <div className="info-icon-wrapper">
-                      <div className="info-icon">
-                        <MdLocationPin size={22} />
-                      </div>
-                    </div>
-                    <div className="info-details">
-                      <h4>{translate("officeAdd")}</h4>
-                      <p>{systemsettings?.company_address}</p>
-                    </div>
+            <aside className="contact-us-info-card">
+              <h3 className="contact-us-info-card__title">{translate("contactInfo")}</h3>
+              <div className="contact-us-info-card__list">
+                <div className="contact-us-info-item">
+                  <span className="contact-us-info-item__icon" aria-hidden>
+                    <MdLocationPin size={20} />
+                  </span>
+                  <div className="contact-us-info-item__content">
+                    <span className="contact-us-info-item__label">{translate("officeAdd")}</span>
+                    <p className="contact-us-info-item__text">{systemsettings?.company_address || "—"}</p>
                   </div>
-
-                  {/* Phone Numbers */}
-                  <div className="info-item">
-                    <div className="info-icon-wrapper">
-                      <div className="info-icon">
-                        <FiPhoneCall size={20} />
-                      </div>
-                    </div>
-                    <div className="info-details">
-                      <h4>{translate("tele")}</h4>
-                      <a href={`tel:${systemsettings?.company_tel1}`}>
-                        {systemsettings?.company_tel1}
-                      </a>
-                      {systemsettings?.company_tel2 && (
-                        <a href={`tel:${systemsettings?.company_tel2}`}>
-                          {systemsettings?.company_tel2}
+                </div>
+                <div className="contact-us-info-item">
+                  <span className="contact-us-info-item__icon" aria-hidden>
+                    <FiPhoneCall size={20} />
+                  </span>
+                  <div className="contact-us-info-item__content">
+                    <span className="contact-us-info-item__label">{translate("tele")}</span>
+                    <a href={`tel:${systemsettings?.company_tel1}`} className="contact-us-info-item__link">{systemsettings?.company_tel1 || "—"}</a>
+                    {systemsettings?.company_tel2 && (
+                      <a href={`tel:${systemsettings?.company_tel2}`} className="contact-us-info-item__link">{systemsettings?.company_tel2}</a>
+                    )}
+                  </div>
+                </div>
+                <div className="contact-us-info-item">
+                  <span className="contact-us-info-item__icon" aria-hidden>
+                    <FiMail size={20} />
+                  </span>
+                  <div className="contact-us-info-item__content">
+                    <span className="contact-us-info-item__label">{translate("emailUs")}</span>
+                    <a href={`mailto:${systemsettings?.company_email}`} className="contact-us-info-item__link">{systemsettings?.company_email || "—"}</a>
+                  </div>
+                </div>
+                {(systemsettings?.facebook_id || systemsettings?.instagram_id || systemsettings?.twitter_id || systemsettings?.youtube_id) && (
+                  <div className="contact-us-info-item contact-us-info-item--social">
+                    <span className="contact-us-info-item__label">{translate("followUs")}</span>
+                    <div className="contact-us-social">
+                      {systemsettings?.facebook_id && (
+                        <a href={systemsettings.facebook_id} target="_blank" rel="noopener noreferrer" className="contact-us-social__link" aria-label="Facebook">
+                          <PiFacebookLogoBold size={20} />
+                        </a>
+                      )}
+                      {systemsettings?.instagram_id && (
+                        <a href={systemsettings.instagram_id} target="_blank" rel="noopener noreferrer" className="contact-us-social__link" aria-label="Instagram">
+                          <BsInstagram size={20} />
+                        </a>
+                      )}
+                      {systemsettings?.youtube_id && (
+                        <a href={systemsettings.youtube_id} target="_blank" rel="noopener noreferrer" className="contact-us-social__link" aria-label="YouTube">
+                          <FaYoutube size={20} />
+                        </a>
+                      )}
+                      {systemsettings?.twitter_id && (
+                        <a href={systemsettings.twitter_id} target="_blank" rel="noopener noreferrer" className="contact-us-social__link" aria-label="Twitter">
+                          <FaXTwitter size={20} />
                         </a>
                       )}
                     </div>
                   </div>
-
-                  {/* Email */}
-                  <div className="info-item">
-                    <div className="info-icon-wrapper">
-                      <div className="info-icon">
-                        <FiMail size={20} />
-                      </div>
-                    </div>
-                    <div className="info-details">
-                      <h4>{translate("emailUs")}</h4>
-                      <a href={`mailto:${systemsettings?.company_email}`}>
-                        {systemsettings?.company_email}
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Social Media */}
-                  {(systemsettings?.facebook_id ||
-                    systemsettings?.instagram_id ||
-                    systemsettings?.twitter_id ||
-                    systemsettings?.youtube_id) && (
-                    <div className="social-section">
-                      <h4>{translate("followUs")}</h4>
-                      <div className="social-grid">
-                        {systemsettings?.facebook_id && (
-                          <a
-                            href={systemsettings.facebook_id}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-link facebook"
-                          >
-                            <PiFacebookLogoBold size={22} />
-                          </a>
-                        )}
-                        {systemsettings?.instagram_id && (
-                          <a
-                            href={systemsettings.instagram_id}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-link instagram"
-                          >
-                            <BsInstagram size={22} />
-                          </a>
-                        )}
-                        {systemsettings?.youtube_id && (
-                          <a
-                            href={systemsettings.youtube_id}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-link youtube"
-                          >
-                            <FaYoutube size={22} />
-                          </a>
-                        )}
-                        {systemsettings?.twitter_id && (
-                          <a
-                            href={systemsettings.twitter_id}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-link twitter"
-                          >
-                            <FaXTwitter size={22} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Decorative Elements */}
-                <div className="info-decoration">
-                  <div className="decoration-circle"></div>
-                  <div className="decoration-circle"></div>
-                </div>
+                )}
               </div>
-            </div>
+            </aside>
           </div>
 
-          {/* Map Section */}
-          <div className="map-section">
-            <div className="map-container">
+          {systemsettings?.iframe_link && (
+            <div className="contact-us-map">
               <iframe
-                src={systemsettings?.iframe_link}
-                title="Office Location"
+                src={systemsettings.iframe_link}
+                title={translate("officeAdd")}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
+                className="contact-us-map__iframe"
+              />
             </div>
-          </div>
+          )}
         </div>
       </section>
     </Layout>

@@ -1,56 +1,57 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
 import { settingsData } from "@/store/reducer/settingsSlice";
 import { useSelector } from "react-redux";
 import Skeleton from "react-loading-skeleton";
 import { translate } from "@/utils/helper";
 import { languageData } from "@/store/reducer/languageSlice";
-import Layout from '../Layout/Layout';
-
+import Layout from "../Layout/Layout";
 
 const TermsAndCondition = () => {
+  const settings = useSelector(settingsData);
+  const termsFromSettings = settings?.terms_conditions;
+  const [termsData, setTermsData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const lang = useSelector(languageData);
 
-    const TermsAndCondition = useSelector(settingsData);
-    const TermsAndConditionData = TermsAndCondition?.terms_conditions;
-    const [termsData, setTermsData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        // Simulate data fetching delay
-        setTimeout(() => {
-            // Simulate fetched data (replace with actual data fetching)
-            const simulatedData = TermsAndConditionData;
-            setTermsData(simulatedData);
-            setIsLoading(false);
-        }, 2000);
-    }, []);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setTermsData(termsFromSettings ?? "");
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [termsFromSettings]);
 
-    const lang = useSelector(languageData);
+  return (
+    <Layout>
+      <Breadcrumb title={translate("terms&condition")} />
+      <section className="terms-page" aria-label={translate("terms&condition")}>
+        <div className="terms-container">
+          <header className="terms-hero">
+            <p className="terms-hero__eyebrow">{translate("terms&condition")}</p>
+            <h1 className="terms-hero__title">{translate("terms&condition")}</h1>
+          </header>
+          <div className="terms-content">
+            {isLoading ? (
+              <div className="terms-content__loading">
+                <Skeleton height={16} count={2} style={{ marginBottom: 16 }} />
+                <Skeleton height={14} count={8} style={{ marginBottom: 12 }} />
+                <Skeleton height={14} count={6} style={{ marginBottom: 12 }} />
+                <Skeleton height={16} count={2} style={{ marginBottom: 16 }} />
+                <Skeleton height={14} count={10} />
+              </div>
+            ) : (
+              <div
+                className="terms-content__body legal-prose prose"
+                dangerouslySetInnerHTML={{ __html: termsData || "" }}
+              />
+            )}
+          </div>
+        </div>
+      </section>
+    </Layout>
+  );
+};
 
-    useEffect(() => { }, [lang]);
-    
-    return (
-        <Layout>
-            <Breadcrumb title={translate("terms&condition")} />
-            <section id="termsSect">
-                <div className="container">
-                    <div className="card">
-                        {isLoading ? (
-                            // Show skeleton loading when data is being fetched
-                            <div className="col-12 loading_data">
-                                <Skeleton height={20} count={20} />
-                            </div>
-                        ) : (
-                            <div className='col-12 terms-condition-content'>
-                                {/* Render the privacy policy data when not loading */}
-                                <div dangerouslySetInnerHTML={{ __html: termsData || "" }} />
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </section>
-        </Layout>
-    )
-}
-
-export default TermsAndCondition
+export default TermsAndCondition;

@@ -19,94 +19,48 @@ const ArticleCard = ({ ele, language }) => {
     const systemsettingsData = useSelector(settingsData);
 
     return (
-        <article className="article-card-wrapper">
-            <Card className="article-card">
-                {/* Image Container */}
-                <div className="article-image-container">
+        <article className="group cursor-pointer flex flex-col gap-3 h-full">
+            <Link 
+                href="/article-details/[slug]" 
+                as={`/article-details/${ele.slug_id}`} 
+                className="flex flex-col gap-3 h-full outline-none"
+            >
+                {/* Image Section */}
+                <div className="relative w-full aspect-[20/19] overflow-hidden rounded-xl bg-gray-200 shrink-0">
                     <Image 
                         loading="lazy" 
-                        className="article-image"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                         src={ele?.image || placeholderImage} 
                         alt={ele?.title || "Article"} 
-                        width={400} 
-                        height={250} 
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         onError={placeholderImage} 
                     />
                     
-                    {/* Category Tag */}
-                    <span className="article-category-tag">
-                        {ele.category?.category || translate("General")}
-                    </span>
-                    
-                    {/* Overlay Gradient */}
-                    <div className="image-overlay"></div>
+                    {/* Category Badge */}
+                    <div className="absolute top-3 left-3 z-10">
+                        <span className="bg-white/95 backdrop-blur-sm text-gray-900 text-[13px] font-semibold px-3 py-1 rounded-full shadow-sm flex items-center gap-1 border border-black/5">
+                            {ele.category?.category || translate("General")}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Content Section */}
-                <Card.Body className="article-content">
-                    {/* Title */}
-                    <h3 className="article-title">
-                        {stripHtmlTags(truncate(ele.title, 50))}
+                <div className="flex flex-col px-1 flex-grow">
+                    <h3 className="text-gray-900 font-semibold text-[15px] leading-snug line-clamp-2">
+                        {stripHtmlTags(ele.title)}
                     </h3>
                     
-                    {/* Description */}
-                    {ele?.description && (
-                        <p className="article-description">
-                            {stripHtmlTags(truncate(ele.description, 60))}
-                        </p>
-                    )}
-
-                    {/* Read More Button */}
-                    <div className="read-more-container">
-                        <Link 
-                            href="/article-details/[slug]" 
-                            as={`/article-details/${ele.slug_id}`} 
-                            passHref
-                        >
-                            <button className="read-more-btn">
-                                <span>{translate("showMore")}</span>
-                                <span className="btn-icon">
-                                    {language?.rtl === 1 ? (
-                                        <AiOutlineArrowLeft size={16} />
-                                    ) : (
-                                        <AiOutlineArrowRight size={16} />
-                                    )}
-                                </span>
-                            </button>
-                        </Link>
+                    <div className="text-gray-500 text-[15px] mt-1 line-clamp-2">
+                        {stripHtmlTags(ele.description)}
                     </div>
-                </Card.Body>
 
-                {/* Footer */}
-                <Card.Footer className="article-footer">
-                    <div className="author-info">
-                        <div className="author-avatar-wrapper">
-                            <Image 
-                                loading="lazy" 
-                                src={systemsettingsData?.admin_image || placeholderImage} 
-                                alt="Admin" 
-                                className="author-avatar" 
-                                width={48} 
-                                height={48} 
-                                onError={placeholderImage} 
-                            />
-                        </div>
-                        <div className="author-details">
-                            <span className="author-name">
-                                <AiOutlineUser className="author-icon" size={14} />
-                                {translate("by")} {systemsettingsData?.admin_name || "Admin"}
-                            </span>
-                            <span className="article-date">
-                                <AiOutlineCalendar className="date-icon" size={14} />
-                                {timeAgo(ele.created_at)}
-                            </span>
-                        </div>
+                    <div className="mt-auto pt-2 text-gray-900 font-medium text-[14px] flex items-center gap-1 underline underline-offset-2">
+                        {translate("showMore")} 
+                        {language?.rtl === 1 ? <AiOutlineArrowLeft size={14} /> : <AiOutlineArrowRight size={14} />}
                     </div>
-                    
-                    {/* Decorative Element */}
-                    <div className="footer-decoration"></div>
-                </Card.Footer>
-            </Card>
+                </div>
+            </Link>
         </article>
     );
 };

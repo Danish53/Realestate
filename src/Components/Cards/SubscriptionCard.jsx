@@ -3,8 +3,8 @@ import { Tooltip } from "antd";
 import Link from "next/link";
 import React, { useState } from "react";
 import { BiSolidCheckCircle, BiSolidXCircle } from "react-icons/bi";
-import { FaUpload, FaCrown, FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import { FiInfo, FiArrowRight, FiRefreshCw } from "react-icons/fi";
+import { FaUpload, FaCrown, FaClock } from "react-icons/fa";
+import { FiInfo, FiArrowRight } from "react-icons/fi";
 import { MdVerified, MdPending, MdError } from "react-icons/md";
 import UploadReceiptModal from "../User/UploadReceiptModal";
 
@@ -18,37 +18,29 @@ const SubscriptionCard = ({
   const isReview = elem.package_status === "review";
   const isRejected = elem.package_status === "rejected";
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  
-  let packageClass = "other-package";
-  if (isActive) {
-    packageClass = "active-package";
-  } else if (isReview) {
-    packageClass = "review-package";
-  }
 
-  const handleUploadReceipt = (id) => {
-    setIsUploadModalOpen(true);
-  };
+  let packageClass = "other-package";
+  if (isActive) packageClass = "active-package";
+  else if (isReview) packageClass = "review-package";
 
   return (
-    <div className={`subscription-card mt-3 ${packageClass}`}>
-      {/* Card Header */}
-      <div className="card-header">
+    <article className={`subscription-card ${packageClass}`} aria-label={elem?.name}>
+      {/* Top accent – paid plans */}
+      {elem.package_type === "paid" && <div className="subscription-card__accent" aria-hidden />}
+
+      {/* Header: badge, name, price, duration */}
+      <header className="card-header">
         <div className="package-type-badge">
           {elem.package_type === "paid" ? (
             <span className="premium-badge">
-              <FaCrown size={14} />
+              <FaCrown size={12} aria-hidden />
               {translate("premium")}
             </span>
           ) : (
-            <span className="free-badge">
-              {translate("free")}
-            </span>
+            <span className="free-badge">{translate("free")}</span>
           )}
         </div>
-        
         <h3 className="package-name">{elem?.name}</h3>
-        
         <div className="package-price">
           {elem.package_type === "paid" ? (
             <>
@@ -59,129 +51,121 @@ const SubscriptionCard = ({
             <span className="free-text">{translate("free")}</span>
           )}
         </div>
-
         <div className="package-duration">
-          <FaClock className="duration-icon" />
+          <FaClock className="duration-icon" size={12} aria-hidden />
           <span>{formatDuration(elem.duration)}</span>
         </div>
-      </div>
+      </header>
 
-      {/* Card Body - Features */}
+      {/* Body: features list */}
       <div className="card-body">
         <h4 className="features-title">{translate("packageFeatures")}</h4>
-        
-        <div className="features-list">
-          {/* Validity Feature */}
-          <div className="feature-item">
-            <div className="feature-icon-wrapper">
-              <BiSolidCheckCircle className="feature-icon" />
-            </div>
-            <div className="feature-content">
+        <ul className="features-list" role="list">
+          <li className="feature-item">
+            <span className={`feature-icon-wrapper assigned`} aria-hidden>
+              <BiSolidCheckCircle className="feature-icon assigned" size={16} />
+            </span>
+            <span className="feature-content">
               <span className="feature-name">{translate("validity")}</span>
               <span className="feature-value">{formatDuration(elem.duration)}</span>
-            </div>
-          </div>
-
-          {/* Dynamic Features */}
+            </span>
+          </li>
           {allFeatures.map((feature, index) => {
-            const assignedFeature = elem.features.find(
-              (f) => f.id === feature.id
-            );
-
+            const assignedFeature = elem.features?.find((f) => f.id === feature.id);
             return (
-              <div className="feature-item" key={index}>
-                <div className={`feature-icon-wrapper ${assignedFeature ? 'assigned' : 'not-assigned'}`}>
+              <li className="feature-item" key={feature.id ?? index}>
+                <span className={`feature-icon-wrapper ${assignedFeature ? "assigned" : "not-assigned"}`} aria-hidden>
                   {assignedFeature ? (
-                    <BiSolidCheckCircle className="feature-icon assigned" />
+                    <BiSolidCheckCircle className="feature-icon assigned" size={16} />
                   ) : (
-                    <BiSolidXCircle className="feature-icon not-assigned" />
+                    <BiSolidXCircle className="feature-icon not-assigned" size={16} />
                   )}
-                </div>
-                <div className="feature-content">
+                </span>
+                <span className="feature-content">
                   <span className="feature-name">{feature?.name}</span>
-                  <span className={`feature-value ${assignedFeature ? 'assigned' : 'not-assigned'}`}>
+                  <span className={`feature-value ${assignedFeature ? "assigned" : "not-assigned"}`}>
                     {assignedFeature
                       ? assignedFeature.limit_type === "limited"
                         ? assignedFeature.limit
                         : translate("unlimited")
                       : translate("notIncluded")}
                   </span>
-                </div>
-              </div>
+                </span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
 
-      {/* Card Footer - Actions */}
-      <div className="card-footer">
-        {isActive ? (
-          <div className="active-status">
-            <div className="status-badge active">
-              <MdVerified size={18} />
-              <span>{translate("active")}</span>
-            </div>
+      {/* Footer: status or CTA */}
+      <footer className="card-footer">
+        {isActive && (
+          <div className="card-footer__status active-status">
+            <span className="status-badge active">
+              <MdVerified size={16} aria-hidden />
+              {translate("active")}
+            </span>
             <Tooltip title={translate("activePackageDescription")}>
-              <FiInfo className="info-icon" size={18} />
+              <span className="info-icon-wrap" tabIndex={0} role="button" aria-label="Info">
+                <FiInfo className="info-icon" size={16} />
+              </span>
             </Tooltip>
           </div>
-        ) : isReview ? (
-          <div className="review-status">
-            <div className="status-badge review">
-              <MdPending size={18} />
-              <span>{translate("pendingVerification")}</span>
-            </div>
-            <div className="review-actions">
+        )}
+        {isReview && (
+          <div className="card-footer__status review-status">
+            <span className="status-badge review">
+              <MdPending size={16} aria-hidden />
+              {translate("pendingVerification")}
+            </span>
+            <div className="card-footer__actions">
               <Tooltip title={translate("pendingVerificationDescription")}>
-                <FiInfo className="info-icon" size={18} />
+                <span className="info-icon-wrap" tabIndex={0} role="button" aria-label="Info">
+                  <FiInfo className="info-icon" size={16} />
+                </span>
               </Tooltip>
-              <Link href="/user/transaction-history">
-                <button className="view-btn">
-                  <span>{translate("view")}</span>
-                  <FiArrowRight size={16} />
-                </button>
+              <Link href="/user/transaction-history" className="view-btn">
+                <span>{translate("view")}</span>
+                <FiArrowRight size={14} aria-hidden />
               </Link>
             </div>
           </div>
-        ) : isRejected ? (
-          <div className="rejected-status">
-            <div className="status-badge rejected">
-              <MdError size={18} />
-              <span>{translate("verificationRejected")}</span>
-            </div>
-            <div className="rejected-actions">
+        )}
+        {isRejected && (
+          <div className="card-footer__status rejected-status">
+            <span className="status-badge rejected">
+              <MdError size={16} aria-hidden />
+              {translate("verificationRejected")}
+            </span>
+            <div className="card-footer__actions">
               <Tooltip title={translate("rejectedVerificationDescription")}>
-                <FiInfo className="info-icon" size={18} />
+                <span className="info-icon-wrap" tabIndex={0} role="button" aria-label="Info">
+                  <FiInfo className="info-icon" size={16} />
+                </span>
               </Tooltip>
               <Tooltip title={translate("reuploadReceipt")}>
-                <button
-                  className="reupload-btn"
-                  onClick={() => handleUploadReceipt(elem.id)}
-                >
-                  <FaUpload size={16} />
+                <button type="button" className="reupload-btn" onClick={() => setIsUploadModalOpen(true)}>
+                  <FaUpload size={14} aria-hidden />
                   <span>{translate("reupload")}</span>
                 </button>
               </Tooltip>
             </div>
           </div>
-        ) : (
-          <button
-            className="find"
-            onClick={(e) => subscribePayment(e, elem)}
-          >
+        )}
+        {!isActive && !isReview && !isRejected && (
+          <button type="button" className="find" onClick={(e) => subscribePayment(e, elem)}>
             <span>{translate("subscribe")}</span>
-            <FiArrowRight size={18} />
+            <FiArrowRight size={16} aria-hidden />
           </button>
         )}
-      </div>
+      </footer>
 
-      {/* Upload Receipt Modal */}
       <UploadReceiptModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         transactionId={elem?.payment_transaction_id}
       />
-    </div>
+    </article>
   );
 };
 

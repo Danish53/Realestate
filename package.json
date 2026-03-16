@@ -1,5 +1,5 @@
 {
-  "name": "MKT",
+  "name": "AI Lands MKT",
   "version": "1.2.5",
   "private": true,
   "scripts": {
@@ -93,8 +93,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.24",
+    "autoprefixer": "^10.4.27",
     "next-htaccess-generator": "^1.0.3",
-    "postcss": "^8.5.6"
+    "postcss": "^8.5.8",
+    "tailwindcss": "^3.4.17"
   }
 }

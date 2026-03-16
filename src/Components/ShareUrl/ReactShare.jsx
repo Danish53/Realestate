@@ -7,7 +7,7 @@ import { translate } from '@/utils/helper';
 const ReactShare = ({ currentUrl, handleCopyUrl, data, CompanyName }) => {
     return (
         <>
-            <div className="card">
+            <div className="share-card-inner card">
                 <div className="card-header">{translate("share")}</div>
                 <div className="card-body">
                     <Menu>

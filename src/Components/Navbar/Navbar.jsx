@@ -4,7 +4,7 @@ import ebroker from "@/assets/Logo_Color.png";
 import { RiArrowDownSLine, RiUserLine, RiUserSmileLine } from "react-icons/ri";
 import { Dropdown } from "react-bootstrap";
 import Link from "next/link";
-import { FiPhone, FiPlusCircle } from "react-icons/fi";
+import { FiChevronRight, FiPhone, FiPlusCircle } from "react-icons/fi";
 import LoginModal from "../LoginModal/LoginModal";
 import AreaConverter from "../AreaConverter/AreaConverter";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -47,10 +47,10 @@ const Nav = () => {
   const signupData = useSelector(userSignUpData);
   const settingData = store.getState().Settings?.data;
   const FcmToken = useSelector(Fcmtoken);
-  
+
   // Use useSelector to directly access the current location from Redux
   const currentLocationFromRedux = useSelector(selectCurrentLocation);
-  
+
   const LanguageList = settingData && settingData.languages;
   const systemDefaultLanguageCode = settingData?.default_language;
   const [showModal, setShowModal] = useState(false);
@@ -78,7 +78,7 @@ const Nav = () => {
 
   useEffect(() => {
     const header = document.querySelector(".header");
-    setHeaderTop(header.offsetTop);
+    setHeaderTop(header?.offsetTop);
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -273,384 +273,213 @@ const Nav = () => {
   }, [currentLocationFromRedux]); // Only depend on currentLocation from Redux
 
   return (
-    <div>
-      <div className={`${scroll > headerTop ? "is-sticky" : ""}`}>
-        <div className="new-header-dark-top-bar">
-          <div className="container">
-            <div className="new-header-top-bar-content">
-              <div className="new-header-contact-info">
+    <>
+      <div className={`${scroll > headerTop ? "fixed top-0 w-full shadow-md z-50 animate-fadeInDown" : "relative z-50"} transition-all duration-300`}>
+        {/* Top bar (Matching Vulpo Design) */}
+        <div className="hidden lg:block bg-secondary text-white/90 py-2.5 text-[13.5px] font-medium border-b border-white/5 relative">
+          <div className="mx-auto px-4 lg:px-0 flex justify-between items-center">
 
-                {settingData?.company_email &&
-                  <>
-                    <a href={`mailto:${settingData?.company_email}`} className="new-header-contact-item" target="_blank">
-                      <HiOutlineMail className="new-header-icon" />
-                      <span>{settingData?.company_email}</span>
-                    </a>
-                    <div className="vertical-divider"></div>
-                  </>
-                }
-                {settingData?.company_tel1 &&
-                  <>
-                    <a href={`tel:${settingData?.company_tel1}`} className="new-header-contact-item">
-                      <FiPhone className="new-header-icon" />
-                      <span>{settingData?.company_tel1}</span>
-                    </a>
-                    <div className="vertical-divider"></div>
-                  </>
-                }
-                {settingData?.company_tel2 &&
-                  <>
-                    <a href={`tel:${settingData?.company_tel2}`} className="new-header-contact-item">
-                      <FiPhone className="new-header-icon" />
-                      <span>{settingData?.company_tel2}</span>
-                    </a>
-                  </>
-                }
-              </div>
-              <div className="new-header-top-right">
-                <div className="new-header-language-selector">
-                  <Dropdown>
-                    <Dropdown.Toggle id="dropdown-basic01" style={{ padding: "0px" }}>
-                      {" "}
-                      {selectedLanguage ? selectedLanguage : defaultlang}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                      {LanguageList &&
-                        LanguageList.map((ele, index) => (
-                          <Dropdown.Item
-                            key={index}
-                            onClick={() => handleLanguageChange(ele.code)}
-                          >
-                            <span className="perent_link">
-                              <span className="links">{ele.name}</span>
-                            </span>
-                          </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </div>
-                {(settingData?.facebook_id || settingData?.instagram_id || settingData?.twitter_id || settingData?.youtube_id) &&
-                  <>
-                    <div className="vertical-divider"></div>
-                    <div className="new-header-social-icons">
-                      <span className="new-header-follow-text">{translate("followUs")} :</span>
-                      {settingData?.facebook_id &&
-                        <a href={settingData?.facebook_id || "#"} className="new-header-social-icon" target="_blank" rel="noreferrer">
-                          <FaFacebookF />
-                        </a>
-                      }
-                      {settingData?.instagram_id &&
-                        <a href={settingData?.instagram_id || "#"} className="new-header-social-icon" target="_blank" rel="noreferrer">
-                          <FaInstagram />
-                        </a>
-                      }
-                      {settingData?.twitter_id &&
-                        <a href={settingData?.twitter_id || "#"} className="new-header-social-icon" target="_blank" rel="noreferrer">
-                          <FaX />
-                        </a>
-                      }
-                      {settingData?.youtube_id &&
-                        <a href={settingData?.youtube_id || "#"} className="new-header-social-icon" target="_blank" rel="noreferrer">
-                          <FaYoutube />
-                        </a>
-                      }
-                    </div>
-                  </>
-                }
-              </div>
+            {/* Socials & Language (Left side) */}
+            <div className="flex items-center space-x-4">
+              <Dropdown className="inline-block relative">
+                <Dropdown.Toggle as="button" className="flex items-center gap-1 text-white transition-colors bg-transparent border-none p-0 focus:outline-none">
+                  {selectedLanguage ? selectedLanguage : defaultlang}
+                </Dropdown.Toggle>
+                <Dropdown.Menu className="absolute left-0 mt-2 w-40 bg-white shadow-card rounded-lg py-2 z-50 border-none text-text">
+                  {LanguageList && LanguageList.map((ele, index) => (
+                    <Dropdown.Item key={index} onClick={() => handleLanguageChange(ele.code)} className="px-4 py-2 hover:bg-primary-50 hover:text-primary-600 transition-colors cursor-pointer text-sm">
+                      {ele.name}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
             </div>
+
+            {/* Centered Message */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center pointer-events-none">
+              <span className="bg-white/10 px-2 py-0.5 rounded-full text-[11px] font-bold mr-3 border border-white/20 text-white">New</span>
+              <span className="text-white">Simplify your property search with our platform <FiChevronRight className="inline ml-1" /></span>
+            </div>
+
+            {/* Contacts (Right side) */}
+            <div className="flex items-center space-x-6 z-10 relative">
+              {settingData?.company_email && (
+                <a href={`mailto:${settingData?.company_email}`} className="flex items-center gap-1.5 hover:text-white transition-colors" target="_blank" rel="noreferrer">
+                  <HiOutlineMail size={15} />
+                  <span>{settingData?.company_email}</span>
+                </a>
+              )}
+              {settingData?.company_tel1 && (
+                <a href={`tel:${settingData?.company_tel1}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+                  <FiPhone size={13} />
+                  <span>{settingData?.company_tel1}</span>
+                </a>
+              )}
+            </div>
+
           </div>
         </div>
-        <header>
-          <nav className={`navbar header navbar-expand-lg`}>
-            <div className="container">
-              {/* Left Section - Logo and Location */}
-              <div className="header-left-section">
-                <Link className="navbar-brand m-0" href="/">
+
+        {/* Main Header (Matching Vulpo Design) */}
+        <header className="bg-white shadow-sm transition-all duration-300 relative z-40">
+          <div className=" mx-auto px-4 lg:px-0 py-0 lg:py-0">
+            <div className="flex items-center h-[5rem] lg:h-[5rem]">
+
+              {/* Logo and Mobile controls */}
+              <div className="flex items-center justify-between w-full lg:w-auto h-full">
+                <Link href="/" className="flex-shrink-0 flex items-center h-full">
                   <Image
                     loading="lazy"
                     src={settingData?.web_logo ? settingData?.web_logo : ebroker}
-                    alt="no_img"
-                    className="logo p-0"
-                    width={0}
-                    height={85}
-                    // style={{ width: "auto", height: "85px" }}
+                    alt="Logo"
+                    width={150}
+                    height={48}
+                    className="h-10 lg:h-16 w-auto object-contain"
                     onError={placeholderImage}
                   />
                 </Link>
-                <div className="location-selector-wrapper">
 
-                  {/* Location Selector */}
-                  <div className="location-selector">
-                    <button
-                      type="button"
-                      className="location-selector-button"
-                      onClick={handleToggleLocationPopup}
-                      aria-label={translate("location")}
-                    >
-                      <span className="location-icon">
-                        <BiMapPin size={20} />
-                      </span>
-                      <span className="location-text" title={formattedLocationText}>
-                        <span>
-                          {translate("location")}
-                        </span>
-                        <span>
-                          {formattedLocationText ? formattedLocationText : translate("enterLocation")}
-                        </span>
-                      </span>
-                    </button>
-                    <LocationModal
-                      show={showLocationPopup}
-                      onHide={handleCloseLocationPopup}
-                      onSave={handleSelectLocation}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleShow}
-                    id="hamburg"
-                    className="mobile-menu-button"
-                    aria-label="Open menu"
-                  >
-                    <GiHamburgerMenu size={30} />
+                <div className="flex items-center gap-3 lg:hidden">
+                  <button type="button" onClick={handleToggleLocationPopup} className="p-2 text-secondary hover:text-primary-500 rounded-full hover:bg-gray-50 transition-colors bg-transparent border border-gray-200">
+                    <BiMapPin size={22} />
+                  </button>
+                  <button type="button" onClick={handleShow} className="p-2 text-secondary hover:text-primary-500 rounded-lg hover:bg-gray-50 transition-colors bg-transparent border border-gray-200">
+                    <GiHamburgerMenu size={24} />
                   </button>
                 </div>
-
               </div>
 
-              {/* Right Section - Navigation, Login/Register, Add Property */}
-              <div className="header-right-section">
-                <div className="nav-elements">
-                  <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li className="nav-item">
-                      <Link
-                        className="nav-link active"
-                        aria-current="page"
-                        href="/"
-                      >
-                        {translate("home")}
-                      </Link>
-                    </li>
-                    <li className="nav-item dropdown ">
-                      <Dropdown>
-                        <Dropdown.Toggle id="dropdown-basic" className="custom-dropdown-toggle">
-                          {translate("properties")}
-                          <RiArrowDownSLine size={18} className="dropdown-icon ms-1" />
-                        </Dropdown.Toggle>
+              {/* Desktop Navigation & Auth */}
+              <div className="hidden lg:flex items-center flex-1 justify-between pl-8 xl:pl-12 h-full">
 
-                        <Dropdown.Menu>
-                          <Dropdown.Item>
-                            <Link href="/properties/all-properties/">
-                              <span className="links">
-                                {translate("allProperties")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            <Link href="/featured-properties">
-                              <span className="links">
-                                {translate("featuredProp")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            {" "}
-                            <Link href="/most-viewed-properties">
-                              <span className="links">
-                                {translate("mostViewedProp")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            {" "}
-                            <Link href="/properties-nearby-city">
-                              <span className="links">
-                                {translate("nearbyCities")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            <Link href="/most-favorite-properties">
-                              <span className="links">
-                                {translate("mostFavProp")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </li>
-                    <li className="nav-item dropdown">
-                      <Dropdown>
-                        <Dropdown.Toggle id="dropdown-basic" className="custom-dropdown-toggle">
-                          {translate("pages")}
-                          <RiArrowDownSLine size={18} className="dropdown-icon ms-1" />
-                        </Dropdown.Toggle>
+                {/* Nav Links (Left aligned, tightly spaced) */}
+                <nav className="flex items-center space-x-2 xl:space-x-4 h-full">
 
-                        <Dropdown.Menu>
-                          <Dropdown.Item>
-                            <Link href="/subscription-plan">
-                              <span className="links">
-                                {translate("subscriptionPlan")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            {" "}
-                            <Link href="/articles">
-                              <span className="links">{translate("articles")}</span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            {" "}
-                            <Link href="/faqs">
-                              <span className="links">{translate("faqs")}</span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item onClick={handleOpenAcModal}>
-                            <span className="perent_link">
-                              <span className="links">
-                                {translate("areaConverter")}
-                              </span>
-                            </span>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            <Link href="/terms-and-condition">
-                              <span className="links">
-                                {translate("terms&condition")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                          <Dropdown.Item>
-                            {" "}
-                            <Link href="/privacy-policy">
-                              <span className="links">
-                                {translate("privacyPolicy")}
-                              </span>
-                            </Link>
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
-                    </li>
-                    <li className="nav-item">
-                      <Link href="/about-us" id="a-tags-link">
-                        <span className="nav-link">
-                          {translate("aboutUs")}
+                  <Link href="/" className="px-2 py-2 text-[15px] text-secondary font-bold hover:text-primary-500 transition-colors">
+                    {translate("home")}
+                  </Link>
+
+                  <Dropdown className="h-full flex items-center">
+                    <Dropdown.Toggle as="button" className="px-2 py-2 text-[15px] text-secondary font-bold hover:text-primary-500 transition-colors flex items-center gap-1 bg-transparent border-none focus:ring-0 after:hidden">
+                      {translate("properties")} <RiArrowDownSLine size={20} className="text-secondary opacity-80" />
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="absolute top-full left-0 mt-0 w-56 bg-white shadow-card rounded-xl py-2 z-50 border border-gray-100">
+                      <Dropdown.Item as={Link} href="/properties/all-properties/" className="px-5 py-3.5 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("allProperties")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/featured-properties" className="px-5 py-3.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("featuredProp")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/most-viewed-properties" className="px-5 py-3.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("mostViewedProp")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/properties-nearby-city" className="px-5 py-3.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("nearbyCities")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/most-favorite-properties" className="px-5 py-3.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("mostFavProp")}</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+
+                  <Dropdown className="h-full flex items-center">
+                    <Dropdown.Toggle as="button" className="px-2 py-2 text-[15px] text-secondary font-bold hover:text-primary-500 transition-colors flex items-center gap-1 bg-transparent border-none focus:ring-0 after:hidden">
+                      {translate("pages")} <RiArrowDownSLine size={20} className="text-secondary opacity-80" />
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className="absolute top-full left-0 mt-0 w-48 bg-white shadow-card rounded-xl py-2 z-50 border border-gray-100">
+                      <Dropdown.Item as={Link} href="/subscription-plan" className="px-5 py-2.5 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("subscriptionPlan")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/articles" className="px-5 py-2.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("articles")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/faqs" className="px-5 py-2.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("faqs")}</Dropdown.Item>
+                      {/* <Dropdown.Item onClick={handleOpenAcModal} className="px-5 py-2.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text cursor-pointer">{translate("areaConverter")}</Dropdown.Item> */}
+                      <Dropdown.Item as={Link} href="/terms-and-condition" className="px-5 py-2.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("terms&condition")}</Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/privacy-policy" className="px-5 py-2.5 mt-2 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-sm font-semibold text-text">{translate("privacyPolicy")}</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+
+                  <Link href="/about-us" className="px-2 py-2 text-[15px] text-secondary font-bold hover:text-primary-500 transition-colors">
+                    {translate("aboutUs")}
+                  </Link>
+
+                  <Link href="/contact-us" className="px-2 py-2 text-[15px] text-secondary font-bold hover:text-primary-500 transition-colors">
+                    {translate("contactUs")}
+                  </Link>
+                </nav>
+
+                {/* Auth and Add Property (Right Aligned) */}
+                <div className="flex items-center space-x-6 h-full">
+
+                  {/* Location - Placed here unobtrusively if needed, else we can skip if it breaks the look. Let's keep it as an icon for compactness. */}
+                  <button type="button" onClick={handleToggleLocationPopup} title={formattedLocationText || translate("location")} className="text-secondary hover:text-primary-500 transition-colors">
+                    <BiMapPin size={24} />
+                  </button>
+
+                  <div className="w-px h-6 bg-gray-200"></div>
+
+                  {signupData?.data === null ? (
+                    <button onClick={(e) => { e.preventDefault(); handleOpenModal(); }} className="text-[16px] text-secondary font-bold hover:text-primary-500 transition-colors tracking-wide">
+                      {translate("login&Register")}
+                    </button>
+                  ) : signupData?.data?.data.name || signupData?.data?.data.email || signupData?.data?.data.mobile ? (
+                    <Dropdown className="relative h-full flex items-center">
+                      <Dropdown.Toggle as="button" className="flex items-center gap-2 text-secondary hover:text-primary-500 font-bold transition-colors bg-transparent focus:ring-0 after:hidden">
+                        <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 border border-primary-100">
+                          <RiUserSmileLine size={20} />
+                        </div>
+                        <span className="text-[15px] hidden xl:block">
+                          {signupData.data.data.name ? truncate(signupData.data.data.name, 12) : translate("welcmGuest")}
                         </span>
-                      </Link>
-                    </li>
-                    <li className="nav-item">
-                      <Link href="/contact-us" id="a-tags-link">
-                        <span className="nav-link">
-                          {translate("contactUs")}
-                        </span>
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
+                        <RiArrowDownSLine size={18} className="opacity-80" />
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu className="absolute right-0 top-full mt-0 w-48 bg-white shadow-card rounded-xl py-2 z-50 border border-gray-100">
+                        <Dropdown.Item onClick={handleShowDashboard} className="px-5 py-2.5 hover:bg-primary-50 hover:text-primary-600 transition-colors block text-[15px] font-semibold text-secondary cursor-pointer">{translate("dashboard")}</Dropdown.Item>
+                        <Dropdown.Divider className="my-1 border-t border-gray-100" />
+                        <Dropdown.Item onClick={handleLogout} className="px-5 py-2.5 hover:bg-red-50 hover:text-red-600 transition-colors block text-[15px] font-semibold text-red-500 cursor-pointer">{translate("logout")}</Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  ) : null}
 
-                <div className="auth-section">
-                  <ul className="navbar-nav ml-auto">
-                    <li className="nav-item">
-                      {
-                        // Check if signupData.data is null
-                        signupData?.data === null ? (
-                          <a
-                            className="nav-link user-nav-link"
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleOpenModal();
-                            }}
-                          >
-                            <RiUserLine size={16} className="icon me-1" />
-                            <span className="auth-text">{translate("login&Register")}</span>
-                          </a>
-                        ) : signupData?.data?.data.name || signupData?.data?.data.email || signupData?.data?.data.mobile ? (
-                          <Dropdown>
-                            <Dropdown.Toggle id="dropdown-basic" className="user-dropdown">
-                              <RiUserLine size={16} className="icon01 me-1" />
-                              <span className="auth-text">
-                                {signupData.data.data.name ? truncate(signupData.data.data.name, 15) : translate("welcmGuest")}
-                              </span>
-                            </Dropdown.Toggle>
-
-                            <Dropdown.Menu id="language">
-                              <Dropdown.Item onClick={handleShowDashboard}>
-                                <span className="perent_link">
-                                  <span className="links">
-                                    {translate("dashboard")}
-                                  </span>
-                                </span>
-                              </Dropdown.Item>
-                              <Dropdown.Item onClick={handleLogout}>
-                                <span className="perent_link">
-                                  <span className="links">
-                                    {translate("logout")}
-                                  </span>
-                                </span>
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        ) : null
-                      }
-                    </li>
-                    {signupData?.data?.data.name && settingData && (
-                      <li className="nav-item">
-                        <button
-                          type="button"
-                          className="btn add-property-btn ds-btn ds-btn-primary"
-                          id="addbutton"
-                          onClick={(e) => handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router)}
-                          aria-label={translate("addProp")}
-                        >
-                          <FiPlusCircle
-                            size={20}
-                            className="add-nav-button"
-                          />
-                          <span className="add-text">{translate("addProp")}</span>
-                        </button>
-                      </li>
-                    )}
-                  </ul>
+                  {/* {settingData && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        if (signupData?.data?.data.name) {
+                          handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router);
+                        } else {
+                          handleOpenModal();
+                        }
+                      }}
+                      className="bg-primary-500 hover:bg-primary-600 text-white font-bold px-8 py-3 rounded-full transition-all shadow-md active:scale-95"
+                    >
+                      <span className="text-[15px] tracking-wide">{translate("addProp")}</span>
+                    </button>
+                  )} */}
                 </div>
               </div>
             </div>
-          </nav>
+          </div>
         </header>
-      </div>
 
-      <div>
-        <MobileOffcanvas
-          show={show}
-          handleClose={handleClose}
-          settingData={settingData}
-          signupData={signupData}
-          translate={translate}
-          handleOpenModal={handleOpenModal}
-          handleShowDashboard={handleShowDashboard}
-          handleLogout={handleLogout}
-          handleLanguageChange={handleLanguageChange}
-          LanguageList={LanguageList}
-          defaultlang={defaultlang}
-          handleOpenAcModal={handleOpenAcModal}
-          selectedLanguage={selectedLanguage}
-          language={language}
-          formattedLocationText={formattedLocationText}
-          handleSelectLocation={handleSelectLocation}
-          handleCloseLocationPopup={handleCloseLocationPopup}
-          currentLocationFromRedux={currentLocationFromRedux}
+        <LocationModal
+          show={showLocationPopup}
+          onHide={handleCloseLocationPopup}
+          onSave={handleSelectLocation}
         />
       </div>
-      {showModal && (
-        <LoginModal isOpen={showModal} onClose={handleCloseModal} />
-      )}
 
+      <MobileOffcanvas
+        show={show}
+        handleClose={handleClose}
+        settingData={settingData}
+        signupData={signupData}
+        translate={translate}
+        handleOpenModal={handleOpenModal}
+        handleShowDashboard={handleShowDashboard}
+        handleLogout={handleLogout}
+        handleLanguageChange={handleLanguageChange}
+        LanguageList={LanguageList}
+        defaultlang={defaultlang}
+        handleOpenAcModal={handleOpenAcModal}
+        selectedLanguage={selectedLanguage}
+        language={language}
+        formattedLocationText={formattedLocationText}
+        handleSelectLocation={handleSelectLocation}
+        handleCloseLocationPopup={handleCloseLocationPopup}
+        currentLocationFromRedux={currentLocationFromRedux}
+      />
+
+      {showModal && <LoginModal isOpen={showModal} onClose={handleCloseModal} />}
       <AreaConverter isOpen={areaconverterModal} onClose={handleCloseAcModal} />
-
-
-    </div>
+    </>
   );
 };
 

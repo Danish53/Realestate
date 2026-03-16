@@ -191,7 +191,7 @@ const SliderComponent = ({ sliderData }) => {
   const systemSetttings = useSelector(settingsData);
   const intervalRef = useRef(null);
   const progressRef = useRef(null);
-  
+
   const PlaceHolderImg = systemSetttings?.web_placeholder_logo || "/placeholder-image.jpg";
 
   // Auto-play functionality
@@ -227,21 +227,21 @@ const SliderComponent = ({ sliderData }) => {
 
     // Slide change interval
     intervalRef.current = setInterval(() => {
-      setCurrentSlide((prev) => 
+      setCurrentSlide((prev) =>
         prev === sliderData.length - 1 ? 0 : prev + 1
       );
     }, 5000);
   };
 
   const handleNext = () => {
-    setCurrentSlide((prev) => 
+    setCurrentSlide((prev) =>
       prev === sliderData.length - 1 ? 0 : prev + 1
     );
     resetAutoplay();
   };
 
   const handlePrev = () => {
-    setCurrentSlide((prev) => 
+    setCurrentSlide((prev) =>
       prev === 0 ? sliderData.length - 1 : prev - 1
     );
     resetAutoplay();
@@ -272,7 +272,7 @@ const SliderComponent = ({ sliderData }) => {
 
   const handleImageClick = (data) => {
     if (!data) return;
-    
+
     let dynamicLink = "/";
     let openInNewTab = false;
 
@@ -320,7 +320,7 @@ const SliderComponent = ({ sliderData }) => {
               onClick={() => handleImageClick(slide)}
             >
               {/* Background Image with Overlay */}
-              <div 
+              <div
                 className="slide-bg"
                 style={{
                   backgroundImage: `url(${slide?.web_image || PlaceHolderImg})`,
@@ -336,12 +336,12 @@ const SliderComponent = ({ sliderData }) => {
                     <div className="price-tag">
                       {formatNumberWithCommas(slide.property.price)}
                     </div>
-                    
+
                     <h2 className="title">{slide.property.title}</h2>
-                    
+
                     <div className="parameters">
                       {slide?.parameters?.slice(0, 4).map(
-                        (param, idx) => 
+                        (param, idx) =>
                           param.value && (
                             <span key={idx} className="parameter">
                               {param.name}: {param.value}
@@ -364,7 +364,7 @@ const SliderComponent = ({ sliderData }) => {
 
                       {slide?.property?.video_link && (
                         <>
-                          <button 
+                          <button
                             className="play-btn"
                             onClick={handleOpenModal}
                           >
@@ -429,7 +429,7 @@ const SliderComponent = ({ sliderData }) => {
               className={`thumbnail ${index === currentSlide ? 'active' : ''}`}
               onClick={() => handleSlideClick(index)}
             >
-              <div 
+              <div
                 className="thumbnail-img"
                 style={{
                   backgroundImage: `url(${slide?.web_image || PlaceHolderImg})`,
@@ -444,18 +444,17 @@ const SliderComponent = ({ sliderData }) => {
       <style jsx>{`
         .modern-slider-wrapper {
           width: 100%;
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 0 16px 24px;
+          margin: 0;
+          padding: 0;
         }
 
         .modern-slider-container {
           position: relative;
           width: 100%;
-          height: 520px;
-          border-radius: 20px;
+          height: 75vh;
+          min-height: 550px;
+          max-height: 850px;
           overflow: hidden;
-          box-shadow: 0 20px 60px -15px rgba(29, 42, 91, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
         }
 
         .slides-container {
@@ -471,7 +470,7 @@ const SliderComponent = ({ sliderData }) => {
           width: 100%;
           height: 100%;
           opacity: 0;
-          transition: opacity 0.6s ease-in-out;
+          transition: opacity 0.8s ease-in-out;
           cursor: pointer;
         }
 
@@ -501,13 +500,12 @@ const SliderComponent = ({ sliderData }) => {
           left: 0;
           width: 100%;
           height: 100%;
-          background: linear-gradient(
-            105deg,
-            rgba(29, 42, 91, 0.85) 0%,
-            rgba(29, 42, 91, 0.5) 35%,
-            rgba(0, 0, 0, 0.25) 70%,
-            transparent 100%
-          );
+          background: 
+            radial-gradient(ellipse 80% 50% at 50% 100%, rgba(0, 0, 0, 0.85) 0%, transparent 55%),
+            linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.2) 45%, transparent 100%),
+            linear-gradient(to right, rgba(0, 0, 0, 0.5) 0%, transparent 50%),
+            linear-gradient(to left, rgba(0, 0, 0, 0.25) 0%, transparent 40%);
+          pointer-events: none;
         }
 
         .slide-content {
@@ -515,20 +513,35 @@ const SliderComponent = ({ sliderData }) => {
           height: 100%;
           display: flex;
           align-items: center;
-          padding: 0 64px 100px;
+          padding: 0 5% 4rem;
           color: white;
           z-index: 2;
+          max-width: 1400px;
+          margin: 0 auto;
         }
 
         .content-wrapper {
           max-width: 560px;
-          animation: heroSlideUp 0.6s ease forwards;
+          animation: heroSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          position: relative;
+        }
+
+        .content-wrapper::after {
+          content: '';
+          position: absolute;
+          bottom: -20px;
+          left: 0;
+          width: 64px;
+          height: 4px;
+          background: var(--primary-color);
+          border-radius: 2px;
+          box-shadow: 0 0 20px rgba(241, 93, 45, 0.5);
         }
 
         @keyframes heroSlideUp {
           from {
             opacity: 0;
-            transform: translateY(24px);
+            transform: translateY(32px);
           }
           to {
             opacity: 1;
@@ -538,72 +551,78 @@ const SliderComponent = ({ sliderData }) => {
 
         .price-tag {
           display: inline-block;
-          background: var(--primary-color);
+          background: linear-gradient(135deg, var(--primary-color) 0%, #e04a1a 100%);
           color: #fff;
-          padding: 10px 22px;
-          border-radius: 12px;
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 16px;
+          padding: 12px 26px;
+          border-radius: 10px;
+          font-size: 1.6rem;
+          font-weight: 800;
+          margin-bottom: 22px;
           letter-spacing: 0.02em;
-          box-shadow: 0 8px 24px -8px rgba(241, 93, 45, 0.45);
+          box-shadow: 0 8px 24px rgba(241, 93, 45, 0.4), 0 2px 8px rgba(0,0,0,0.2);
+          border: 1px solid rgba(255,255,255,0.15);
         }
 
         .title {
-          font-size: clamp(1.75rem, 4vw, 2.75rem);
-          font-weight: 700;
-          margin-bottom: 16px;
-          line-height: 1.25;
-          letter-spacing: -0.02em;
-          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+          font-size: clamp(2.5rem, 5vw, 4rem);
+          font-weight: 800;
+          margin-bottom: 24px;
+          line-height: 1.08;
+          letter-spacing: -0.03em;
+          text-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 4px 24px rgba(0,0,0,0.35);
+          max-width: 800px;
+          font-family: var(--ds-font, "Outfit", "Inter", sans-serif);
         }
 
         .parameters {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px 16px;
-          margin-bottom: 28px;
-          font-size: 0.95rem;
-          color: rgba(255, 255, 255, 0.92);
+          gap: 12px 24px;
+          margin-bottom: 36px;
+          font-size: 1.1rem;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.95);
+          text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .parameter {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
         }
 
         .separator {
-          margin-left: 4px;
+          margin-left: 12px;
           opacity: 0.5;
         }
 
         .actions {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 20px;
         }
 
         .view-btn {
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          background: var(--primary-color);
-          color: #fff;
+          background: #ffffff;
+          color: #0f172a;
           border: none;
-          padding: 14px 28px;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 600;
+          padding: 16px 34px;
+          border-radius: 10px;
+          font-size: 1.05rem;
+          font-weight: 700;
           cursor: pointer;
-          transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-          box-shadow: 0 8px 24px -8px rgba(241, 93, 45, 0.4);
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .view-btn:hover {
-          background: var(--primary-hover);
-          transform: translateY(-2px);
-          box-shadow: 0 12px 28px -8px rgba(241, 93, 45, 0.5);
+          background: var(--primary-color);
+          color: #fff;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 28px rgba(241, 93, 45, 0.4), 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .view-btn:focus-visible {
@@ -620,21 +639,24 @@ const SliderComponent = ({ sliderData }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 52px;
-          height: 52px;
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.4);
+          width: 54px;
+          height: 54px;
+          background: rgba(255, 255, 255, 0.12);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 2px solid rgba(255, 255, 255, 0.35);
           border-radius: 50%;
           color: white;
           cursor: pointer;
           transition: all 0.25s ease;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
 
         .play-btn:hover {
           background: var(--primary-color);
           border-color: var(--primary-color);
-          transform: scale(1.08);
+          transform: scale(1.1);
+          box-shadow: 0 8px 24px rgba(241, 93, 45, 0.45);
         }
 
         .play-btn:focus-visible {
@@ -651,11 +673,12 @@ const SliderComponent = ({ sliderData }) => {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          width: 52px;
-          height: 52px;
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.25);
+          width: 56px;
+          height: 56px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 2px solid rgba(255, 255, 255, 0.3);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -664,12 +687,15 @@ const SliderComponent = ({ sliderData }) => {
           cursor: pointer;
           transition: all 0.25s ease;
           z-index: 10;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
 
         .nav-arrow:hover {
           background: var(--primary-color);
           border-color: var(--primary-color);
           color: white;
+          transform: translateY(-50%) scale(1.05);
+          box-shadow: 0 8px 24px rgba(241, 93, 45, 0.4);
         }
 
         .nav-arrow:focus-visible {
@@ -678,22 +704,23 @@ const SliderComponent = ({ sliderData }) => {
         }
 
         .nav-arrow.prev {
-          left: 24px;
+          left: 28px;
         }
 
         .nav-arrow.next {
-          right: 24px;
+          right: 28px;
         }
 
         .play-pause-btn {
           position: absolute;
           bottom: 88px;
-          right: 24px;
-          width: 44px;
-          height: 44px;
-          background: rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(8px);
-          border: 2px solid rgba(255, 255, 255, 0.25);
+          right: 28px;
+          width: 48px;
+          height: 48px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 2px solid rgba(255, 255, 255, 0.3);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -702,11 +729,13 @@ const SliderComponent = ({ sliderData }) => {
           cursor: pointer;
           transition: all 0.25s ease;
           z-index: 10;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
 
         .play-pause-btn:hover {
           background: var(--primary-color);
           border-color: var(--primary-color);
+          box-shadow: 0 6px 20px rgba(241, 93, 45, 0.4);
         }
 
         .play-pause-btn:focus-visible {
@@ -719,15 +748,16 @@ const SliderComponent = ({ sliderData }) => {
           bottom: 0;
           left: 0;
           width: 100%;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.2);
+          height: 5px;
+          background: rgba(255, 255, 255, 0.15);
           z-index: 10;
         }
 
         .hero-progress-fill {
           height: 100%;
-          background: var(--primary-color);
+          background: linear-gradient(90deg, var(--primary-color), #ff7a4d);
           transition: width 0.05s linear;
+          box-shadow: 0 0 12px rgba(241, 93, 45, 0.6);
         }
 
         .hero-dots {
@@ -741,24 +771,26 @@ const SliderComponent = ({ sliderData }) => {
         }
 
         .hero-dot {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          border: none;
-          background: rgba(255, 255, 255, 0.4);
+          border: 2px solid rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.25);
           cursor: pointer;
-          transition: all 0.25s ease;
+          transition: all 0.3s ease;
           padding: 0;
         }
 
         .hero-dot:hover {
-          background: rgba(255, 255, 255, 0.7);
+          background: rgba(255, 255, 255, 0.6);
+          border-color: rgba(255, 255, 255, 0.8);
         }
 
         .hero-dot.active {
           background: var(--primary-color);
-          transform: scale(1.2);
-          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+          border-color: var(--primary-color);
+          transform: scale(1.15);
+          box-shadow: 0 0 0 2px rgba(255,255,255,0.4), 0 0 16px rgba(241, 93, 45, 0.5);
         }
 
         .hero-dot:focus-visible {
@@ -768,36 +800,40 @@ const SliderComponent = ({ sliderData }) => {
 
         .thumbnails-container {
           position: absolute;
-          bottom: 20px;
+          bottom: 24px;
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          gap: 10px;
+          gap: 12px;
           z-index: 10;
-          padding: 8px 14px;
-          background: rgba(0, 0, 0, 0.35);
-          backdrop-filter: blur(10px);
-          border-radius: 14px;
+          padding: 10px 18px;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.25);
         }
 
         .thumbnail {
           position: relative;
-          width: 88px;
-          height: 50px;
-          border-radius: 8px;
+          width: 92px;
+          height: 52px;
+          border-radius: 10px;
           overflow: hidden;
           cursor: pointer;
           border: 2px solid transparent;
-          transition: all 0.25s ease;
+          transition: all 0.3s ease;
         }
 
         .thumbnail.active {
           border-color: var(--primary-color);
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+          box-shadow: 0 0 0 2px rgba(255,255,255,0.2), 0 0 20px rgba(241, 93, 45, 0.35);
         }
 
         .thumbnail:hover {
-          border-color: rgba(255, 255, 255, 0.4);
+          border-color: rgba(255, 255, 255, 0.5);
+          transform: scale(1.03);
         }
 
         .thumbnail-img {
@@ -813,12 +849,12 @@ const SliderComponent = ({ sliderData }) => {
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(0, 0, 0, 0.25);
+          background: rgba(0, 0, 0, 0.2);
           transition: background 0.25s ease;
         }
 
         .thumbnail:hover .thumbnail-overlay {
-          background: rgba(0, 0, 0, 0.05);
+          background: rgba(0, 0, 0, 0.02);
         }
 
         @media (max-width: 992px) {
@@ -839,16 +875,16 @@ const SliderComponent = ({ sliderData }) => {
 
         @media (max-width: 768px) {
           .modern-slider-container {
-            height: 420px;
-            border-radius: 16px;
+            height: 60vh;
+            min-height: 450px;
           }
 
           .slide-content {
-            padding: 0 24px 80px;
+            padding: 0 5% 100px;
           }
 
           .price-tag {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             padding: 8px 18px;
           }
 
@@ -884,12 +920,12 @@ const SliderComponent = ({ sliderData }) => {
 
         @media (max-width: 480px) {
           .modern-slider-wrapper {
-            padding: 0 12px 16px;
+            padding: 0;
           }
 
           .modern-slider-container {
-            height: 360px;
-            border-radius: 12px;
+            height: 60vh;
+            min-height: 450px;
           }
 
           .slide-content {

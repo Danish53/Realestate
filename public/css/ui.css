@@ -1,0 +1,189 @@
+/**
+ * Reusable UI layer – buttons, inputs, cards, section headings, badges
+ * Use with existing markup; no logic changes.
+ */
+
+/* ----- Buttons ----- */
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-sm);
+  padding: 12px 24px;
+  font-family: var(--ds-font);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+  border-radius: var(--ds-radius);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.ds-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.ds-btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.ds-btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+  box-shadow: var(--ds-shadow-md);
+}
+
+.ds-btn-secondary {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border-color: var(--secondary-color);
+}
+
+.ds-btn-secondary:hover {
+  background-color: #152347;
+  border-color: #152347;
+  color: #fff;
+  box-shadow: var(--ds-shadow-md);
+}
+
+.ds-btn-outline {
+  background-color: transparent;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.ds-btn-outline:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.ds-btn-text {
+  background-color: transparent;
+  color: var(--primary-color);
+  border-color: transparent;
+}
+
+.ds-btn-text:hover {
+  background-color: rgba(241, 93, 45, 0.08);
+  color: var(--primary-color);
+}
+
+/* ----- Inputs / Selects ----- */
+.ds-input,
+.ds-select {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--ds-font);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ds-text);
+  background-color: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ds-input::placeholder {
+  color: var(--ds-muted);
+}
+
+.ds-input:focus,
+.ds-select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(241, 93, 45, 0.15);
+}
+
+.ds-input:focus-visible,
+.ds-select:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.ds-label {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--ds-text);
+  margin-bottom: var(--ds-space-xs);
+}
+
+/* ----- Cards ----- */
+.ds-card {
+  background-color: var(--ds-surface);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius);
+  box-shadow: var(--ds-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.ds-card:hover {
+  box-shadow: var(--ds-shadow-md);
+  border-color: var(--ds-border);
+}
+
+.ds-card-elevated {
+  box-shadow: var(--ds-shadow-md);
+}
+
+.ds-card-elevated:hover {
+  box-shadow: var(--ds-shadow-lg);
+}
+
+/* ----- Section headings ----- */
+.ds-section-heading {
+  font-family: var(--ds-font);
+  font-weight: var(--ds-heading-weight);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.25;
+  color: var(--ds-text);
+  margin-bottom: var(--ds-space-sm);
+}
+
+.ds-section-sub {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ds-muted);
+  margin-top: 0;
+  margin-bottom: var(--ds-space-lg);
+}
+
+.ds-section-wrap {
+  margin-bottom: var(--ds-section);
+}
+
+/* ----- Badges / Chips ----- */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 9999px;
+  background-color: var(--ds-border-light);
+  color: var(--ds-text);
+}
+
+.ds-badge-primary {
+  background-color: rgba(241, 93, 45, 0.12);
+  color: var(--primary-color);
+}
+
+.ds-badge-secondary {
+  background-color: rgba(29, 42, 91, 0.1);
+  color: var(--secondary-color);
+}
+
+/* ----- Focus visible (accessibility) ----- */
+a:focus-visible,
+button:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

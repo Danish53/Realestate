@@ -13,6 +13,7 @@ import "swiper/css/pagination";
 import AgentCardSkeleton from "../Skeleton/AgentCardSkeleton";
 import AgentCard from "../Cards/AgentCard";
 import { ArrowRight } from "@mui/icons-material";
+import { BsArrowRight } from "react-icons/bs";
 const Agent = ({
   isLoading,
   agentsData,
@@ -24,91 +25,15 @@ const Agent = ({
   return (
     <div>
       {isLoading ? (
-        <>
-          <section id="agent_section">
-            <div className="container">
-              <div className="row">
-                <div
-                  className="col-sm-12 col-md-4 col-lg-3"
-                  id="browse-by-agents"
-                >
-                  <div className="browse-agent">
-                    <span>{sectionTitle}</span>
-                    <div className="explore-border"></div>
-                    <Link href="/all-agents">
-                      <button className="mt-3">
-                        {" "}
-                        {translate("viewAllAgents")}
-                        <ArrowRight className="mx-2" size={25} />
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="mobile-headline-view">
-                  <MobileHeadline
-                    data={{
-                      text: sectionTitle,
-                      link: "/all-agents",
-                    }}
-                  />
-                </div>
-                <div
-                  className="col-sm-12 col-md-4 col-lg-9"
-                  id="agent-slider-cards"
-                >
-                  <div className="loading_data mt-4">
-                    <Swiper
-                      key={language.rtl}
-                      dir={language.rtl === 1 ? "rtl" : "ltr"}
-                      spaceBetween={30}
-                      freeMode={true}
-                      pagination={{
-                        clickable: true,
-                      }}
-                      modules={[FreeMode, Pagination]}
-                      className="agent-swiper"
-                      breakpoints={breakpointsAgents}
-                    >
-                      {Array.from({ length: 6 }).map((_, index) => (
-                        <SwiperSlide>
-                          <div className="loading_data">
-                            <AgentCardSkeleton />
-                          </div>
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
-                </div>
+        <section className="py-16 lg:py-24 bg-gray-50/50">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+              <div className="lg:w-1/4 flex flex-col justify-center">
+                <div className="w-48 h-10 bg-gray-200 animate-pulse rounded-lg mb-6"></div>
+                <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-lg"></div>
               </div>
-            </div>
-          </section>
-        </>
-      ) : // Once loading is complete, render the agents section if data is available
-        agentsData && agentsData.length > 0 ? (
-          <section id="agent_section">
-            <div className="container">
-              <div className="row">
-                <div
-                  className="col-sm-12 col-md-4 col-lg-3"
-                  id="browse-by-agents"
-                >
-                  <div className="browse-agent">
-                    <div className="browse-header">
-                      <h2 className="browse-title">{sectionTitle}</h2>
-                      <div className="browse-border"></div>
-                    </div>
-
-                    <Link href="/all-agents" className="browse-link">
-                      <button className="browse-button">
-                        <span className="button-text">{translate("viewAllAgents")}</span>
-                        <div className="button-icon-wrapper">
-                          <ArrowRight className="button-icon" size={20} />
-                        </div>
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="mobile-headline-view">
+              <div className="lg:w-3/4">
+                <div className="block lg:hidden mb-6">
                   <MobileHeadline
                     data={{
                       text: sectionTitle,
@@ -116,44 +41,94 @@ const Agent = ({
                     }}
                   />
                 </div>
-                <div
-                  className="col-sm-12 col-md-4 col-lg-9"
-                  id="agent-slider-cards"
-                >
-                  <div
-                    className="agents-cards "
+                <div className="-mx-4 px-4 sm:mx-0 sm:px-0">
+                  <Swiper
+                    key={language.rtl}
                     dir={language.rtl === 1 ? "rtl" : "ltr"}
+                    slidesPerView={2}
+                    spaceBetween={24}
+                    freeMode={true}
+                    pagination={{ clickable: true }}
+                    modules={[FreeMode, Pagination]}
+                    breakpoints={breakpointsAgents}
+                    className="pb-12"
                   >
-                    <Swiper
-                      key={language.rtl}
-                      dir={language.rtl === 1 ? "rtl" : "ltr"}
-                      slidesPerView={3}
-                      spaceBetween={30}
-                      freeMode={true}
-                      pagination={{
-                        clickable: true,
-                      }}
-                      modules={[FreeMode, Pagination]}
-                      className="agent-swiper"
-                      breakpoints={breakpointsAgents}
-                    >
-                      {agentsData.map((ele, index) => (
-                        <SwiperSlide key={index} id="agent-swiper-slider">
-                          <AgentCard
-                            ele={ele}
-                            handlecheckPremiumUserAgent={
-                              handlecheckPremiumUserAgent
-                            }
-                          />
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <SwiperSlide key={index}>
+                        <AgentCardSkeleton />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
                 </div>
               </div>
             </div>
-          </section>
-        ) : null}
+          </div>
+        </section>
+      ) : agentsData && agentsData.length > 0 ? (
+        <section className="py-12 lg:py-16 bg-gray-50/50 overflow-hidden relative border-t border-gray-100 mt-2">
+          {/* Subtle background decoration */}
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-primary-50 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+          <div className="container mx-auto px-4 max-w-7xl relative z-10">
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center">
+              <div className="w-full lg:w-1/4 flex flex-col justify-center items-start">
+                <span className="text-primary-600 font-bold tracking-wider uppercase text-sm mb-2">{translate("expertTeam")}</span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-4 lg:mb-6 leading-tight">
+                  {sectionTitle}
+                </h2>
+                <p className="text-gray-500 mb-8 hidden lg:block text-[15px] leading-relaxed">
+                  {translate("meetOurAgentsDesc") || "Work with our most experienced and trusted real estate professionals to find your dream property."}
+                </p>
+
+                <Link href="/all-agents" className="hidden lg:inline-flex">
+                  <button className="group inline-flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-full font-bold hover:border-primary-500 hover:text-primary-600 shadow-sm hover:shadow-md transition-all duration-300">
+                    <span>{translate("viewAllAgents")}</span>
+                    <div className="w-8 h-8 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-colors">
+                      {language.rtl === 1 ? <BsArrowLeft size={16} /> : <BsArrowRight size={16} />}
+                    </div>
+                  </button>
+                </Link>
+              </div>
+
+              <div className="w-full lg:w-3/4">
+                <div className="block lg:hidden mb-6">
+                  <MobileHeadline
+                    data={{
+                      text: sectionTitle,
+                      link: "/all-agents",
+                    }}
+                  />
+                </div>
+
+                <div className="-mx-4 px-4 sm:mx-0 sm:px-0 relative" dir={language.rtl === 1 ? "rtl" : "ltr"}>
+                  <Swiper
+                    key={language.rtl}
+                    slidesPerView={3}
+                    spaceBetween={24}
+                    freeMode={true}
+                    pagination={{
+                      clickable: true,
+                      dynamicBullets: true,
+                    }}
+                    modules={[FreeMode, Pagination]}
+                    breakpoints={breakpointsAgents}
+                    className="pb-14 swiper-custom-pagination"
+                  >
+                    {agentsData.map((ele, index) => (
+                      <SwiperSlide key={index} className="h-auto">
+                        <AgentCard
+                          ele={ele}
+                          handlecheckPremiumUserAgent={handlecheckPremiumUserAgent}
+                        />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 };

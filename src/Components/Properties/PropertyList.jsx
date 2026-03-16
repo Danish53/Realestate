@@ -199,10 +199,11 @@ const PropertyList = ({ type }) => {
   return (
     <Layout>
       <Breadcrumb title={breadCrumbTitle} />
-      <div id="all-prop-containt">
-        <div className="all-properties container">
-          <div className="row " id="main-all-prop">
-            <div className="col-12 col-md-12 col-lg-3">
+      <section id="all-prop-containt" className="all-properties-page">
+        <div className="container all-properties">
+          <div className="all-properties-inner">
+            {/* Sidebar Filters */}
+            <aside className="all-prop-sidebar">
               <FilterForm
                 filterData={filterData}
                 getCategories={properties}
@@ -218,79 +219,73 @@ const PropertyList = ({ type }) => {
                 handleFacilityChange={handleFacilityChange}
                 type={type}
               />
-            </div> 
-            <div className="col-12 col-md-12 col-lg-9">
-              <div className="all-prop-rightside">
-                {!isLoading && properties && properties.length > 0 ? (
-                  <GridCard total={total} setGrid={setGrid} grid={grid} />
-                ) : null}
+            </aside>
 
-                {isLoading ? (
-                  !grid ? (
-                    <div className="all-prop-cards" id="rowCards">
-                      {Array.from({ length: limit }).map((_, index) => (
-                        <div className="col-sm-12 loading_data" key={index}>
-                          <CustomHorizontalSkeleton />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div id="columnCards">
-                      <div className="row" id="all-prop-col-cards">
-                        {Array.from({ length: limit }).map((_, index) => (
-                          <div className="col-12 col-md-6 col-lg-4" key={index}>
-                            <VerticalCardSkeleton />
-                          </div>
-                        ))}
+            {/* Main Content */}
+            <div className="all-prop-main">
+              {!isLoading && properties && properties.length > 0 ? (
+                <GridCard total={total} setGrid={setGrid} grid={grid} />
+              ) : null}
+
+              {isLoading ? (
+                !grid ? (
+                  <div className="flex flex-col gap-6">
+                    {Array.from({ length: limit }).map((_, index) => (
+                      <div className="w-full" key={index}>
+                        <CustomHorizontalSkeleton />
                       </div>
-                    </div>
-                  )
-                ) : properties && properties.length > 0 ? (
-                  !grid ? (
-                    <div className="all-prop-cards" id="rowCards">
-                      {properties.map((ele, index) => (
-                        <Link
-                          href="/properties-details/[slug]"
-                          as={`/properties-details/${ele.slug_id}`}
-                          passHref
-                          key={index}
-                        >
-                          <AllPropertieCard ele={ele} />
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div id="columnCards">
-                      <div className="row" id="all-prop-col-cards">
-                        {properties.map((ele, index) => (
-                          <div
-                            className="col-12 col-md-6 col-lg-4"
-                            key={index}
-                          >
-                            <VerticalCard ele={ele} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
+                    ))}
+                  </div>
                 ) : (
-                  <div className="noDataFoundDiv">
-                    <NoData />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: limit }).map((_, index) => (
+                      <div className="w-full" key={index}>
+                        <VerticalCardSkeleton />
+                      </div>
+                    ))}
                   </div>
-                )}
+                )
+              ) : properties && properties.length > 0 ? (
+                !grid ? (
+                  <div className="flex flex-col gap-6">
+                    {properties.map((ele, index) => (
+                      <Link
+                        href="/properties-details/[slug]"
+                        as={`/properties-details/${ele.slug_id}`}
+                        passHref
+                        key={index}
+                        className="block w-full focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-2xl"
+                      >
+                        <AllPropertieCard ele={ele} />
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {properties.map((ele, index) => (
+                      <div className="w-full" key={index}>
+                        <VerticalCard ele={ele} />
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                <div className="all-prop-no-data">
+                  <NoData />
+                </div>
+              )}
 
-                {!isLoading && properties && properties.length > 0 && hasMoreData ? (
-                  <div className="col-12 loadMoreDiv" id="loadMoreDiv">
-                    <button className="loadMore" onClick={handleLoadMore}>
-                      {translate("loadmore")}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              {!isLoading && properties && properties.length > 0 && hasMoreData ? (
+                <div className="loadMoreDiv">
+                  <button type="button" className="loadMore" onClick={handleLoadMore}>
+                    {translate("loadmore")}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 };
