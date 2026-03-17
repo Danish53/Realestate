@@ -406,9 +406,9 @@ const Nav = () => {
                   <div className="w-px h-6 bg-gray-200"></div>
 
                   {signupData?.data === null ? (
-                    <button onClick={(e) => { e.preventDefault(); handleOpenModal(); }} className="text-[16px] text-secondary font-bold hover:text-primary-500 transition-colors tracking-wide">
+                    <Link href="/login" className="text-[16px] text-secondary font-bold hover:text-primary-500 transition-colors tracking-wide">
                       {translate("login&Register")}
-                    </button>
+                    </Link>
                   ) : signupData?.data?.data.name || signupData?.data?.data.email || signupData?.data?.data.mobile ? (
                     <Dropdown className="relative h-full flex items-center">
                       <Dropdown.Toggle as="button" className="flex items-center gap-2 text-secondary hover:text-primary-500 font-bold transition-colors bg-transparent focus:ring-0 after:hidden">

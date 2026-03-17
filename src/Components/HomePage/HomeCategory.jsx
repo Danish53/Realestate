@@ -376,7 +376,7 @@ const HomeCategory = ({ isLoading, categoryData, language, breakpoints, sectionT
             {/* Mobile View All Button */}
             <div className="text-center mt-10 lg:hidden">
               <Link href="/all-categories">
-                <button className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:text-primary-700 transition-colors bg-primary-50 px-6 py-3 rounded-xl">
+                <button className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white px-8 py-2 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 overflow-hidden">
                   <span>{translate("viewAllCategories")}</span>
                   {language.rtl === 1 ? <BsArrowLeft size={18} /> : <BsArrowRight size={18} />}
                 </button>

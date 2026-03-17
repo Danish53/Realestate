@@ -6,7 +6,6 @@ import { languageData } from "@/store/reducer/languageSlice";
 import { useSelector } from "react-redux";
 import { settingsData } from "@/store/reducer/settingsSlice";
 import { store } from "@/store/store";
-import { MessageCircle, X } from 'lucide-react';
 import {
   categoriesCacheData,
   saveIsProject,
@@ -32,8 +31,6 @@ import Swal from "sweetalert2";
 import LocationModal from "../LocationSelector/LocationPopup";
 import { setLocation } from "@/store/reducer/locationSlice";
 import { useDispatch } from "react-redux";
-import ChatBot from "../chat/chatbot";
-
 const index = () => {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -158,7 +155,6 @@ const index = () => {
     },
   };
 
-  const [isOpen, setIsOpen] = useState(false);
   const [showLocationPopup, setShowLocationPopup] = useState(false);
 
   const handleCloseLocationPopup = () => {
@@ -423,34 +419,6 @@ const index = () => {
         {sections && sections.length > 0 && (
           sections.filter(s => s.type !== 'agents_list_section').map((section) => renderSectionByType(section))
         )}
-
-        {/* Fixed Position ChatBot */}
-      <div className="chat-icon-container">
-        <button
-          type="button"
-          className={`chat-icon-btn ${isOpen ? 'active' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label={isOpen ? "Close chat" : "Open chat"}
-        >
-          {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        </button>
-        
-        {/* Pulse Animation */}
-        {!isOpen && (
-          <>
-            <span className="pulse-ring"></span>
-            <span className="pulse-ring delay"></span>
-          </>
-        )}
-        
-        {/* Notification Badge */}
-        {!isOpen && (
-          <span className="notification-badge">1</span>
-        )}
-      </div>
-
-      {/* ChatBot Modal */}
-      <ChatBot isOpen={isOpen} onClose={() => setIsOpen(false)} />
 
         {/* WHEN NO DATA IN ADMIN PANEL  */}
         {!isLoading && sections && sections.length === 0 && sliderData && sliderData.length === 0 && (

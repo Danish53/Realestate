@@ -905,11 +905,16 @@ const SliderComponent = ({ sliderData }) => {
           .play-pause-btn {
             bottom: 72px;
             right: 16px;
+            width: 44px;
+            height: 44px;
           }
 
           .nav-arrow {
             width: 44px;
             height: 44px;
+          }
+
+          .nav-arrow.prev {
             left: 12px;
           }
 
@@ -924,12 +929,12 @@ const SliderComponent = ({ sliderData }) => {
           }
 
           .modern-slider-container {
-            height: 60vh;
-            min-height: 450px;
+            height: 58vh;
+            min-height: 420px;
           }
 
           .slide-content {
-            padding: 0 16px 64px;
+            padding: 0 16px 72px;
           }
 
           .actions {
@@ -937,9 +942,64 @@ const SliderComponent = ({ sliderData }) => {
             gap: 12px;
           }
 
+          .play-pause-btn {
+            bottom: 64px;
+            right: 12px;
+            width: 40px;
+            height: 40px;
+          }
+
           .nav-arrow {
             width: 40px;
             height: 40px;
+          }
+
+          .nav-arrow.prev {
+            left: 10px;
+          }
+
+          .nav-arrow.next {
+            right: 10px;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .modern-slider-container {
+            height: 52vh;
+            min-height: 360px;
+          }
+
+          .slide-content {
+            padding: 0 12px 64px;
+          }
+
+          .price-tag {
+            font-size: 1.1rem;
+            padding: 6px 14px;
+          }
+
+          .title {
+            font-size: 1.35rem;
+          }
+
+          .play-pause-btn {
+            bottom: 56px;
+            right: 10px;
+            width: 38px;
+            height: 38px;
+          }
+
+          .nav-arrow {
+            width: 38px;
+            height: 38px;
+          }
+
+          .nav-arrow.prev {
+            left: 8px;
+          }
+
+          .nav-arrow.next {
+            right: 8px;
           }
         }
       `}</style>

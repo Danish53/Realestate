@@ -18747,7 +18747,7 @@ body {
     width: auto;
   }
   #mainheroImage {
-    height: 88vh;
+    height: 80vh !important;
   }
 }
 

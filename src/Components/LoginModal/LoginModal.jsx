@@ -672,7 +672,7 @@ const EmailLoginForm = ({
   );
 };
 
-const LoginModal = ({ isOpen, onClose }) => {
+const LoginModal = ({ isOpen, onClose, asPage = false }) => {
   const SettingsData = useSelector(settingsData);
   const isDemo = SettingsData?.demo_mode;
   const CompanyName = SettingsData?.company_name;
@@ -877,7 +877,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || asPage) {
       generateRecaptcha();
       // setShowLoader(true);
       return () => {
@@ -898,7 +898,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         }
       };
     }
-  }, [isOpen]);
+  }, [isOpen, asPage]);
 
   const generateOTPWithTwilio = async (phoneNumber) => {
     setShowLoader(true);
@@ -1018,7 +1018,11 @@ const LoginModal = ({ isOpen, onClose }) => {
     if (e) {
       e.stopPropagation();
     }
-    onClose();
+    if (asPage) {
+      navigate.push("/");
+    } else if (onClose) {
+      onClose();
+    }
     setShowOtpContent(false);
     setOTP("");
     setTimeLeft(0);
@@ -1472,6 +1476,114 @@ const LoginModal = ({ isOpen, onClose }) => {
     setShowEmailContent(true);
   };
 
+  const authBodyContent = showForgotPassword ? (
+    <ForgotPasswordForm
+      onSubmit={handleForgotPasswordSubmit}
+      showLoader={showLoader}
+      onBackToLogin={handleBackToLogin}
+    />
+  ) : showEmailContent ? (
+    <EmailLoginForm
+      signInFormData={signInFormData}
+      handleSignInInputChange={handleSignInInputChange}
+      SignInWithEmail={(e) => SignInWithEmail(e)}
+      handlesignUp={handlesignUp}
+      ShowGoogleLogin={ShowGoogleLogin}
+      ShowPhoneLogin={ShowPhoneLogin}
+      handlePhoneLogin={handlePhoneLogin}
+      handleGoogleSignup={handleGoogleSignup}
+      showLoader={showLoader}
+      emailReverify={emailReverify}
+      onForgotPasswordClick={handleForgotPasswordClick}
+      handleResendOTP={handleResendOTP}
+      formatTime={formatTime}
+    />
+  ) : showRegisterContent ? (
+    <RegisterForm
+      registerFormData={registerFormData}
+      handleRegisterInputChange={handleRegisterInputChange}
+      handleRegisterPhoneChange={handleRegisterPhoneChange}
+      handleRegisterUser={handleRegisterUser}
+      handleSignIn={handleSignIn}
+      showLoader={showLoader}
+    />
+  ) : showLoginContent ? (
+    <PhoneLoginForm
+      value={value}
+      setValue={setValue}
+      onSignUp={onSignUp}
+      ShowGoogleLogin={ShowGoogleLogin}
+      handleEmailLoginshow={handleEmailLoginshow}
+      CompanyName={CompanyName}
+      handleGoogleSignup={handleGoogleSignup}
+      ShowPhoneLogin={ShowPhoneLogin}
+      showLoader={showLoader}
+    />
+  ) : showOTPContent ? (
+    <OTPForm
+      phonenum={phonenum}
+      wrongNumber={wrongNumber}
+      wrongEmail={wrongEmail}
+      otp={otp}
+      setOTP={setOTP}
+      handleConfirm={handleConfirm}
+      showLoader={showLoader}
+      timeLeft={timeLeft}
+      isEmailOtpEnabled={isEmailOtpEnabled}
+      emailOtp={emailOtp}
+      email={
+        registerFormData?.email
+          ? registerFormData?.email
+          : signInFormData?.email
+      }
+      setEmailOtp={setEmailOtp}
+      handleEmailOtpVerification={handleEmailOtpVerification}
+      isEmailCounting={isEmailCounting}
+      emailTimeLeft={emailTimeLeft}
+      formatTime={formatTime}
+      isCounting={isCounting}
+      handleResendOTP={handleResendOTP}
+    />
+  ) : null;
+
+  if (asPage) {
+    return (
+      <section className="auth-page p-0">
+        <div className="auth-page__bg" aria-hidden="true" />
+        <div className="auth-page__layout">
+          <div className="auth-page__form">
+            <div className="auth-page__form-inner">
+              <Link href="/" className="auth-page__back" aria-label={translate("backToHome")}>
+                <RiCloseCircleLine size={24} />
+                <span>{translate("backToHome")}</span>
+              </Link>
+              <div className="auth-page__body">
+                {authBodyContent}
+              </div>
+              <div className="auth-page__footer">
+                <FooterLinks />
+              </div>
+            </div>
+          </div>
+          <div className="auth-page__image" aria-hidden="true">
+            <div className="auth-page__image-content">
+              <div className="auth-page__image-badge">
+                {CompanyName || "Welcome"}
+              </div>
+              <p className="auth-page__image-text">
+                {translate("login&Register")}
+              </p>
+            </div>
+          </div>
+          <div className="auth-page__image-mobile" aria-hidden="true">
+            <span className="auth-page__image-mobile-text">{CompanyName || "Welcome"}</span>
+          </div>
+        </div>
+        <div id="recaptcha-container" style={{ display: "none" }}></div>
+      </section>
+    );
+  }
+
   return (
     <>
       <Modal
@@ -1493,77 +1605,8 @@ const LoginModal = ({ isOpen, onClose }) => {
             <RiCloseCircleLine size={28} />
           </button>
         </div>
-        
         <Modal.Body className="p-6 sm:p-10 pt-12 relative bg-white">
-          {showForgotPassword ? (
-            <ForgotPasswordForm
-              onSubmit={handleForgotPasswordSubmit}
-              showLoader={showLoader}
-              onBackToLogin={handleBackToLogin}
-            />
-          ) : showEmailContent ? (
-            <EmailLoginForm
-              signInFormData={signInFormData}
-              handleSignInInputChange={handleSignInInputChange}
-              SignInWithEmail={(e) => SignInWithEmail(e)}
-              handlesignUp={handlesignUp}
-              ShowGoogleLogin={ShowGoogleLogin}
-              ShowPhoneLogin={ShowPhoneLogin}
-              handlePhoneLogin={handlePhoneLogin}
-              handleGoogleSignup={handleGoogleSignup}
-              showLoader={showLoader}
-              emailReverify={emailReverify}
-              onForgotPasswordClick={handleForgotPasswordClick}
-              handleResendOTP={handleResendOTP}
-              formatTime={formatTime}
-            />
-          ) : showRegisterContent ? (
-            <RegisterForm
-              registerFormData={registerFormData}
-              handleRegisterInputChange={handleRegisterInputChange}
-              handleRegisterPhoneChange={handleRegisterPhoneChange}
-              handleRegisterUser={handleRegisterUser}
-              handleSignIn={handleSignIn}
-              showLoader={showLoader}
-            />
-          ) : showLoginContent ? (
-            <PhoneLoginForm
-              value={value}
-              setValue={setValue}
-              onSignUp={onSignUp}
-              ShowGoogleLogin={ShowGoogleLogin}
-              handleEmailLoginshow={handleEmailLoginshow}
-              CompanyName={CompanyName}
-              handleGoogleSignup={handleGoogleSignup}
-              ShowPhoneLogin={ShowPhoneLogin}
-              showLoader={showLoader}
-            />
-          ) : showOTPContent ? (
-            <OTPForm
-              phonenum={phonenum}
-              wrongNumber={wrongNumber}
-              wrongEmail={wrongEmail}
-              otp={otp}
-              setOTP={setOTP}
-              handleConfirm={handleConfirm}
-              showLoader={showLoader}
-              timeLeft={timeLeft}
-              isEmailOtpEnabled={isEmailOtpEnabled}
-              emailOtp={emailOtp}
-              email={
-                registerFormData?.email
-                  ? registerFormData?.email
-                  : signInFormData?.email
-              }
-              setEmailOtp={setEmailOtp}
-              handleEmailOtpVerification={handleEmailOtpVerification}
-              isEmailCounting={isEmailCounting}
-              emailTimeLeft={emailTimeLeft}
-              formatTime={formatTime}
-              isCounting={isCounting}
-              handleResendOTP={handleResendOTP}
-            />
-          ) : null}
+          {authBodyContent}
         </Modal.Body>
         <Modal.Footer className="border-t border-gray-100 bg-gray-50/80 p-5 sm:p-6 text-center justify-center m-0">
           <FooterLinks />

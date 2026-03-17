@@ -1,19 +1,61 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AiOutlineArrowRight } from "react-icons/ai";
+import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
+import { FiHome, FiMapPin, FiCalendar, FiSquare } from "react-icons/fi";
+import { FaBed, FaBath } from "react-icons/fa";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { FiHome, FiMapPin, FiCalendar, FiBed, FiBath, FiSquare } from "react-icons/fi";
+
+import Layout from "../Layout/Layout";
+import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
+import Loader from "@/Components/Loader/Loader";
+import NoData from "../NoDataFound/NoData";
+import withAuth from "../Layout/withAuth";
 
 import { translate, placeholderImage } from "@/utils/helper";
 
-import Layout from "../Layout/Layout";
-import Breadcrumb from "../Breadcrumb/Breadcrumb";
-import Loader from "../Loader/Loader";
-import NoData from "../NoDataFound/NoData";
-import withAuth from "../Layout/withAuth";
-import GoogleMap from "../GoogleMap/GoogleMap";
+import Map from "@/Components/GoogleMap/GoogleMap";
 import MortgageCalculator from "../MortgageCalculator/MortgageCalculator";
+
+/**
+ * EXPECTED API RESPONSE SHAPE (/api/scrapePropertyDetail?slug=...)
+ *
+ * {
+ *   slug: string,
+ *   url: string,
+ *   title: string,
+ *   price: string,
+ *   location: string,
+ *   area: string,
+ *   beds: string | null,
+ *   baths: string | null,
+ *   propertyType: "plot" | "house" | "flat" | null,
+ *   added: string | null,
+ *   description: string | null,
+ *   gallery: string[],
+ *   agent: { phone: string | null },
+ *
+ *   // OPTIONAL: map ke liye
+ *   latitude?: number | null,
+ *   longitude?: number | null,
+ *
+ *   // OPTIONAL: calculator show karne ke liye
+ *   // "sale" ho to calculator, "rent" ho to nahi
+ *   dealType?: "sale" | "rent" | null,
+ *
+ *   related: Array<{
+ *      title: string,
+ *      price: string,
+ *      location: string,
+ *      area: string,
+ *      beds: string | null,
+ *      baths: string | null,
+ *      link: string,
+ *      image: string,
+ *      added: string | null
+ *   }>
+ * }
+ */
 
 const PropertyDetailsAI = () => {
   const router = useRouter();
@@ -23,10 +65,13 @@ const PropertyDetailsAI = () => {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState(null);
+
+  // Lightbox state
   const [viewerIsOpen, setViewerIsOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
+  const [showMap, setShowMap] = useState(false);
 
-  // Fetch scraped detail
+  // ---------------- Fetch scraped detail ----------------
   useEffect(() => {
     if (!router.isReady || !slug) return;
 
@@ -42,6 +87,7 @@ const PropertyDetailsAI = () => {
           throw new Error(`API error: ${res.status}`);
         }
         const data = await res.json();
+
         setDetail(data);
       } catch (err) {
         console.error("Error fetching detail:", err);
@@ -54,6 +100,8 @@ const PropertyDetailsAI = () => {
     fetchDetail();
   }, [router.isReady, slug]);
 
+  // ---------------- Helpers ----------------
+
   const openLightbox = (index) => {
     setCurrentImage(index);
     setViewerIsOpen(true);
@@ -64,6 +112,9 @@ const PropertyDetailsAI = () => {
     setViewerIsOpen(false);
   };
 
+  const handleShowMap = () => setShowMap(true);
+
+  // Gallery – original working implementation (card + grid + simple lightbox)
   const renderGallery = () => {
     if (!detail?.gallery || !detail.gallery.length) return null;
 
@@ -71,52 +122,80 @@ const PropertyDetailsAI = () => {
       <div className="prop-detail-card">
         <div className="prop-detail-card-header">
           <span className="prop-detail-card-accent" />
-          <h3 className="prop-detail-card-title">{translate("gallery")}</h3>
+          <h3 className="prop-detail-card-title">
+            {translate ? translate("gallery") : "Gallery"}
+          </h3>
         </div>
         <div className="prop-detail-card-body">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="row g-2">
             {detail.gallery.map((src, idx) => (
-              <button
-                type="button"
+              <div
+                className="col-6 col-md-3"
                 key={`${src}-${idx}`}
                 onClick={() => openLightbox(idx)}
-                className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                style={{ cursor: "pointer" }}
               >
-                <Image
-                  src={src}
-                  alt={detail.title || "Property image"}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-cover"
-                  onError={(e) => placeholderImage(e)}
-                />
-              </button>
+                <div className="ratio ratio-4x3 position-relative">
+                  <Image
+                    src={src}
+                    alt={detail.title || "Property image"}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    style={{ objectFit: "cover" }}
+                    onError={placeholderImage}
+                  />
+                </div>
+              </div>
             ))}
           </div>
 
+          {/* Simple lightbox */}
           {viewerIsOpen && (
             <div
-              className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center"
+              className="lightbox-backdrop"
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "rgba(0,0,0,0.7)",
+                zIndex: 9999,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               onClick={closeLightbox}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Escape" && closeLightbox()}
-              aria-label="Close"
             >
               <div
-                className="relative max-w-[90vw] max-h-[90vh]"
+                style={{
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
+                  position: "relative",
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <img
                   src={detail.gallery[currentImage]}
-                  alt=""
-                  className="max-w-full max-h-[90vh] object-contain"
+                  alt="Large"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                  }}
                 />
                 <button
                   type="button"
                   onClick={closeLightbox}
-                  className="absolute top-2 right-2 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800"
-                  aria-label="Close"
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    background: "#000",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 32,
+                    height: 32,
+                    cursor: "pointer",
+                  }}
                 >
                   ✕
                 </button>
@@ -128,8 +207,10 @@ const PropertyDetailsAI = () => {
     );
   };
 
+  // Address + Map (prop-detail-card design)
   const renderAddressAndMap = () => {
     if (!detail) return null;
+
     const hasLocationText = Boolean(detail.location);
     const hasCoordinates =
       detail.latitude != null &&
@@ -143,25 +224,48 @@ const PropertyDetailsAI = () => {
       <div className="prop-detail-card" id="propertie_address">
         <div className="prop-detail-card-header">
           <span className="prop-detail-card-accent" />
-          <h3 className="prop-detail-card-title">{translate("address")}</h3>
+          <h3 className="prop-detail-card-title">
+            {translate ? translate("location") : "Location"}
+          </h3>
         </div>
         <div className="prop-detail-card-body">
           {hasLocationText && (
-            <div className="mb-4">
-              <span className="prop-detail-feature-label">{translate("address")}</span>
-              <p className="prop-detail-feature-value mt-1">{detail.location}</p>
+            <div className="prop-detail-address-grid">
+              <div className="prop-detail-address-item">
+                <span className="prop-detail-address-label">
+                  {translate ? translate("address") : "Address"}
+                </span>
+                <p className="prop-detail-address-value">{detail.location}</p>
+              </div>
             </div>
           )}
           {(hasCoordinates || hasLocationText) && (
-            <div className="prop-detail-map-wrap rounded-lg overflow-hidden">
+            <div className="prop-detail-map-wrap">
               {hasCoordinates ? (
-                <GoogleMap latitude={detail.latitude} longitude={detail.longitude} />
+                showMap ? (
+                  <Map latitude={detail.latitude} longitude={detail.longitude} />
+                ) : (
+                  <div className="prop-detail-map-placeholder">
+                    <div className="prop-detail-map-blur" />
+                    <button
+                      type="button"
+                      onClick={handleShowMap}
+                      className="prop-detail-map-btn"
+                    >
+                      <FiMapPin size={20} />
+                      {translate ? translate("ViewMap") : "View Map"}
+                    </button>
+                  </div>
+                )
               ) : (
-                <div className="relative w-full aspect-video">
+                <div className="ratio ratio-16x9">
                   <iframe
-                    title="Location"
-                    src={`https://www.google.com/maps?q=${encodeURIComponent(detail.location)}&output=embed`}
-                    className="absolute inset-0 w-full h-full border-0"
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(
+                      detail.location
+                    )}&output=embed`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
@@ -177,55 +281,72 @@ const PropertyDetailsAI = () => {
   const renderRelated = () => {
     if (!detail?.related || !detail.related.length) return null;
     return (
-      <div className="prop-detail-card">
-        <div className="prop-detail-card-header">
-          <span className="prop-detail-card-accent" />
-          <h3 className="prop-detail-card-title">{translate("similarProperties")}</h3>
-        </div>
-        <div className="prop-detail-card-body">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {detail.related.map((item, idx) => (
-              <a
-                key={idx}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
-              >
-                {item.image && (
-                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden mb-2 bg-gray-100">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => placeholderImage(e)}
-                    />
-                  </div>
-                )}
-                <h6 className="font-semibold text-gray-900 mb-1 line-clamp-2">{item.title}</h6>
-                {item.price && (
-                  <p className="text-primary-600 font-semibold text-sm">{item.price}</p>
-                )}
-                {item.location && (
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-1">{item.location}</p>
-                )}
-                <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-600">
-                  {item.area && <span>{item.area}</span>}
-                  {item.beds && item.beds !== "-" && <span>{item.beds} {translate("beds")}</span>}
-                  {item.baths && item.baths !== "-" && <span>{item.baths} {translate("baths")}</span>}
+      <div className="prop-detail-similar">
+        <div className="prop-detail-card">
+          <div className="prop-detail-card-header">
+            <span className="prop-detail-card-accent" />
+            <h3 className="prop-detail-card-title">
+              {translate ? translate("similarProperties") : "Similar Properties"}
+            </h3>
+          </div>
+          <div className="prop-detail-card-body">
+            <div className="row g-3">
+              {detail.related.map((item, idx) => (
+                <div className="col-12 col-md-6 col-lg-4" key={idx}>
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-decoration-none text-dark"
+                  >
+                    <div className="border rounded h-100 p-2">
+                      {item.image && (
+                        <div className="ratio ratio-4x3 mb-2">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            style={{ objectFit: "cover", width: "100%" }}
+                            onError={placeholderImage}
+                          />
+                        </div>
+                      )}
+                      <h6 className="mb-1">{item.title}</h6>
+                      {item.price && (
+                        <div className="text-success fw-bold">{item.price}</div>
+                      )}
+                      {item.location && (
+                        <div className="small text-muted">{item.location}</div>
+                      )}
+                      <div className="small mt-1">
+                        {item.area && <span>{item.area}</span>}
+                        {item.beds &&
+                          item.beds !== "-" &&
+                          ` • ${item.beds} ${translate ? translate("beds") : "Beds"}`}
+                        {item.baths &&
+                          item.baths !== "-" &&
+                          ` • ${item.baths} ${translate ? translate("baths") : "Baths"}`}
+                      </div>
+                      {item.added && (
+                        <div className="small text-muted mt-1">{item.added}</div>
+                      )}
+                    </div>
+                  </a>
                 </div>
-                {item.added && (
-                  <p className="text-xs text-gray-400 mt-1">{item.added}</p>
-                )}
-              </a>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   };
 
-  const canShowMortgageCalculator = !!detail?.price && detail?.dealType !== "rent";
+  // Calculator kab show karein?
+  // - Price ho
+  // - Aur dealType "rent" na ho (ya dealType defined hi na ho)
+  const canShowMortgageCalculator =
+    !!detail?.price && detail?.dealType !== "rent";
+
+  // ---------------- Render ----------------
 
   if (loading) {
     return (
@@ -238,12 +359,10 @@ const PropertyDetailsAI = () => {
   if (error) {
     return (
       <Layout>
-        <Breadcrumb title={translate("propertyDetails") || "Property Details"} />
-        <section className="prop-detail-page">
-          <div className="prop-detail-container">
-            <p className="text-red-600">{error}</p>
-          </div>
-        </section>
+        <Breadcrumb />
+        <div className="container py-5">
+          <p className="text-danger">{error}</p>
+        </div>
       </Layout>
     );
   }
@@ -251,12 +370,12 @@ const PropertyDetailsAI = () => {
   if (!detail) {
     return (
       <Layout>
-        <Breadcrumb title={translate("propertyDetails") || "Property Details"} />
-        <section className="prop-detail-page">
-          <div className="prop-detail-container">
+        <Breadcrumb />
+        <div className="row">
+          <div className="col-12 pb-5">
             <NoData />
           </div>
-        </section>
+        </div>
       </Layout>
     );
   }
@@ -267,7 +386,7 @@ const PropertyDetailsAI = () => {
 
       <section className="prop-detail-page">
         <div className="prop-detail-container">
-          {/* Hero card */}
+          {/* Hero overview card – same design as PropertyDetails */}
           <div className="prop-detail-hero-card">
             <div className="prop-detail-hero-accent" />
             <div className="prop-detail-hero-body">
@@ -280,18 +399,20 @@ const PropertyDetailsAI = () => {
                     <div className="prop-detail-badges">
                       {detail.propertyType && (
                         <span className="prop-detail-badge prop-detail-badge-primary">
-                          {translate(detail.propertyType)}
+                          {detail.propertyType}
                         </span>
                       )}
                       {detail.dealType && (
                         <span
                           className={`prop-detail-badge ${
-                            detail.dealType === "sell"
+                            detail.dealType === "sale" || detail.dealType === "sell"
                               ? "prop-detail-badge-sell"
                               : "prop-detail-badge-rent"
                           }`}
                         >
-                          {translate(detail.dealType)}
+                          {detail.dealType === "sale" || detail.dealType === "sell"
+                            ? (translate ? translate("sell") : "Sale")
+                            : (translate ? translate("rent") : "Rent")}
                         </span>
                       )}
                     </div>
@@ -299,12 +420,10 @@ const PropertyDetailsAI = () => {
                   </div>
                 </div>
                 <div className="prop-detail-price-wrap">
-                  {detail.price && (
-                    <>
-                      <span className="prop-detail-price-label">{translate("price")}</span>
-                      <span className="prop-detail-price">{detail.price}</span>
-                    </>
-                  )}
+                  <span className="prop-detail-price-label">
+                    {translate ? translate("price") : "Price"}
+                  </span>
+                  <span className="prop-detail-price">{detail.price || "—"}</span>
                 </div>
               </div>
 
@@ -314,7 +433,7 @@ const PropertyDetailsAI = () => {
                   <div className="prop-detail-stat">
                     <FiMapPin className="prop-detail-stat-icon" />
                     <div>
-                      <span className="prop-detail-stat-label">{translate("location")}</span>
+                      <span className="prop-detail-stat-label">Location</span>
                       <p className="prop-detail-stat-value truncate">{detail.location}</p>
                     </div>
                   </div>
@@ -323,22 +442,22 @@ const PropertyDetailsAI = () => {
                   <div className="prop-detail-stat">
                     <FiCalendar className="prop-detail-stat-icon" />
                     <div>
-                      <span className="prop-detail-stat-label">{translate("added")}</span>
+                      <span className="prop-detail-stat-label">Posted</span>
                       <p className="prop-detail-stat-value">{detail.added}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Specs */}
+              {/* Specs: beds, baths, area */}
               <div className="prop-detail-specs">
                 {detail.beds && detail.beds !== "-" && (
                   <div className="prop-detail-spec">
                     <div className="prop-detail-spec-icon prop-detail-spec-bed">
-                      <FiBed />
+                      <FaBed />
                     </div>
                     <div>
-                      <span className="prop-detail-spec-label">{translate("bedrooms")}</span>
+                      <span className="prop-detail-spec-label">Bedrooms</span>
                       <p className="prop-detail-spec-value">{detail.beds}</p>
                     </div>
                   </div>
@@ -346,10 +465,10 @@ const PropertyDetailsAI = () => {
                 {detail.baths && detail.baths !== "-" && (
                   <div className="prop-detail-spec">
                     <div className="prop-detail-spec-icon prop-detail-spec-bath">
-                      <FiBath />
+                      <FaBath />
                     </div>
                     <div>
-                      <span className="prop-detail-spec-label">{translate("bathrooms")}</span>
+                      <span className="prop-detail-spec-label">Bathrooms</span>
                       <p className="prop-detail-spec-value">{detail.baths}</p>
                     </div>
                   </div>
@@ -360,7 +479,7 @@ const PropertyDetailsAI = () => {
                       <FiSquare />
                     </div>
                     <div>
-                      <span className="prop-detail-spec-label">{translate("area")}</span>
+                      <span className="prop-detail-spec-label">Area</span>
                       <p className="prop-detail-spec-value">{detail.area}</p>
                     </div>
                   </div>
@@ -370,60 +489,78 @@ const PropertyDetailsAI = () => {
           </div>
 
           <div className="prop-detail-layout">
+            {/* Main content */}
             <div className="prop-detail-main">
+              {/* Gallery – original working implementation */}
               {renderGallery()}
 
+              {/* About / Description */}
               {detail.description && (
                 <div className="prop-detail-card">
                   <div className="prop-detail-card-header">
                     <span className="prop-detail-card-accent" />
-                    <h3 className="prop-detail-card-title">{translate("aboutProp")}</h3>
+                    <h3 className="prop-detail-card-title">
+                      {translate ? translate("aboutProp") : "About this property"}
+                    </h3>
                   </div>
                   <div className="prop-detail-card-body">
-                    <p className={`prop-detail-desc-text ${!expanded ? "line-clamp-4" : ""}`}>
+                    <p
+                      className={`prop-detail-desc-text ${!expanded ? "line-clamp-4" : ""}`}
+                      style={{ whiteSpace: "pre-wrap" }}
+                    >
                       {detail.description}
                     </p>
-                    {(detail.description.length > 250 || detail.description.split("\n").length > 3) && (
+                    {detail.description.length > 400 && (
                       <button
                         type="button"
                         onClick={() => setExpanded(!expanded)}
                         className="prop-detail-read-more"
                       >
                         <span>{expanded ? "Show Less" : "Read More"}</span>
-                        <AiOutlineArrowRight className="ml-2" size={18} />
+                        {expanded ? (
+                          <AiOutlineArrowLeft size={18} />
+                        ) : (
+                          <AiOutlineArrowRight size={18} />
+                        )}
                       </button>
                     )}
                   </div>
                 </div>
               )}
 
+              {/* Address + Map */}
               {renderAddressAndMap()}
-              {renderRelated()}
             </div>
 
-            <div className="prop-detail-sidebar">
-              <div className="prop-detail-sidebar-card p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">
-                  {translate("contactUs") || translate("contact") || "Contact"}
-                </h3>
+            {/* Sidebar */}
+            <aside className="prop-detail-sidebar">
+              <div className="prop-detail-sidebar-card">
+                <div className="prop-detail-card-header">
+                  <span className="prop-detail-card-accent" />
+                  <h3 className="prop-detail-card-title">
+                    {translate ? translate("contact") : "Contact"}
+                  </h3>
+                </div>
                 <a
-                  href="tel:03238450741"
-                  className="block w-full py-3 px-4 text-center font-semibold text-white rounded-lg transition-colors ds-btn ds-btn-primary"
-                  aria-label="Call now"
+                  href={detail.agent?.phone ? `tel:${detail.agent.phone}` : "tel:03238450741"}
+                  className="btn btn-success w-75 text-center m-3"
                 >
-                  {translate("call") || "Call Now"}
+                  Call Now
                 </a>
               </div>
 
               {canShowMortgageCalculator && (
-                <div className="mortage_cal_details mt-6">
+                <div className="prop-detail-sidebar-card">
                   <MortgageCalculator
                     data={{ ...detail, property_type: detail.dealType }}
                   />
                 </div>
               )}
-            </div>
+            </aside>
           </div>
+
+          {/* Similar properties – same as PropertyDetails */}
+          {detail.related && detail.related.length > 0 && renderRelated()}
         </div>
       </section>
     </Layout>

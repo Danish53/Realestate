@@ -13,12 +13,15 @@ import SomthingWentWrong from "../SomthingWentWrong/SomthingWentWrong";
 import { loadSystemSettings } from "@/store/reducer/settingsSlice";
 import { loadCategories } from "@/store/reducer/momentSlice";
 import CookieComponent from "../Cookie/Cookie";
+import ChatBot from "../chat/chatbot";
+import { MessageCircle, X } from "lucide-react";
 
 const Layout = ({ children }) => {
   const isLoggedIn = useSelector((state) => state.User_signup);
   const [isLoading, setIsLoading] = useState(true);
   const [settingsError, setSettingsError] = useState(false);
   const [settingsData, setSettingsData] = useState([]);
+  const [chatOpen, setChatOpen] = useState(false);
 
   
   useEffect(() => {
@@ -107,6 +110,25 @@ const Layout = ({ children }) => {
                   {children}
                   <Footer />
                   {allowCookies && <CookieComponent />}
+                  {/* ChatBot: visible on every page */}
+                  <div className="chat-icon-container">
+                    <button
+                      type="button"
+                      className={`chat-icon-btn ${chatOpen ? "active" : ""}`}
+                      onClick={() => setChatOpen(!chatOpen)}
+                      aria-label={chatOpen ? "Close chat" : "Open chat"}
+                    >
+                      {chatOpen ? <X size={24} /> : <MessageCircle size={24} />}
+                    </button>
+                    {!chatOpen && (
+                      <>
+                        <span className="pulse-ring" />
+                        <span className="pulse-ring delay" />
+                      </>
+                    )}
+                    {!chatOpen && <span className="notification-badge">1</span>}
+                  </div>
+                  <ChatBot isOpen={chatOpen} onClose={() => setChatOpen(false)} />
                 </>
               )}
             </Suspense>

@@ -1,11 +1,13 @@
 "use client";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect } from "react";
 import { Provider } from "react-redux";
 import { store } from "../src/store/store";
 import { Fragment } from "react";
 
 import { Router } from "next/router";
 import NProgress from "nprogress";
+
+NProgress.configure({ minimum: 0.12, speed: 200, showSpinner: false });
 
 import { Toaster } from "react-hot-toast";
 import PushNotificationLayout from "@/Components/firebaseNotification/PushNotificationLayout";
@@ -39,17 +41,9 @@ const queryClient = new QueryClient({
 });
 
 function MyApp({ Component, pageProps, data }) {
-  const [isPageLoading, setIsPageLoading] = useState(false);
-
   useEffect(() => {
-    const handleStart = () => {
-      NProgress.start();
-      setIsPageLoading(true);
-    };
-    const handleStop = () => {
-      NProgress.done();
-      setIsPageLoading(false);
-    };
+    const handleStart = () => NProgress.start();
+    const handleStop = () => NProgress.done();
 
     Router.events.on("routeChangeStart", handleStart);
     Router.events.on("routeChangeError", handleStop);
@@ -107,7 +101,6 @@ function MyApp({ Component, pageProps, data }) {
           <InspectElement>
             <PushNotificationLayout>
               <Suspense fallback={<Loader />}>
-                {isPageLoading && <Loader fullScreen={true} />}
                 <Component {...pageProps} data={data} />
               </Suspense>
             </PushNotificationLayout>

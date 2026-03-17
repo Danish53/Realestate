@@ -310,7 +310,10 @@ const MobileOffcanvas = ({
                     {translate('login&Register')}
                   </span>
                 }
-                onClick={handleOpenModal}
+                onClick={() => {
+                  handleClose();
+                  router.push('/login');
+                }}
               />
             )}
           </div>
@@ -326,7 +329,7 @@ const MobileOffcanvas = ({
                     handlePackageCheck(e, PackageTypes.PROPERTY_LIST, router);
                   } else {
                     handleClose();
-                    handleOpenModal();
+                    router.push('/login');
                   }
                 }} 
                 aria-label={translate('addProp')}

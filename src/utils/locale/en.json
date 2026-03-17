@@ -671,6 +671,7 @@
   "forgotPassword": "Forgot Password?",
   "enterEmailForReset": "Enter your email to reset your password",
   "backToLogin": "Back to Login",
+  "backToHome": "Back to Home",
   "enterOtpSentToEmail": "Enter OTP sent to your email",
   "enterEmailToReset": "Enter your email to reset your password",
   "resetPassword": "Reset Password",
