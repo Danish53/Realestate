@@ -9,15 +9,20 @@ import { translate } from "@/utils/helper";
 import MapCard from "../Cards/MapCard";
 import { MdClose } from "react-icons/md";
 
-const PropertiesOnLocationMap = ({ onSelectLocation, latitude, longitude, data, setActiveTab, activeTab, fetchAllData }) => {
+const PropertiesOnLocationMap = ({ apiKey, onSelectLocation, latitude, longitude, data, setActiveTab, activeTab, fetchAllData }) => {
 
 
     const systemsettings = useSelector(settingsData)
 
     const libraries = ["places"];
+    const getSafeNumber = (value, fallback) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
     const [initialLocation, setInitialLocation] = useState({
-        lat: latitude ? parseFloat(latitude) : parseFloat(systemsettings?.latitude),
-        lng: longitude ? parseFloat(longitude) : parseFloat(systemsettings?.longitude),
+        lat: getSafeNumber(latitude ?? systemsettings?.latitude, 31.5204),
+        lng: getSafeNumber(longitude ?? systemsettings?.longitude, 74.3587),
     });
 
     const [location, setLocation] = useState(initialLocation);
@@ -30,8 +35,12 @@ const PropertiesOnLocationMap = ({ onSelectLocation, latitude, longitude, data, 
     const priceSymbol = useSelector(settingsData);
     const PlaceHolderImg = priceSymbol?.web_placeholder_logo;
     useEffect(() => {
-        setLocation(initialLocation);
-    }, [initialLocation]);
+        const lat = getSafeNumber(latitude ?? systemsettings?.latitude, 31.5204);
+        const lng = getSafeNumber(longitude ?? systemsettings?.longitude, 74.3587);
+        const updatedInitialLocation = { lat, lng };
+        setInitialLocation(updatedInitialLocation);
+        setLocation(updatedInitialLocation);
+    }, [latitude, longitude, systemsettings?.latitude, systemsettings?.longitude]);
     useEffect(() => {
     }, [clickedMarker]);
     const handleTabClick = (tab) => {
@@ -116,12 +125,13 @@ const PropertiesOnLocationMap = ({ onSelectLocation, latitude, longitude, data, 
     return (
         <>
             <div id="map">
-                {mapError ? (
+                {!apiKey ? (
+                    <div className="container py-4">Google Map API key is missing.</div>
+                ) : mapError ? (
                     <div>{mapError}</div>
                 ) : (
                     <>
-
-                        {/* // <LoadScript googleMapsApiKey={apiKey} libraries={libraries} onError={handleMapLoadError}> */}
+                        <LoadScript googleMapsApiKey={apiKey} libraries={libraries} onError={handleMapLoadError}>
                         <Autocomplete
                             onLoad={(autocomplete) => {
                                 autocompleteRef.current = autocomplete;
@@ -182,8 +192,7 @@ const PropertiesOnLocationMap = ({ onSelectLocation, latitude, longitude, data, 
                                 </InfoWindow>
                             )}
                         </GoogleMap>
-
-                        {/* // </LoadScript> */}
+                        </LoadScript>
                     </>
                 )}
             </div>

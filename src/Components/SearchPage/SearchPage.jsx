@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { getPropertyListApi } from "@/store/actions/campaign.js";
 import { RiCloseCircleLine, RiSendPlane2Line } from "react-icons/ri";
 import { GrRefresh } from "react-icons/gr";
-import { ButtonGroup, Modal, Pagination } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import LocationSearchBox from "@/Components/Location/LocationSearchBox.jsx";
 import { BiFilter } from "react-icons/bi";
 import { FiCalendar, FiCheck, FiChevronDown, FiClock, FiDollarSign, FiHome, FiMapPin, FiMinus, FiSearch, FiSun, FiX } from "react-icons/fi";
@@ -240,49 +240,56 @@ const SearchPage = () => {
     return (
         <Layout>
             <Breadcrumb title="" />
-            <div className="serach_page_tab">
-                <div id="searchbox" className="container">
-                    <ButtonGroup>
-                        <ul className="nav nav-tabs" id="tabs">
-                            <li className="">
-                                <a className={`nav-link ${activeTab === 0 ? "tab-0" : ""}`} aria-current="page" id="sellbutton" onClick={() => handleTabClick("sell")}>
-                                    {translate("sell")}
-                                </a>
-                            </li>
-                            <li className="">
-                                <a className={`nav-link ${activeTab === 1 ? "tab-1" : ""}`} onClick={() => handleTabClick("rent")} aria-current="page" id="rentbutton">
-                                    {translate("rent")}
-                                </a>
-                            </li>
-                        </ul>
-                    </ButtonGroup>
-                    <div id="searchcard">
-                        <div id="searchbuttoon">
-                            <FiSearch size={20} />
-                            <input
-                                className="searchinput"
-                                placeholder={translate("searchYourProperty")}
-                                name="propertySearch"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                onKeyPress={(e) => {
-                                    if (e.key === "Enter") {
-                                        // Prevent the default form submission behavior
-                                        e.preventDefault();
-                                        // Trigger the click event on the submit button
-                                        handleSearch();
-                                    }
-                                }}
-                            />
+            <div className="search-page-layout">
+            <div className="serach_page_tab search-page-shell">
+                <div id="searchbox" className="container search-page-container">
+                    <div className="search-page-hero-card">
+                        <div className="search-page-tab-row" role="tablist" aria-label={translate("propertyType")}>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={activeTab === 0}
+                                className={`search-page-tab ${activeTab === 0 ? "is-active" : ""}`}
+                                onClick={() => handleTabClick("sell")}
+                            >
+                                {translate("sell")}
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={activeTab === 1}
+                                className={`search-page-tab ${activeTab === 1 ? "is-active" : ""}`}
+                                onClick={() => handleTabClick("rent")}
+                            >
+                                {translate("rent")}
+                            </button>
                         </div>
-                        <div id="leftside-buttons">
-                            <button type="button" className="filter ds-btn ds-btn-outline" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
-                                <BiFilter size={25} />
-                                {translate("filter")}
-                            </button>
-                            <button type="button" className="find ds-btn ds-btn-primary" onClick={handleSearch} aria-label={translate("search")}>
-                                {translate("search")}
-                            </button>
+                        <div className="search-page-search-row">
+                            <div className="search-page-field">
+                                <FiSearch size={22} className="search-page-field-icon" aria-hidden />
+                                <input
+                                    className="searchinput search-page-input"
+                                    placeholder={translate("searchYourProperty")}
+                                    name="propertySearch"
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleSearch();
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <div className="search-page-actions">
+                                <button type="button" className="search-page-btn search-page-btn--outline" onClick={() => setShowFilterModal(true)} aria-label={translate("filter")}>
+                                    <BiFilter size={22} />
+                                    <span>{translate("filter")}</span>
+                                </button>
+                                <button type="button" className="search-page-btn search-page-btn--primary" onClick={handleSearch} aria-label={translate("search")}>
+                                    <span>{translate("search")}</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -293,7 +300,7 @@ const SearchPage = () => {
                               size="lg" 
                               centered 
                               backdrop="static" 
-                              className="filter-modal"
+                              className="hero-filter-modal"
                             >
                                 <div className="filter-modal-content">
                                     {/* Modal Header */}
@@ -438,7 +445,7 @@ const SearchPage = () => {
                             </Modal>
             </div>
 
-            <div className="search_content container">
+            <div className="search_content container search-page-results">
                 <div id="feature_cards" className="row">
                     {isLoading ? (
                         Array.from({ length: 8 }).map((_, index) => (
@@ -461,6 +468,7 @@ const SearchPage = () => {
                         </div>
                     ) : null}
                 </div>
+            </div>
             </div>
         </Layout>
     )

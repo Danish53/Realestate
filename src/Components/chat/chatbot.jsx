@@ -283,7 +283,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             <Sparkles size={12} />
           </div>
           <div className="header-info">
-            <h3>AI Real Estate Assistant</h3>
+            <h3 className="text-white">AI Real Estate Assistant</h3>
             <span className="status-dot"></span>
             <span className="status-text">Online</span>
           </div>

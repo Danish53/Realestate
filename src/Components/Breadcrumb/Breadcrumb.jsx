@@ -448,7 +448,7 @@ const Breadcrumb = (props) => {
                 {props.title}
               </h1>
               <div className="flex items-center justify-center gap-2 text-gray-300">
-                <span className="hover:text-white transition-colors cursor-pointer" onClick={() => router.push('/')}>Home</span>
+                <span className="text-white transition-colors cursor-pointer" onClick={() => router.push('/')}>Home</span>
                 <span className="text-primary-500">/</span>
                 <span className="text-white">{props.title}</span>
               </div>

@@ -1,36 +1,42 @@
 import React from 'react';
 import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode, Pagination } from "swiper/modules";
+import { Pagination } from "swiper/modules";
 import PackageCard from "@/Components/Skeleton/PackageCard";
 import SubscriptionCard from "@/Components/Cards/SubscriptionCard";
 import NoData from "@/Components/NoDataFound/NoData";
 
 // Import Swiper styles
 import "swiper/css";
-import "swiper/css/free-mode";
 import "swiper/css/pagination";
 
 const SubscriptionSwiper = ({
   loading,
   packagedata,
   language,
-  breakpoints,
   subscribePayment,
   systemsettings,
   allFeatures
 }) => {
+  const sliderBreakpoints = {
+    0: { slidesPerView: 1, spaceBetween: 16 },
+    576: { slidesPerView: 2, spaceBetween: 20 },
+    992: { slidesPerView: 3, spaceBetween: 24 },
+  };
+
   return (
     <Swiper
       dir={language.rtl === 1 ? "rtl" : "ltr"}
-      slidesPerView={4}
-      spaceBetween={30}
-      freeMode={true}
+      slidesPerView={3}
+      spaceBetween={24}
+      freeMode={false}
+      centeredSlides={false}
+      watchOverflow={true}
       pagination={{
         clickable: true,
       }}
-      modules={[FreeMode, Pagination]}
+      modules={[Pagination]}
       className="subscription-swiper"
-      breakpoints={breakpoints}
+      breakpoints={sliderBreakpoints}
     >
       {loading ? (
         <>

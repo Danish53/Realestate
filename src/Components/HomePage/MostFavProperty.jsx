@@ -204,7 +204,7 @@ const MostFavProperty = ({
       spaceBetween: 24,
     },
     1400: {
-      slidesPerView: 4.2,
+      slidesPerView: 4,
       spaceBetween: 24,
     },
   };

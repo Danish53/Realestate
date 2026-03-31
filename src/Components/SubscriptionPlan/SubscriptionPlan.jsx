@@ -98,13 +98,6 @@ const SubscriptionPlan = () => {
     );
     const stripe_currency = stripeKeyObject ? stripeKeyObject.data : null;
 
-    const breakpoints = {
-        0: { slidesPerView: 1.2 },
-        768: { slidesPerView: 2.5 },
-        992: { slidesPerView: 3 },
-        1200: { slidesPerView: 3.5 },
-    };
-
     const isUserLogin = isLogin();
 
     // Fetch packages
@@ -369,7 +362,6 @@ const SubscriptionPlan = () => {
                             loading={loading}
                             packagedata={packagedata}
                             language={language}
-                            breakpoints={breakpoints}
                             subscribePayment={subscribePayment}
                             systemsettings={systemsettings}
                             allFeatures={allFeatures}
