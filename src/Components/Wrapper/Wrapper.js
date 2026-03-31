@@ -1,7 +1,7 @@
 "use client"
 import React from 'react'
 import PropTypes from 'prop-types'
-// CSS
+// CSs..
 import classes from './Wrapper.module.css'
 
 const wrapper = (props) => {
