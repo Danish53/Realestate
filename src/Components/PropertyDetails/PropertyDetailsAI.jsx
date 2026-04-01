@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
 import { FiHome, FiMapPin, FiCalendar, FiSquare } from "react-icons/fi";
-import { FaBed, FaBath } from "react-icons/fa";
+import { FaBed, FaBath, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
@@ -100,6 +100,10 @@ const PropertyDetailsAI = () => {
     fetchDetail();
   }, [router.isReady, slug]);
 
+
+  const whatsappDigits = detail?.agent?.phone
+        ? String(detail?.agent?.phone).replace(/\D/g, '')
+        : ''
   // ---------------- Helpers ----------------
 
   const openLightbox = (index) => {
@@ -117,6 +121,8 @@ const PropertyDetailsAI = () => {
   // Gallery – original working implementation (card + grid + simple lightbox)
   const renderGallery = () => {
     if (!detail?.gallery || !detail.gallery.length) return null;
+
+    
 
     return (
       <div className="prop-detail-card">
@@ -542,11 +548,20 @@ const PropertyDetailsAI = () => {
                   </h3>
                 </div>
                 <a
-                  href={detail.agent?.phone ? `tel:${detail.agent.phone}` : "tel:03238450741"}
-                  className="btn btn-success w-75 text-center m-3"
-                >
-                  Call Now
-                </a>
+                        href={`https://wa.me/${whatsappDigits}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 hover:shadow-sm transition-all group"
+                        aria-label={`${translate("whatsapp")} ${detail?.agent?.phone}`}
+                    >
+                        <div className="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-105 transition-all shrink-0">
+                            <FaWhatsapp size={26} />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-gray-500">{translate("whatsapp")}</span>
+                            <span className="text-gray-900 font-semibold truncate text-[15px]">{detail?.agent?.phone}</span>
+                        </div>
+                    </a>
               </div>
 
               {canShowMortgageCalculator && (

@@ -3,6 +3,7 @@ import { BadgeSvg, placeholderImage, translate } from '@/utils/helper'
 import Image from 'next/image'
 import React from 'react'
 import { CiLocationOn } from 'react-icons/ci'
+import { FaWhatsapp } from 'react-icons/fa'
 import { FiMail, FiMessageSquare, FiPhoneCall, FiThumbsUp } from 'react-icons/fi'
 import { MdReport } from 'react-icons/md'
 import { RiMailSendLine, RiThumbUpFill } from 'react-icons/ri'
@@ -23,6 +24,10 @@ const OwnerDeatilsCard = (
         PlaceHolderImg,
         handlecheckPremiumUserAgent
     }) => {
+        const whatsappDigits = getPropData?.mobile
+        ? String(getPropData.mobile).replace(/\D/g, '')
+        : ''
+
     return (
         <div className="flex flex-col h-full bg-white">
             {/* Header / Profile Section */}
@@ -90,19 +95,24 @@ const OwnerDeatilsCard = (
                     </div>
                 )}
 
-                {/* Chat Button */}
-                {showChat && isMessagingSupported && notificationPermissionGranted && (
-                    <div className="flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 hover:shadow-sm cursor-pointer transition-all group" onClick={handleChat}>
-                        <div className="w-12 h-12 rounded-full bg-primary-50 text-primary-500 flex items-center justify-center group-hover:scale-105 transition-all shrink-0">
-                            {/* Note: FiMessageSquare imported from react-icons/fi above */}
-                            <svg stroke="currentColor" fill="none" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="22" width="22" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                {/* WhatsApp */}
+                {/* {whatsappDigits && ( */}
+                    <a
+                        href={`https://wa.me/${whatsappDigits}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 hover:shadow-sm transition-all group"
+                        aria-label={`${translate("whatsapp")} ${getPropData.mobile}`}
+                    >
+                        <div className="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-105 transition-all shrink-0">
+                            <FaWhatsapp size={26} />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-gray-500">{translate("chat")}</span>
-                            <span className="text-gray-900 font-semibold truncate text-[15px]">{translate("startAChat")}</span>
+                            <span className="text-sm font-medium text-gray-500">{translate("whatsapp")}</span>
+                            <span className="text-gray-900 font-semibold truncate text-[15px]">{getPropData.mobile}</span>
                         </div>
-                    </div>
-                )}
+                    </a>
+                {/* )} */}
             </div>
 
             {/* Actions Footer */}

@@ -131,6 +131,7 @@ const CITY_SLUGS = {
   hyderabad: "Hyderabad-249",
   murree: "Murree-19",
   gwadar: "Gwadar-1065"
+
 };
 
 const AREA_SLUGS = {
