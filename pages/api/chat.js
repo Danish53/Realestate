@@ -99,7 +99,7 @@ function extractPriceRange(message) {
   let priceMax = null;
 
   // Regex for "under 50 lakh", "below 1 crore", etc.
-  const underMatch = text.match(/(under|below|less than|upto)\s+(\d+(\.\d+)?)\s*(lakh|lac|crore|cr)?/);
+  const underMatch = text.match(/(under|below|less than|upto|under 50 lakh|below 1 crore|between|and|crore|cr|lakh|lac|thousand|k)\s+(\d+(\.\d+)?)\s*(lakh|lac|crore|cr|thousand|k)?/);
   if (underMatch) {
     priceMax = parseAmount(underMatch[2], underMatch[4] || "");
   }
@@ -109,6 +109,15 @@ function extractPriceRange(message) {
   if (betweenMatch) {
     priceMin = parseAmount(betweenMatch[1], betweenMatch[3] || betweenMatch[7] || "");
     priceMax = parseAmount(betweenMatch[5], betweenMatch[7] || "");
+  }
+
+  // Match **any standalone price** in the text
+  const priceMatch = text.match(/(\d+(\.\d+)?)\s*(lakh|lac|crore|cr|k|thousand)/);
+  if (priceMatch) {
+    const amount = parseAmount(priceMatch[1], priceMatch[3] || "");
+    priceMin = amount;
+    priceMax = amount;
+    return { priceMin, priceMax };
   }
 
   return { priceMin, priceMax };

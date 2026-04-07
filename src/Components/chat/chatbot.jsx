@@ -314,15 +314,16 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             <div className="message-content">
               <div className="message-bubble">
                 {m.content}
+                <br/>
 
                 {m.hasProperties && m.pageLink && (
                   <a
                     href={m.pageLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="property-btn"
+                    className="property-btn text-[#F1592A]"
                   >
-                    View Full Property Listings
+                    View Listings
                   </a>
                 )}
               </div>

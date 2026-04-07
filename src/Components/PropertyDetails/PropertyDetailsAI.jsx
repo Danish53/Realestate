@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
-import { FiHome, FiMapPin, FiCalendar, FiSquare } from "react-icons/fi";
+import { FiHome, FiMapPin, FiCalendar, FiSquare, FiPhoneCall } from "react-icons/fi";
 import { FaBed, FaBath, FaWhatsapp } from "react-icons/fa";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -547,30 +547,49 @@ const PropertyDetailsAI = () => {
                     {translate ? translate("contact") : "Contact"}
                   </h3>
                 </div>
-                <a
+                {/* {detail?.agent?.phone && ( */}
+                  <div className="flex flex-col">
+                    {/* {whatsappDigits && ( */}
+                      <a
                         href={`https://wa.me/${whatsappDigits}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 hover:shadow-sm transition-all group"
-                        aria-label={`${translate("whatsapp")} ${detail?.agent?.phone}`}
-                    >
+                        className="flex items-center gap-4 p-3 rounded-xl  hover:bg-gray-50 hover:shadow-sm transition-all group"
+                        aria-label={`${translate("whatsapp")} ${"03238450741"}`}
+                      >
                         <div className="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-105 transition-all shrink-0">
-                            <FaWhatsapp size={26} />
+                          <FaWhatsapp size={26} />
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-gray-500">{translate("whatsapp")}</span>
-                            <span className="text-gray-900 font-semibold truncate text-[15px]">{detail?.agent?.phone}</span>
+                          <span className="text-sm font-medium text-gray-500">{translate("whatsapp")}</span>
+                          <span className="text-gray-900 font-semibold truncate text-[15px]">{"03238450741"}</span>
                         </div>
+                      </a>
+                    {/* )} */}
+                    <a
+                      href={`tel:03238450741`}
+                      className="flex items-center gap-4 p-3 rounded-xl  hover:bg-gray-50 hover:shadow-sm transition-all group"
+                      aria-label={`${translate("call")} ${"03238450741"}`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center group-hover:scale-105 group-hover:bg-green-100 transition-all shrink-0">
+                        <FiPhoneCall size={22} className="group-hover:animate-pulse" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium text-gray-500">{translate("call")}</span>
+                        <span className="text-gray-900 font-semibold truncate text-[15px]">{"03238450741"}</span>
+                      </div>
                     </a>
+                  </div>
+                {/* )} */}
               </div>
 
-              {canShowMortgageCalculator && (
+              {/* {canShowMortgageCalculator && (
                 <div className="prop-detail-sidebar-card">
                   <MortgageCalculator
                     data={{ ...detail, property_type: detail.dealType }}
                   />
                 </div>
-              )}
+              )} */}
             </aside>
           </div>
 

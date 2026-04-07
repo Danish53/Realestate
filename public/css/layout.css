@@ -89,6 +89,10 @@
   transition: background-color 0.2s, box-shadow 0.2s;
 }
 
+.property-btn{
+  text-decoration: underline !important;
+}
+
 #addbutton:hover,
 .add-property-btn:hover {
   background-color: var(--primary-hover) !important;
