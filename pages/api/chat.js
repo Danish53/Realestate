@@ -1,3 +1,4 @@
+import { stripChatMarkdown } from "@/utils/stripChatMarkdown";
 
 // pages/api/chat.js
 // --------------- Helper: Size parsing ---------------
@@ -25,13 +26,52 @@ function parseSizeFromText(text = "") {
 }
 
 // --------------- Helper: Property type / purpose ---------------
-function detectPropertyType(text = "") {
-  const t = text.toLowerCase();
+/** Type keywords in the latest user message only — wins over older lines in merged chat text. */
+function detectPropertyTypeFromLastSegment(lastUserMessage = "") {
+  const t = String(lastUserMessage || "").toLowerCase().trim();
+  if (!t) return null;
   if (/\b(plot|plots|file)\b/.test(t)) return "plot";
-  if (/\b(house|home|villa|portion|houses)\b/.test(t)) return "house";
+  if (
+    /\b(house|home|homes|villa|villas|portion|houses|bungalow|bungalows)\b/.test(t)
+  )
+    return "house";
   if (/\b(flat|flats|apartment|apartments)\b/.test(t)) return "flat";
   if (/\b(shop|office|commercial)\b/.test(t)) return "commercial";
   return null;
+}
+
+/** Full-text scan (order: plot before house). Used after prior-line inference. */
+function detectPropertyTypeCore(text = "") {
+  const t = String(text || "").toLowerCase();
+  if (/\b(plot|plots|file)\b/.test(t)) return "plot";
+  if (
+    /\b(house|home|homes|villa|villas|portion|houses|bungalow|bungalows)\b/.test(t)
+  )
+    return "house";
+  if (/\b(flat|flats|apartment|apartments)\b/.test(t)) return "flat";
+  if (/\b(shop|office|commercial)\b/.test(t)) return "commercial";
+  return null;
+}
+
+/**
+ * If the last message is refinement-only (e.g. only beds/baths/price), infer house/flat/plot
+ * from **earlier** conversation text so category matches the user's prior house/flat search.
+ */
+function detectPropertyType(text = "", lastUserMessage = "") {
+  const fromLast = detectPropertyTypeFromLastSegment(lastUserMessage);
+  if (fromLast) return fromLast;
+
+  const last = String(lastUserMessage || "").trim();
+  if (last && isRefinementOnlyMessage(last)) {
+    const prior = getPriorConversationTextExcludingLast(text, lastUserMessage);
+    if (prior.length > 5) {
+      const fromPrior =
+        detectPropertyTypeFromLastSegment(prior) || detectPropertyTypeCore(prior);
+      if (fromPrior) return fromPrior;
+    }
+  }
+
+  return detectPropertyTypeCore(text);
 }
 
 function detectPurpose(text = "") {
@@ -43,17 +83,31 @@ function detectPurpose(text = "") {
 }
 
 function detectBeds(text = "") {
-  const m = text
-    .toLowerCase()
-    .match(/(\d+)\s*(bed|beds|bedroom|bedrooms|br)\b/i);
+  const low = text.toLowerCase();
+  let m = low.match(/(\d+)\s*(bed|beds|bedroom|bedrooms|br)\b/i);
+  if (!m) m = low.match(/(\d+)(bed|beds|bedroom|bedrooms)\b/i);
   return m ? parseInt(m[1], 10) : null;
 }
 
 function detectBaths(text = "") {
-  const m = text
-    .toLowerCase()
-    .match(/(\d+)\s*(bath|baths|bathroom|bathrooms)\b/i);
+  const low = text.toLowerCase();
+  let m = low.match(/(\d+)\s*(bath|baths|bathroom|bathrooms)\b/i);
+  if (!m) m = low.match(/(\d+)(bath|baths|bathroom|bathrooms)\b/i);
   return m ? parseInt(m[1], 10) : null;
+}
+
+/** Combined chat text with last user line removed (case-insensitive) — for type/category inference. */
+function getPriorConversationTextExcludingLast(fullText, lastUserMessage) {
+  const prior = String(fullText || "").trim();
+  const last = String(lastUserMessage || "").trim();
+  if (!last) return prior;
+  const lower = prior.toLowerCase();
+  const lastLow = last.toLowerCase();
+  const ix = lower.lastIndexOf(lastLow);
+  if (ix >= 0) return prior.slice(0, ix).replace(/\s+$/u, "").trim();
+  const parts = prior.split(/\n/).map((s) => s.trim()).filter(Boolean);
+  if (parts.length > 1) return parts.slice(0, -1).join(" \n ");
+  return "";
 }
 
 function convertToSquareMeters(size, unit) {
@@ -83,41 +137,106 @@ function convertToSquareMeters(size, unit) {
   return null;
 }
 
-// --------------- Helper: Price range (simple numbers) ---------------
+// --------------- Helper: Price range (PKR) ---------------
 function extractPriceRange(message) {
-  const text = message.toLowerCase().replace(/,/g, "");
+  const text = String(message || "")
+    .toLowerCase()
+    .replace(/,/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  // Helper to convert lakh/crore to numbers
   const parseAmount = (num, unit) => {
-    let val = parseFloat(num);
-    if (unit.includes("lakh") || unit.includes("lac")) return val * 100000;
-    if (unit.includes("crore") || unit.includes("cr")) return val * 10000000;
+    const val = parseFloat(num, 10);
+    if (Number.isNaN(val)) return null;
+    const u = (unit || "").toLowerCase();
+    if (u.includes("crore") || u === "cr") return val * 10000000;
+    if (u.includes("lakh") || u.includes("lac")) return val * 100000;
+    if (u.includes("thousand") || u === "k") return val * 1000;
     return val;
   };
 
   let priceMin = null;
   let priceMax = null;
 
-  // Regex for "under 50 lakh", "below 1 crore", etc.
-  const underMatch = text.match(/(under|below|less than|upto|under 50 lakh|below 1 crore|between|and|crore|cr|lakh|lac|thousand|k)\s+(\d+(\.\d+)?)\s*(lakh|lac|crore|cr|thousand|k)?/);
-  if (underMatch) {
-    priceMax = parseAmount(underMatch[2], underMatch[4] || "");
-  }
+  const UNIT = "(lakh|lac|crore|cr|k|thousand)s?";
+  const NUM = "(\\d+(?:\\.\\d+)?)";
 
-  // Range: "between 50 lakh and 1 crore"
-  const betweenMatch = text.match(/between\s+(\d+(\.\d+)?)\s*(lakh|lac|crore|cr)?\s+(and|-)\s+(\d+(\.\d+)?)\s*(lakh|lac|crore|cr)?/);
-  if (betweenMatch) {
-    priceMin = parseAmount(betweenMatch[1], betweenMatch[3] || betweenMatch[7] || "");
-    priceMax = parseAmount(betweenMatch[5], betweenMatch[7] || "");
-  }
-
-  // Match **any standalone price** in the text
-  const priceMatch = text.match(/(\d+(\.\d+)?)\s*(lakh|lac|crore|cr|k|thousand)/);
-  if (priceMatch) {
-    const amount = parseAmount(priceMatch[1], priceMatch[3] || "");
-    priceMin = amount;
-    priceMax = amount;
+  // "between 50 lakh and 1 crore" / "between 1.2 cr to 2 cr"
+  const betweenRe = new RegExp(
+    `between\\s+${NUM}\\s*${UNIT}?\\s+(?:and|-|to)\\s+${NUM}\\s*${UNIT}?`,
+    "i"
+  );
+  const bm = text.match(betweenRe);
+  if (bm) {
+    const u1 = bm[2] || "";
+    const u2 = (bm[4] || bm[2] || "").toLowerCase();
+    priceMin = parseAmount(bm[1], u1);
+    priceMax = parseAmount(bm[3], u2);
+    if (
+      priceMin != null &&
+      priceMax != null &&
+      priceMin > priceMax
+    ) {
+      const t = priceMin;
+      priceMin = priceMax;
+      priceMax = t;
+    }
     return { priceMin, priceMax };
+  }
+
+  // under / below / less than / upto / max ...
+  const underRe = new RegExp(
+    `(?:under|below|less\\s+than|upto|up\\s+to|maximum|max)\\s+${NUM}\\s*${UNIT}?`,
+    "i"
+  );
+  const um = text.match(underRe);
+  if (um) {
+    priceMax = parseAmount(um[1], um[2] || "");
+    return { priceMin, priceMax };
+  }
+
+  // above / over / more than / min ...
+  const overRe = new RegExp(
+    `(?:above|over|more\\s+than|minimum|min)\\s+${NUM}\\s*${UNIT}?`,
+    "i"
+  );
+  const om = text.match(overRe);
+  if (om) {
+    priceMin = parseAmount(om[1], om[2] || "");
+    return { priceMin, priceMax };
+  }
+
+  // "in 35 lac", "at 1.5 crore", "budget 1 crore", "within 80 lakh" (budget-style)
+  const budgetRe = new RegExp(
+    `\\b(?:in|at|for|around|about|near|budget|within)\\s+${NUM}\\s*${UNIT}\\b`,
+    "i"
+  );
+  const im = text.match(budgetRe);
+  if (im) {
+    const amt = parseAmount(im[1], im[2] || "");
+    if (amt != null) {
+      const fuzzy = /\b(around|about|near)\b/.test(im[0]);
+      if (fuzzy) {
+        priceMin = Math.round(amt * 0.85);
+        priceMax = Math.round(amt * 1.15);
+      } else {
+        // "in 1 crore" / "budget 1 cr" = cap only — include everything below up to this amount
+        priceMin = null;
+        priceMax = amt;
+      }
+      return { priceMin, priceMax };
+    }
+  }
+
+  // Last: first money amount in the line (e.g. "...lahore 1 crore" with no "in") — treat as **max budget only**, not min=max
+  const soloRe = new RegExp(`\\b${NUM}\\s*${UNIT}\\b`, "i");
+  const sm = text.match(soloRe);
+  if (sm) {
+    const amt = parseAmount(sm[1], sm[2] || "");
+    if (amt != null) {
+      priceMin = null;
+      priceMax = amt;
+    }
   }
 
   return { priceMin, priceMax };
@@ -336,8 +455,15 @@ const GRAANA_AREA_SLUGS = {
 
 function detectCityFromText(text = "") {
   const t = text.toLowerCase();
-  for (const name of Object.keys(CITY_SLUGS)) {
-    if (t.includes(name)) return name; // e.g. "lahore"
+  const keys = [
+    ...new Set([
+      ...Object.keys(CITY_SLUGS),
+      ...Object.keys(GRAANA_CITY_SLUGS),
+    ]),
+  ].sort((a, b) => b.length - a.length);
+  for (const name of keys) {
+    const phrase = name.replace(/_/g, " ");
+    if (t.includes(phrase)) return name;
   }
   return null;
 }
@@ -345,7 +471,10 @@ function detectCityFromText(text = "") {
 function detectAreaFromText(text = "") {
   const t = text.toLowerCase();
 
-  for (const [key, slug] of Object.entries(AREA_SLUGS)) {
+  const entries = Object.entries(AREA_SLUGS).sort(
+    (a, b) => b[0].length - a[0].length
+  );
+  for (const [key, slug] of entries) {
     if (t.includes(key)) {
       let areaLabel = key;
 
@@ -362,15 +491,42 @@ function detectAreaFromText(text = "") {
 
 function detectGraanaAreaFromText(text = "") {
   const t = text.toLowerCase();
-  for (const [key, slug] of Object.entries(GRAANA_AREA_SLUGS)) {
+  const entries = Object.entries(GRAANA_AREA_SLUGS).sort(
+    (a, b) => b[0].length - a[0].length
+  );
+  for (const [key, slug] of entries) {
     if (t.includes(key)) return slug;
   }
   return null;
 }
 
+function inferCityFromZameenAreaSlug(areaSlug) {
+  if (!areaSlug || typeof areaSlug !== "string") return null;
+  const prefix = areaSlug.split("_")[0];
+  const map = {
+    Lahore: "lahore",
+    Karachi: "karachi",
+    Islamabad: "islamabad",
+    Rawalpindi: "rawalpindi",
+    Multan: "multan",
+    Faisalabad: "faisalabad",
+    Peshawar: "peshawar",
+    Gujranwala: "gujranwala",
+    Quetta: "quetta",
+    Gwadar: "gwadar",
+  };
+  return map[prefix] || null;
+}
+
 function mapGraanaCitySlug(cityName) {
   if (!cityName) return null;
-  return GRAANA_CITY_SLUGS[cityName.toLowerCase()] || null;
+  const raw = String(cityName).toLowerCase().trim();
+  const underscored = raw.replace(/\s+/g, "_");
+  return (
+    GRAANA_CITY_SLUGS[underscored] ||
+    GRAANA_CITY_SLUGS[raw] ||
+    null
+  );
 }
 
 function mapCityNameToSlug(cityName) {
@@ -391,7 +547,14 @@ function mapPropertyTypeToCategory(propertyType, purpose, text = "") {
   }
 
   // --- 2. Houses / Flats ---
-  if (t === "house" || t === "home" || t === "villa" || t === "portion" || t === "houses") return "Houses";
+  if (
+    t === "house" ||
+    t === "home" ||
+    t === "villa" ||
+    t === "portion" ||
+    t === "houses"
+  )
+    return "Houses";
   if (t === "flat" || t === "apartment" || t === "flats") return "Flats";
 
   // --- 3. Office / Shop / Commercial detection ---
@@ -401,16 +564,16 @@ function mapPropertyTypeToCategory(propertyType, purpose, text = "") {
 
   // --- 4. Purpose fallback ---
   if (p === "commercial") return "Commercial_Plots";
-  if (p === "residential" || p === "sale") return "Residential_Plots";
+  // Do NOT map generic "sale" to Residential_Plots — that mis-tags house searches when type is unclear.
 
-  return "Homes"; // final fallback
+  return "Homes"; // default when category cannot be inferred
 }
 
 // --------------- Query classification ---------------
 function isPropertySearchQuery(text = "") {
   const t = text.toLowerCase();
   return (
-    /\b(plot|plots|file|house|home|villa|portion|flat|flats|apartment|apartments|shop|office|commercial)\b/.test(
+    /\b(plot|plots|file|house|homes|home|villa|villas|portion|houses|bungalow|bungalows|flat|flats|apartment|apartments|shop|office|commercial)\b/.test(
       t
     ) ||
     /\bmarla|kanal|sq ft|square feet|sq yd|rent|sale|buy|purchase|invest\b/.test(
@@ -424,12 +587,299 @@ function isNearMeQuery(text = "") {
   return /\bnear me|mere qareeb|around me|pass mein\b/.test(t);
 }
 
+/** Last N user messages joined — used to merge follow-up filters (beds/baths/budget) with earlier search. */
+function buildCombinedUserSearchText(messages) {
+  const users = (messages || [])
+    .filter((m) => m && m.role === "user")
+    .map((m) => normalizePropertySearchText(String(m.content || "").trim()))
+    .filter(Boolean);
+  const maxMsgs = 12;
+  return users.slice(-maxMsgs).join(" \n");
+}
+
+function hasPrimaryPropertyKeyword(text = "") {
+  const t = text.toLowerCase();
+  return (
+    /\b(plot|plots|file|house|homes|home|villa|villas|portion|houses|bungalow|bungalows|flat|flats|apartment|apartments|shop|office|commercial)\b/.test(
+      t
+    ) ||
+    /\bmarla|kanal|sq ft|square feet|sq yd|rent|sale|buy|purchase|invest\b/.test(t)
+  );
+}
+
+/** True if message looks like a filter tweak (beds, baths, price, size, area) without a full new property query. */
+function looksLikeSearchRefinement(text = "") {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  if (detectBeds(t) || detectBaths(t)) return true;
+  const { priceMin, priceMax } = extractPriceRange(t);
+  if (priceMin != null || priceMax != null) return true;
+  if (parseSizeFromText(t).size) return true;
+  if (detectAreaFromText(t).areaSlug || detectGraanaAreaFromText(t)) return true;
+  return false;
+}
+
+function isRefinementOnlyMessage(text = "") {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  if (hasPrimaryPropertyKeyword(t)) return false;
+  return looksLikeSearchRefinement(t);
+}
+
+/**
+ * User is adding detail (e.g. "good houses on Raiwind") without restating budget/size — merge with earlier turns for link params, while last message still wins for property type.
+ */
+function isAdditivePropertyFollowUp(userMessage = "") {
+  const t = String(userMessage || "").trim();
+  if (!t) return false;
+  if (isRefinementOnlyMessage(t)) return false;
+  if (!hasPrimaryPropertyKeyword(t)) return false;
+  const { priceMin, priceMax } = extractPriceRange(t);
+  if (priceMin != null || priceMax != null) return false;
+  const { size } = parseSizeFromText(t.toLowerCase());
+  if (size != null) return false;
+  return true;
+}
+
+/**
+ * Guides the model to mirror user language: English vs Roman Urdu vs Urdu script.
+ */
+function inferUserLanguageHint(text = "") {
+  const raw = String(text || "").trim();
+  if (!raw) return "Mirror the user's language.";
+
+  if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(raw)) {
+    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural.";
+  }
+
+  const lower = raw.toLowerCase();
+  const romanUrdu =
+    /\b(kay|kya|hai|hain|ke liye|mujhe|aapko|aap|mera|mere|chahiye|talash|dhoondh|dhoond|raha|rahi|rahe|hoon|hon|par|mein|main|wala|wali|acha|achhi|bata|dekho|yeh|ye|kuch|nahi|nahin|agar|warna|bhi|isko|uss|liye|mil|milte|mil sakte|zaroorat)\b/i.test(
+      lower
+    ) || /[؟]/u.test(raw);
+
+  const englishLean =
+    /\b(looking for|i want|i need|can you|please|show me|find|search|plot|house|flat|for sale|to rent|budget|lac|lakh|crore|marla|kanal)\b/i.test(
+      lower
+    ) && !romanUrdu;
+
+  // Short English-style queries: "5marla plot raiwind road in 50lac" (spacing optional)
+  const compactEnglishProperty =
+    !romanUrdu &&
+    /\b(plot|plots|house|flat|road|block|phase|dha|bahria|society)\b|\d+\s*marla|marla|kanal/i.test(
+      lower
+    ) && /\b(in|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
+
+  if (romanUrdu) {
+    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth** (2–4 paragraphs when area/size/budget given): **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions** (priorities / trade-offs / what to verify). No empty hospitality closings.";
+  }
+  if (englishLean || compactEnglishProperty) {
+    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**. Use **2–4 paragraphs** (blank lines between) when they gave area/size/budget: (1) acknowledge ask without robotic \"You are looking for…\" every time — vary the opening; (2) **2025–2026** market framing + **broad PKR range** for that corridor; (3) **budget fit** + ✅/❌ or clear trade-offs; (4) **2–3 concrete suggestions** (e.g. \"I'd prioritize…\", \"If budget is tight, lean toward…\", \"Verify first:…\"). Never end with generic \"let me know / assist you further\" filler.";
+  }
+  return "Mirror the user's language (English vs Roman Urdu); default to English if unclear.";
+}
+
+function formatPkBudgetPhrase(minP, maxP) {
+  const fmt = (n) => {
+    if (n >= 10000000)
+      return `${(n / 10000000).toFixed(Number.isInteger(n / 10000000) ? 0 : 2)} crore`;
+    return `${(n / 100000).toFixed(Number.isInteger(n / 100000) ? 0 : 1)} lakh`;
+  };
+  if (minP != null && maxP != null && Math.abs(minP - maxP) > 1)
+    return `around ${fmt(minP)} to ${fmt(maxP)} PKR`;
+  if (maxP != null) return `around up to ${fmt(maxP)} PKR`;
+  if (minP != null) return `from about ${fmt(minP)} PKR`;
+  return null;
+}
+
+/** One-line summary for the model (English) — mirrors parsed filters */
+function buildSearchSummaryForPrompt(f) {
+  if (!f) return "";
+  const bits = [];
+  if (f.propertyType) bits.push(f.propertyType);
+  if (f.size != null)
+    bits.push(`${f.size} ${f.sizeUnit || "marla"}`.trim());
+  const place =
+    f.areaLabel ||
+    (f.areaSlug ? String(f.areaSlug).replace(/_/g, " ") : "") ||
+    f.city ||
+    "";
+  if (place) bits.push(place);
+  else if (f.city) bits.push(f.city);
+  const budget = formatPkBudgetPhrase(f.minPrice, f.maxPrice);
+  if (budget) bits.push(budget);
+  bits.push(f.purpose === "rent" ? "rent" : "sale");
+  return bits.filter(Boolean).join(" · ");
+}
+
+/**
+ * Common misspellings → forms that match AREA_SLUGS / GRAANA_AREA_SLUGS / city detection.
+ */
+function normalizePropertySearchText(text = "") {
+  if (!text || typeof text !== "string") return text;
+  let t = text.replace(/\s+/g, " ").trim();
+
+  const replacements = [
+    [/\brawind\s+road\b/gi, "raiwind road"],
+    [/\brawind\b/gi, "raiwind"],
+    [/\briwand\s+road\b/gi, "raiwind road"],
+    [/\briwand\b/gi, "raiwind"],
+    [/\braywind\b/gi, "raiwind"],
+    [/\bray\s+wind\b/gi, "raiwind"],
+    [/\brywind\b/gi, "raiwind"],
+    [/\braiwind\s+raod\b/gi, "raiwind road"],
+    [/\braiwind\s+rod\b/gi, "raiwind road"],
+    [/\briwand\s+raod\b/gi, "raiwind road"],
+    [/\briwand\s+rod\b/gi, "raiwind road"],
+    [/\bjohar\s+toun\b/gi, "johar town"],
+    [/\bdha\s+defense\b/gi, "dha defence"],
+    [/\bdha\s+deffence\b/gi, "dha defence"],
+    [/\bbahria\s+toun\b/gi, "bahria town"],
+    [/\bmodel\s+toun\b/gi, "model town"],
+    [/\bfaisal\s+toun\b/gi, "faisal town"],
+    [/\bvalencia\s+toun\b/gi, "valencia town"],
+    [/\blahoer\b/gi, "lahore"],
+    [/\blahoree\b/gi, "lahore"],
+    [/\bkarchi\b/gi, "karachi"],
+    [/\bislamabed\b/gi, "islamabad"],
+    [/\bgulberg\s+lahore\b/gi, "gulberg"],
+    [/\bfirozpor\s+road\b/gi, "firozpur road"],
+    [/\bfirozpore\s+road\b/gi, "firozpur road"],
+  ];
+
+  for (const [re, rep] of replacements) {
+    t = t.replace(re, rep);
+  }
+
+  // "70lac" / "1.5crore" — glued number + money unit fails price regex word boundaries
+  t = t.replace(
+    /(\d+(?:\.\d+)?)(lac|lacs|lakh|lakhs|crore|crores|cr)\b/gi,
+    "$1 $2"
+  );
+
+  t = t.replace(/(\d+(?:\.\d+)?)\s*marla\b/gi, "$1 marla");
+  t = t.replace(/(\d+(?:\.\d+)?)\s*kanal\b/gi, "$1 kanal");
+
+  return t;
+}
+
+function shouldRemoveListingCtaSentence(s) {
+  const x = String(s || "")
+    .toLowerCase()
+    .trim();
+  if (!x) return false;
+  if (/\bto ensure you find the best options\b/.test(x) && /\blistings?\b/.test(x))
+    return true;
+  if (/\bi recommend exploring\b/.test(x) && /\blistings?\b/.test(x)) return true;
+  if (/\brecommend exploring\b/.test(x) && /\blistings?\b/.test(x)) return true;
+  if (/\bexplor(e|ing)\b/.test(x) && /\blistings?\b/.test(x)) return true;
+  if (/\bbrowse\b/.test(x) && /\blistings?\b/.test(x)) return true;
+  if (/\bview\s+(the\s+)?(current\s+)?listings?\b/.test(x)) return true;
+  if (/\bcheck\s+(the\s+)?listings?\b/.test(x)) return true;
+  if (/\bsearch\s+.*listings?\b/.test(x) && /\b(recommend|please|try|best)\b/.test(x))
+    return true;
+  if (
+    /\bcurrent\s+listings?\b/.test(x) &&
+    /\b(recommend|ensure|suggest|consider|exploring|find the best)\b/.test(x)
+  )
+    return true;
+  return false;
+}
+
+/** Removes generic "let me know / assist you further" closings that add no market value. */
+function shouldRemoveGenericAssistantFillerSentence(s) {
+  const x = String(s || "")
+    .toLowerCase()
+    .trim();
+  if (!x) return false;
+  if (
+    /\bif you have any specific preferences\b/.test(x) &&
+    /\b(please let me know|assist you further|further assistance|in your search)\b/.test(x)
+  )
+    return true;
+  if (
+    /\bif you have any specific preferences\b/.test(x) &&
+    /\b(regarding the type of society|additional features)\b/.test(x)
+  )
+    return true;
+  if (
+    /\bplease let me know\b/.test(x) &&
+    /\b(assist you further|i can assist)\b/.test(x)
+  )
+    return true;
+  if (
+    /\bplease let me know\b/.test(x) &&
+    /\bin your search\b/.test(x)
+  )
+    return true;
+  return false;
+}
+
+/** Removes generic "established societies / amenities" filler with no trade-off (brochure line). */
+function shouldRemoveBrochureFillerSentence(s) {
+  const x = String(s || "")
+    .toLowerCase()
+    .trim();
+  if (!x) return false;
+  const hasConcrete =
+    /\b(lac|lakh|crore|cr|verify|file|possession|noc|map|range|band|2025|2026)\b/i.test(
+      x
+    );
+  if (hasConcrete) return false;
+  if (
+    /\btypically find options\b/.test(x) &&
+    /\b(established|developing)\b/.test(x) &&
+    /\bsocieties\b/.test(x)
+  )
+    return true;
+  if (
+    /\bwell-?developed\b/.test(x) &&
+    /\bamenities\b/.test(x) &&
+    /\binfrastructure\b/.test(x)
+  )
+    return true;
+  return false;
+}
+
+/** Removes sentences that push users to browse/search listings (model often ignores prompt). */
+function sanitizeListingCtaFromAssistantText(text) {
+  if (!text || typeof text !== "string") return text;
+  const paras = text.replace(/\r\n/g, "\n").split(/\n\n+/);
+  const outParas = paras
+    .map((para) => {
+      const parts = para.split(/(?<=[.!?])\s+/);
+      const kept = parts
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter(
+          (s) =>
+            !shouldRemoveListingCtaSentence(s) &&
+            !shouldRemoveGenericAssistantFillerSentence(s) &&
+            !shouldRemoveBrochureFillerSentence(s)
+        );
+      return kept.join(" ");
+    })
+    .filter((p) => p.trim());
+  const out = outParas.join("\n\n").trim();
+  if (!out) return text.trim();
+  return out;
+}
+
 // --------------- Main: extractSearchParams ---------------
-function extractSearchParams(text, userLocation = null, isNearMe = false) {
+function extractSearchParams(
+  text,
+  userLocation = null,
+  isNearMe = false,
+  lastUserMessage = ""
+) {
+  text = normalizePropertySearchText(text);
+  lastUserMessage = normalizePropertySearchText(lastUserMessage);
+
   const t = text.toLowerCase();
 
   let cityFromText = detectCityFromText(t);
   let { areaSlug, areaLabel } = detectAreaFromText(t);
+  const graanaAreaSlug = detectGraanaAreaFromText(t);
 
   let city =
     cityFromText ||
@@ -437,25 +887,83 @@ function extractSearchParams(text, userLocation = null, isNearMe = false) {
       ? userLocation.city.toLowerCase()
       : null);
 
-  // --- ADD THIS (Graana slugs) ---
-  const graanaAreaSlug = detectGraanaAreaFromText(t);
-  const graanaCitySlug = mapGraanaCitySlug(city);
+  if (!city && areaSlug) {
+    const inferred = inferCityFromZameenAreaSlug(areaSlug);
+    if (inferred) city = inferred;
+  }
+  if (!city && graanaAreaSlug) {
+    const known = new Set([
+      "lahore",
+      "karachi",
+      "islamabad",
+      "rawalpindi",
+      "multan",
+      "faisalabad",
+      "peshawar",
+      "gujranwala",
+      "quetta",
+      "hyderabad",
+      "sialkot",
+      "murree",
+      "gwadar",
+    ]);
+    for (const part of graanaAreaSlug.split("-")) {
+      if (known.has(part)) {
+        city = part;
+        break;
+      }
+    }
+  }
 
-  const { priceMin, priceMax } = extractPriceRange(t);
+  const { priceMin, priceMax } = extractPriceRange(text);
   const { size, sizeUnit } = parseSizeFromText(t);
-  const propertyType = detectPropertyType(t);
+  let propertyType = detectPropertyType(t, lastUserMessage);
   const purpose = detectPurpose(t);
   const beds = detectBeds(t);
   const baths = detectBaths(t);
 
+  const lastLm = String(lastUserMessage || "").trim();
+  const bedsInLast = detectBeds(lastLm);
+  const bathsInLast = detectBaths(lastLm);
+  if (
+    (bedsInLast || bathsInLast) &&
+    propertyType !== "house" &&
+    propertyType !== "flat"
+  ) {
+    const priorOnly = getPriorConversationTextExcludingLast(text, lastUserMessage);
+    if (priorOnly.length > 3) {
+      const fromPrior =
+        detectPropertyTypeFromLastSegment(priorOnly) ||
+        detectPropertyTypeCore(priorOnly);
+      if (fromPrior === "house" || fromPrior === "flat") {
+        propertyType = fromPrior;
+      } else if (fromPrior == null) {
+        propertyType = "house";
+      }
+    } else if (!priorOnly && (bedsInLast || bathsInLast)) {
+      propertyType = "house";
+    }
+  }
+
+  // Residential plots do not have bed/bath filters — if user specified bedrooms/bathrooms, use built (house) category.
+  if (propertyType === "plot" && (beds || baths)) {
+    propertyType = "house";
+  }
+
   // Zameen specific:
   const category = mapPropertyTypeToCategory(propertyType, purpose, t);
-  const citySlug = mapCityNameToSlug(city); // e.g. "Lahore-1"
+
+  if (isNearMe && userLocation && !city && userLocation.city) {
+    city = userLocation.city.toLowerCase();
+  }
+
+  const graanaCitySlug = mapGraanaCitySlug(city);
+  const citySlug = mapCityNameToSlug(city);
 
   const params = {};
 
   // High-level for frontend
-  if (city) params.city = city; // "lahore"
+  if (city) params.city = city;
   if (areaSlug) params.area = areaSlug;
   if (graanaAreaSlug) params.graanaArea = graanaAreaSlug;
   if (graanaCitySlug) params.graanaCity = graanaCitySlug;
@@ -477,16 +985,13 @@ function extractSearchParams(text, userLocation = null, isNearMe = false) {
       params.lat = userLocation.lat;
       params.lng = userLocation.lng;
     }
-    if (!city && userLocation.city) {
-      params.city = userLocation.city.toLowerCase();
-    }
   }
 
   params.q = text;
 
   // Backend / URL ke liye direct fields
-  params.category = category; // e.g. Residential_Plots
-  params.citySlug = citySlug; // e.g. Lahore-1
+  params.category = category;
+  params.citySlug = citySlug || null;
   params.areaSlug = areaSlug || null;
   params.graanaArea = graanaAreaSlug || null;
   params.graanaCity = graanaCitySlug || null;
@@ -679,68 +1184,115 @@ export default async function handler(req, res) {
       }
     }
 
-    const isPropSearch = isPropertySearchQuery(userMessage);
+    const userMessageNorm = normalizePropertySearchText(userMessage);
+    const combinedUserSearchText = normalizePropertySearchText(
+      buildCombinedUserSearchText(messages)
+    );
     const nearMe = isNearMeQuery(userMessage);
+
+    // Follow-ups like "5 bed 4 bath" alone don't match isPropertySearchQuery — merge with earlier user lines so pageLink + filters update.
+    const isPropSearch =
+      isPropertySearchQuery(userMessageNorm) ||
+      (isRefinementOnlyMessage(userMessageNorm) &&
+        isPropertySearchQuery(combinedUserSearchText));
+
+    let extractText = userMessageNorm;
+    if (
+      isPropertySearchQuery(combinedUserSearchText) &&
+      (isRefinementOnlyMessage(userMessageNorm) ||
+        isAdditivePropertyFollowUp(userMessageNorm))
+    ) {
+      extractText = combinedUserSearchText;
+    }
 
     let searchInfo = null;
     if (isPropSearch) {
-      searchInfo = extractSearchParams(userMessage, userLocation, nearMe);
+      searchInfo = extractSearchParams(
+        extractText,
+        userLocation,
+        nearMe,
+        userMessageNorm
+      );
     }
+
+    const languageDirective = inferUserLanguageHint(userMessage);
 
     // ---------- SYSTEM PROMPT ----------
     let systemPrompt = `
 You are "AI Land MKT Assistant", a premium and highly professional real-estate expert for Pakistan.
+
+PRIMARY LANGUAGE FOR THIS REPLY (follow strictly):
+${languageDirective}
 
 CORE IDENTITY:
 - You represent a trusted, high-end property platform.
 - Your tone must always be confident, professional, and helpful.
 - Never sound robotic, casual, or playful.
 - Never mention that you are an AI.
+- **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Every property-search reply with budget + area should include **at least two explicit recommendation-style sentences** (could start with \"I'd suggest…\", \"In your situation I'd prioritize…\", \"A practical path is…\").
 
 LANGUAGE RULES:
-- If the user writes in Urdu/Hindi (Roman Urdu included), respond in Urdu/Hindi.
-- Otherwise, respond in clear professional English.
-- Keep answers concise and well-structured.
-- Use English for real-estate terms such as "marla", "kanal", "DHA", "possession", "installments", etc., even in Urdu responses.
+- Match the user's language as directed above. Do not answer in Roman Urdu if they wrote in English-only prompts.
+- Use English for real-estate terms such as "marla", "kanal", "DHA", "possession", "installments", etc., even in Roman Urdu responses.
 
 --------------------------------------------------
 PROPERTY SEARCH BEHAVIOR
 --------------------------------------------------
 
-When the user is searching for property (buy, sell, invest, under budget, in city/area, plots, houses, etc.):
+When the user is searching for property (buy, sell, invest, budget, city/area, plots, houses, flats, marla/kanal size, etc.):
 
 STRICT RULES:
-- DO NOT use bullet points, numbering, dashes, or headings.
-- DO NOT list phases, blocks, or societies individually.
-- DO NOT write markdown formatting like "###".
-- DO NOT say "Here are some options" or "Here is a list".
-- DO NOT provide fabricated or estimated prices per phase/block.
-- DO NOT create fake listings.
+- **Timeframe:** For "current" Pakistan market commentary use **2025–2026** only. Do **not** refer to 2024, 2023, or older years as if they were today's market.
+- DO NOT use markdown heading markers (e.g. ###) or numbered section titles.
+- **Visual tips:** Start actionable lines with plain emoji: ✅ ❌ 👍 🔥 (paste the characters directly). Never type asterisks or markdown bold — the app shows plain text only.
+- DO NOT list individual blocks/phases or invent fake listing addresses or plot numbers.
+- DO NOT paste URLs or say "link below", "click here", "open the link", "View Listings", "browse listings button", or any phrase that tells the user to click a button — the app shows that action separately. Your reply must be **text-only guidance** with no call-to-action about buttons or links.
+- **Never** send the user to "listings" or the search page in words. Forbidden phrases (and close variants): "explore listings", "browse listings", "current listings", "see the listings", "check listings", "view available listings", "search listings", "to proceed", "identify suitable plots/properties that meet your criteria", "use the listings feature". The UI already provides that; your job is **consultant advice only**.
+- **Closing:** Prefer society/possession/transfer/verification angles (e.g. compare possession timelines, confirm map/NOC, understand file vs plot) or **one** clarifying question — **not** "go look at listings".
+- You **may** use short bullet lines and ✅ / ❌ when explaining **budget vs market reality** (what is often realistic vs unlikely in that corridor) — like a clear consultant brief, not a listing sheet.
 
-RESPONSE FORMAT:
-- Reply in ONE short paragraph only.
-- Maximum 2 sentences.
-- No manual line breaks.
-- Speak generally about what type of properties are usually available in that area and budget.
-- Assume the website will show live listings separately.
-- Keep it polished and premium sounding.
+PLOT / FILE vs BUILT PROPERTY:
+- If the user asked for a **plot** or **file** only: stay on plots — mention location, size, and budget fit in general terms (e.g. demand, possession timeline varies by society). Do **not** ask about bedrooms or bathrooms.
+- If they asked for a **house**, **flat**, or **apartment** and **bedroom/bathroom counts are not yet clear** from the conversation: add **one short, professional sentence** (in their language) inviting them to share **how many bedrooms and bathrooms** they want. Frame it as: finer matching on the platform when they are ready — e.g. *"If you share your preferred bedroom and bathroom count, we can align the search more tightly with your layout needs"* — **not** pushy, not like a form, **not** repetitive if they already stated counts.
+- If they **already** gave beds and baths, do **not** ask again.
 
-SPELLING CORRECTION:
-- If the user misspells a location (e.g., "riwand" instead of "Raiwind"), automatically detect the correct spelling.
-- Start the response with:
-  "I understand you are looking for properties in [Correct Spelling]..."
-- Always use the correct spelling in the response.
+MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + budget):
+- **Tone:** premium consultant, honest and grounded — not alarmist, not fake optimism.
+- **Anchor** at least one phrase to **2025–2026** Pakistan market conditions (e.g. "In the 2025–2026 cycle for this corridor…") when giving segment/budget guidance — not a fake statistic, just timeframe clarity. Do **not** anchor on past years (e.g. 2024) as "current".
+- You may reference **2025–2026** as typical for general market guidance in Pakistan — not older cycles unless clearly labeled as historical comparison.
+- Give **approximate PKR bands** in broad terms (e.g. "many segments in this corridor often trade in roughly **X–Y lakh** range; exact figures vary by society, block, and facing"). Never claim a single verified price for a specific plot ID. Avoid the word "listings" when describing market bands — use "market", "segment", "typical range".
+- If their budget is **below** the typical band for that size + location, explain **practically**: what categories often **may** still exist (e.g. file, non-possession, outer pockets, newer schemes, installments) vs what is **usually** hard at that budget (develop prime possession, top-tier blocks) — without calling any party a scam; say "verify carefully" / "due diligence".
+- Optionally name **well-known society types** (e.g. established vs new schemes) at a **generic** level — not as guaranteed listings.
+- If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep structure readable (short paragraphs + optional bullet lines).
+
+RESPONSE FORMAT (property search — ChatGPT/Cursor-level usefulness, not brochure text):
+- When the user gave **area + size + budget** (or plot/house + size + corridor + budget): write **at least 3 paragraphs** (each separated by a **blank line**). Shorter replies are only OK when the query is vague or missing key numbers.
+- **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
+- **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
+- **Paragraph 1:** Acknowledge their ask (type, size, area, budget) with correct spellings + one **2025–2026** framing line.
+- **Paragraph 2 (segment):** Corridor dynamics + **typical PKR band** for that size (broad range, disclaimer) + what usually drives price (possession, block, file vs plot).
+- **Paragraph 3 (budget + judgment):** Honest **budget vs band** fit + short lines starting with **✅ / ❌ / 👍 / 🔥** where useful (no `*` markdown) + **2–3 explicit suggestions** (priorities, alternatives, verification order).
+- **Mandatory:** Include **at least two sentences** that read as **recommendations** (suggestion / priority / \"if… then…\"), not just description.
+
+FORBIDDEN thin / template closings (never use these patterns):
+- "If you have any specific preferences… I can assist you further in your search"
+- "Please let me know… and I can assist you further"
+- Any paragraph that only offers generic help without **specific** market or due-diligence content
+- Any closing that is only **"let me know if you need anything"** style without a concrete next step idea
+
+LOCATION SPELLING:
+- Fix obvious typos (e.g. "riwand" → Raiwind) in your reply.
 
 --------------------------------------------------
 INCOMPLETE INFORMATION HANDLING
 --------------------------------------------------
 
-- If the user is looking for a "House", "Flat", or "Apartment" but HAS NOT mentioned the number of bedrooms or bathrooms, you MUST include this exact question in your response: 
-  "Would you like to specify the number of bedrooms (beds_in) and bathrooms (baths_in) to narrow down your search?"
-- If the budget is missing, ask for their budget range (price_min to price_max).
-- For all other cases, professionally ask for: Property category, City, Area, Budget, and Size.
+- **House / flat / apartment** — if **bedrooms and/or bathrooms** are missing: mention **once**, in a **consultant tone**, that specifying both helps the app apply **layout filters** and surface **more relevant** built properties. Keep it **optional** ("when you're ready" / "if you'd like tighter results"). Match **Roman Urdu** if the user wrote in Urdu style.
+- **Plot/file**: do not ask beds/baths.
+- If the budget is missing for a purchase/rent search, ask politely for their range (lakh/crore).
+- Otherwise ask only what is still needed: category, city, area, budget, size.
 
-STRICT RULE: Do not say "Here are some options". Keep the response as a professional overview + the missing info question.
+STRICT RULE: Do not say "Here are some options" as listing claims. You may still outline **what to look for** in the market when helpful.
 
 Do not assume missing details.
 Do not generate fake assumptions.
@@ -774,6 +1326,7 @@ SAFETY & ACCURACY
 - Never generate fake listings.
 - Never invent exact prices.
 - Never promise guaranteed profits.
+- Do not present **outdated years** (pre-2025) as the live market unless clearly historical; default framing is **2025–2026**.
 - If unsure, provide safe general guidance.
 - Always maintain credibility and authority.
 
@@ -783,26 +1336,39 @@ Your goal is to behave like a top-tier real-estate consultant in Pakistan.
     if (isPropSearch && searchInfo?.filtersForAI) {
       const f = searchInfo.filtersForAI;
       const needsBeds = ["house", "flat", "apartment"].includes(f.propertyType);
+      const layoutIncomplete =
+        needsBeds && (f.beds == null || f.baths == null);
+      const summaryLine = buildSearchSummaryForPrompt(f);
+      const plotOnly = f.propertyType === "plot";
       systemPrompt += `
-INTERNAL CONTEXT (do NOT repeat this text to the user):
-- This is a PROPERTY SEARCH query.
-- Approx filters:
-- Property: ${f.propertyType}
-- Missing Beds/Baths: ${needsBeds ? "YES" : "NO"}
-- Instruction: If Missing Beds is YES, you MUST ask the user: "Would you like to specify the number of bedrooms (beds_in) and bathrooms (baths_in) to narrow down your search?"
-  - City: ${f.city || "not specified"}
-  - Area/Society: ${f.areaLabel || f.areaSlug || "not specified"}
-  - Near-me based: ${f.nearMeUsed ? "yes" : "no"}
-  - Purpose: ${f.purpose || "sale (default)"}
-  - Property type: ${f.propertyType || "any"}
-  - Min budget (PKR): ${f.minPrice || "not specified"}
-  - Max budget (PKR): ${f.maxPrice || "not specified"}
-  - Size: ${f.size ? `${f.size} ${f.sizeUnit || ""}`.trim() : "not specified"
-        }
-  - Bedrooms: ${f.beds || "not specified"}
-  - Bathrooms: ${f.baths || "not specified"}
+INTERNAL CONTEXT (do NOT dump raw filter keys to the user; use them to stay accurate):
+- Property search; parsed summary: ${summaryLine || "partial / broad query"}
+- Property type: ${f.propertyType || "not specified"}
+- Plot-only query: ${plotOnly ? "YES — discuss plots/files only; do NOT ask bedrooms/bathrooms" : "no"}
+- City: ${f.city || "not specified"}
+- Area/Society: ${f.areaLabel || f.areaSlug || "not specified"}
+- Near-me: ${f.nearMeUsed ? "yes" : "no"}
+- Purpose: ${f.purpose || "sale"}
+- Min budget PKR: ${f.minPrice ?? "n/a"} | Max budget PKR: ${f.maxPrice ?? "n/a"}
+- Size: ${f.size != null ? `${f.size} ${f.sizeUnit || ""}`.trim() : "n/a"}
+- Parsed beds/baths: ${f.beds ?? "n/a"} / ${f.baths ?? "n/a"}
+${
+  layoutIncomplete
+    ? `- **BUILT HOME — LAYOUT (required tone):** House/flat/apartment search; bedroom and/or bathroom count is **not fully specified**. Add **one professional sentence** inviting the user to share **bedrooms and bathrooms** if they want **stricter layout filters** and more precise matches on the platform. Sound like a senior consultant: polite, optional, value-focused ("finer filtering" / "align with your layout") — **not** a form. If only one of bed/bath is missing, ask only for the missing count. Do **not** ask on plot-only searches.`
+    : needsBeds
+      ? `- **Layout:** Beds/baths parsed; no layout prompt needed unless user changes ask.`
+      : `- **Layout:** Plot/file or other — do not prompt for beds/baths.`
+}
 
-Use this only to understand intent better; do not expose as filter text.
+The app UI handles browsing separately — do not mention buttons, links, "View Listings", or phrases like "explore/browse/current listings" in your reply. Never paste URLs.
+${
+  f.minPrice != null || f.maxPrice != null
+    ? (f.areaLabel || f.areaSlug || f.city
+        ? `
+- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first). Minimum **3 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
+        : "")
+    : ""
+}
 `;
     }
 
@@ -827,34 +1393,33 @@ Use this only to understand intent better; do not expose as filter text.
         body: JSON.stringify({
           model: "openai/gpt-4o-mini",
           messages: openRouterMessages,
-          temperature: 0.2,
-          max_tokens: 160,
+          temperature: 0.45,
+          max_tokens: 900,
         }),
       }
     );
 
     const data = await response.json();
-    console.log(data, "data reposnes")
-    console.log("OPENROUTER message:", JSON.stringify(data?.choices?.[0]?.message, null, 2));
     if (!response.ok) {
       throw new Error(data?.error?.message || "OpenRouter API error");
     }
 
     // let aiText = data.choices?.[0]?.message?.content || "";
     const msg = data?.choices?.[0]?.message;
-let aiText = "";
+    let aiText = "";
 
-if (typeof msg?.content === "string") {
-  aiText = msg.content;
-} else if (Array.isArray(msg?.content)) {
-  // for multimodal style content arrays
-  aiText = msg.content.map(part => part?.text || "").join("");
-}
+    if (typeof msg?.content === "string") {
+      aiText = msg.content;
+    } else if (Array.isArray(msg?.content)) {
+      aiText = msg.content.map((part) => part?.text || "").join("");
+    }
 
-// fallback debug
-if (!aiText) {
-  console.log("No aiText. msg=", JSON.stringify(msg, null, 2));
-}
+    if (isPropSearch && aiText) {
+      aiText = sanitizeListingCtaFromAssistantText(aiText);
+    }
+    if (aiText) {
+      aiText = stripChatMarkdown(aiText);
+    }
 
     // --------- Link generation only for property search ---------
     let params = null;
@@ -896,14 +1461,9 @@ if (!aiText) {
       appendGraanaParams(searchParams, params);
 
       pageLink = `/properties-list-all?${searchParams.toString()}`;
-      console.log("Generated page link:", pageLink);
-
-      const finalResponse = pageLink && !aiText.includes("link below")
-        ? `${aiText}\n\nYou can open the link below to see all matching listings.`
-        : aiText;
 
       return res.status(200).json({
-        text: finalResponse,
+        text: (aiText || "").trim(),
         params: pageLink ? params : null,
         pageLink: pageLink || null,
       });

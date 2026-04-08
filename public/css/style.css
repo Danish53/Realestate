@@ -35123,6 +35123,20 @@ html[dir="rtl"] .property-gallery__see-all {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
+.message-bubble .chat-listings-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.message-bubble .chat-msg-block {
+  margin: 0 0 0.65em 0;
+}
+
+.message-bubble .chat-msg-block:last-child {
+  margin-bottom: 0;
+}
+
 .message-wrapper:not(.user) .message-bubble {
   background: white;
   color: #1e293b;

@@ -96,6 +96,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, X, MessageCircle, Minimize2, Maximize2, Trash2 } from 'lucide-react';
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '@/utils/chatStorage';
+import { stripChatMarkdown } from '@/utils/stripChatMarkdown';
 
 const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
   const [messages, setMessages] = useState([]);
@@ -202,7 +203,6 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
       });
 
       const data = await response.json();
-      console.log(data, "errororoororororo")
 
       if (data.error) {
         console.error("API Error:", data.error);
@@ -228,7 +228,6 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
 
         setMessages(prev => [...prev, assistantMessage]);
 
-        // optional: parent callback agar aap use karna chahen
         if (onPropertyFound && data.pageLink) {
           onPropertyFound({
             data: null,
@@ -272,6 +271,18 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
     }]);
   };
 
+  /** Splits assistant text on blank lines so multi-paragraph replies render like ChatGPT. */
+  const renderAssistantText = (text) => {
+    const parts = stripChatMarkdown(String(text || ""))
+      .trim()
+      .split(/\n\n+/)
+      .filter(Boolean);
+    if (!parts.length) return null;
+    return parts.map((block, i) => (
+      <p key={i} className="chat-msg-block">{block}</p>
+    ));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -313,19 +324,17 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             </div>
             <div className="message-content">
               <div className="message-bubble">
-                {m.content}
-                <br/>
-
-                {m.hasProperties && m.pageLink && (
+                {m.role === "assistant" && m.hasProperties && m.pageLink && (
                   <a
                     href={m.pageLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="property-btn text-[#F1592A]"
+                    className="property-btn chat-listings-link text-[#F1592A]"
                   >
                     View Listings
                   </a>
                 )}
+                {m.role === "assistant" ? renderAssistantText(m.content) : m.content}
               </div>
 
               <span className="message-time">
