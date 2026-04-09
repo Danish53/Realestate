@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
 import VerticalCard from "@/Components/Cards/VerticleCard";
@@ -20,7 +20,6 @@ const PropertyList = ({ type }) => {
   const router = useRouter();
   const isLoggedIn = isLogin();
 
-  const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [grid, setGrid] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [properties, setProperties] = useState([]);
@@ -44,14 +43,10 @@ const PropertyList = ({ type }) => {
 
   const cityName = router.query;
 
+  const isFirstFilterFetch = useRef(true);
+
   useEffect(() => {}, [lang]);
   useEffect(() => {}, [grid]);
-
-  useEffect(() => {
-    if (router.isReady) {
-      fetchProperties(0, false);
-    }
-  }, [router.isReady, isLoggedIn]);
 
   const fetchProperties = (newOffset, isAppend = false) => {
     setIsLoading(true);
@@ -92,6 +87,25 @@ const PropertyList = ({ type }) => {
       },
     });
   };
+
+  /** Refetch when filters change (live). First load is immediate; later changes are debounced (price typing). */
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const runFetch = () => {
+      fetchProperties(0, false);
+      setOffset(0);
+    };
+
+    if (isFirstFilterFetch.current) {
+      isFirstFilterFetch.current = false;
+      runFetch();
+      return;
+    }
+
+    const t = setTimeout(runFetch, 220);
+    return () => clearTimeout(t);
+  }, [filterData, router.isReady, isLoggedIn, type, router.query?.slug]);
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -144,17 +158,8 @@ const PropertyList = ({ type }) => {
     });
   };
 
-  const handleApplyFilter = (e) => {
-    e.preventDefault();
-    setIsFilterApplied(true);
-    fetchProperties(0, false);
-  };
-
   const handleClearFilter = () => {
-    // First, clear the location filter
-    clearfilterLocation();
-    // Reset the filterData to its initial state
-    const clearedFilterData = {
+    setFilterData({
       propType: "",
       category: "",
       minPrice: "",
@@ -162,26 +167,13 @@ const PropertyList = ({ type }) => {
       postedSince: "",
       selectedLocation: null,
       facilitiesIds: [],
-    };
-    setFilterData(clearedFilterData); // Reset the filter data
-    setIsFilterApplied(true);
+    });
   };
-  useEffect(() => {
-    if (isFilterApplied) {
-      // Call the API with the current filterData
-      fetchProperties(0, false);
-
-      // Reset the flag after the API call
-      setIsFilterApplied(false);
-    }
-  }, [isFilterApplied]); // This will trigger the effect when isFilterApplied is set to true
   const handleLoadMore = () => {
     const newOffset = offset + limit;
     setOffset(newOffset);
     fetchProperties(newOffset, true);
   };
-
-  useEffect(() => {}, [filterData]);
 
   const breadCrumbTitle =
     type === "all"
@@ -211,7 +203,6 @@ const PropertyList = ({ type }) => {
                 handleTabClick={handleTabClick}
                 handlePostedSinceChange={handlePostedSinceChange}
                 handleLocationSelected={handleLocationSelected}
-                handleApplyfilter={handleApplyFilter}
                 handleClearFilter={handleClearFilter}
                 selectedLocation={filterData?.selectedLocation}
                 clearfilterLocation={clearfilterLocation}

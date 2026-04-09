@@ -707,7 +707,7 @@
 /* ========== PROPERTIES LISTS ALL (same layout as All Properties, 4 cards per row) ========== */
 #all-prop-containt.prop-lists-all-page {
   background-color: var(--ds-bg);
-  padding-top: var(--ds-section);
+  /* padding-top: var(--ds-section); */
   padding-bottom: var(--ds-space-3xl);
   min-height: 60vh;
 }
@@ -720,7 +720,7 @@
 
 @media (min-width: 1200px) {
   #all-prop-containt.prop-lists-all-page {
-    padding-top: var(--ds-section-lg);
+    /* padding-top: var(--ds-section-lg); */
   }
 }
 
@@ -756,7 +756,7 @@
   margin-bottom: 0;
 }
 
-/* Grid: 1 col mobile, 2 tablet, 4 desktop */
+/* Grid: 1 col mobile, 2 tablet, 3 desktop */
 .prop-lists-all-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -772,12 +772,6 @@
 @media (min-width: 992px) {
   .prop-lists-all-grid {
     grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1200px) {
-  .prop-lists-all-grid {
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 

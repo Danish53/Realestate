@@ -464,6 +464,43 @@ function parseGraanaArea(areaStr) {
   return num;
 }
 
+/** Zameen listing text → sq ft (1 Marla ≈ 225 sq ft; 1 Kanal = 20 Marla). */
+function parseAreaTextToSqft(areaStr) {
+  if (!areaStr) return 0;
+  const str = String(areaStr).toLowerCase().replace(/,/g, "").trim();
+  const num = parseFloat(str.replace(/[^0-9.]/g, ""));
+  if (Number.isNaN(num)) return 0;
+  if (str.includes("kanal")) return num * 4500;
+  if (str.includes("marla")) return num * 225;
+  if (str.includes("sq. yd") || str.includes("sq yd")) return num * 9;
+  if (str.includes("sq") && (str.includes("ft") || str.includes("feet"))) return num;
+  return 0;
+}
+
+/** Zameen URL `area_min` / `area_max` use internal scale: marla × ZAMEEN_MARLA_FACTOR (see parseZameenArea). */
+const ZAMEEN_SQFT_PER_MARLA = 225;
+const ZAMEEN_MARLA_FACTOR = 20.903;
+
+function roundZameenParam(v) {
+  if (Number.isNaN(v) || v <= 0) return "";
+  return String(Math.round(v * 1e6) / 1e6);
+}
+
+/** Marla count → Zameen internal `area` query (e.g. 5 → 104.515). */
+function marlaToZameenUrlParam(marla) {
+  const n = Number(marla);
+  if (Number.isNaN(n) || n <= 0) return "";
+  return roundZameenParam(n * ZAMEEN_MARLA_FACTOR);
+}
+
+function sqftToZameenUrlParam(sqft) {
+  const n = Number(sqft);
+  if (Number.isNaN(n) || n <= 0) return "";
+  return roundZameenParam((n / ZAMEEN_SQFT_PER_MARLA) * ZAMEEN_MARLA_FACTOR);
+}
+
+const first = (v) => (Array.isArray(v) ? v[0] : v);
+
 // zameen
 export function buildZameenUrl({
   category,
@@ -475,9 +512,10 @@ export function buildZameenUrl({
   beds_in,
   baths_in,
   area_min,
-  area_max
+  area_max,
+  area_unit
 }) {
-  const baseSlug = (areaSlug || citySlug || "").replace(/^\//, "");
+  const baseSlug = String(first(areaSlug) || first(citySlug) || "").replace(/^\//, "");
 
   const categoryMap = {
     plot: "Residential_Plots",
@@ -501,15 +539,47 @@ export function buildZameenUrl({
   const cleanCategory = (category || "").toLowerCase().replace(/-/g, "_").trim();
   const cat = categoryMap[cleanCategory] || "Houses";
 
-  let url = `https://www.zameen.com/${cat}/${baseSlug}-${page}.html`;
+  const pageNum = first(page) ?? 1;
+  let url = `https://www.zameen.com/${cat}/${baseSlug}-${pageNum}.html`;
 
   const params = new URLSearchParams();
-  if (price_min) params.append("price_min", price_min);
-  if (price_max) params.append("price_max", price_max);
-  if (area_min) params.append("area_min", area_min);
-  if (area_max) params.append("area_max", area_max);
-  if (beds_in) params.append("beds_in", beds_in);
-  if (baths_in) params.append("baths_in", baths_in);
+  const pm = first(price_min);
+  const px = first(price_max);
+  const amin = first(area_min);
+  const amax = first(area_max);
+  const auRaw = first(area_unit);
+  const au = String(auRaw != null ? auRaw : "").toLowerCase();
+  const bi = first(beds_in);
+  const ba = first(baths_in);
+  if (pm) params.append("price_min", String(pm));
+  if (px) params.append("price_max", String(px));
+  // Chat flow: `area_min`/`area_max` = square metres (toFixed from convertToSquareMeters) — pass through unchanged.
+  // Legacy: `area_unit=marla` → Zameen internal (marla × 20.903). `area_unit=sqft` → convert via sqft helper.
+  const looksLikeSqm =
+    au === "sqm" ||
+    au === "square_meters" ||
+    (!au &&
+      amin != null &&
+      String(amin).trim() !== "" &&
+      /\d+\.\d/.test(String(amin).trim()));
+  if (looksLikeSqm) {
+    if (amin != null && String(amin).trim() !== "")
+      params.append("area_min", String(amin).trim());
+    if (amax != null && String(amax).trim() !== "")
+      params.append("area_max", String(amax).trim());
+  } else if (au === "sqft" || au === "square_feet" || au === "square feet") {
+    const zMin = sqftToZameenUrlParam(amin);
+    const zMax = sqftToZameenUrlParam(amax);
+    if (zMin) params.append("area_min", zMin);
+    if (zMax) params.append("area_max", zMax);
+  } else {
+    const zMin = marlaToZameenUrlParam(amin);
+    const zMax = marlaToZameenUrlParam(amax);
+    if (zMin) params.append("area_min", zMin);
+    if (zMax) params.append("area_max", zMax);
+  }
+  if (bi) params.append("beds_in", String(bi));
+  if (ba) params.append("baths_in", String(ba));
 
   const queryString = params.toString();
   console.log("Built Zameen URL:", queryString ? `${url}?${queryString}` : url);
@@ -572,7 +642,6 @@ function resolveGraanaType(queryParams = {}) {
     "residential-properties"
   );
 }
-const first = (v) => (Array.isArray(v) ? v[0] : v);
 
 export function buildGraanaUrl(queryParams = {}) {
   const purpose = first(queryParams.g_purpose) || "sale";
@@ -1091,8 +1160,45 @@ function detectGraanaTotalPages($) {
 }
 
 
+const CHAT_SQFT_TO_SQM = 0.092903;
+
 export async function scrapeZameen(targetUrl, filters = {}) {
-  const { price_min, price_max, beds_in, baths_in } = filters;
+  const { price_min, price_max, beds_in, baths_in, area_min, area_max, area_unit } = filters;
+
+  const auRaw = first(area_unit);
+  const au = String(auRaw != null ? auRaw : "").toLowerCase();
+  const isSqftUnit =
+    au === "sqft" || au === "square_feet" || au === "square feet";
+
+  const aminStr = first(area_min);
+  const amaxStr = first(area_max);
+  const looksLikeSqmParams =
+    au === "sqm" ||
+    au === "square_meters" ||
+    ((!au || au === "") &&
+      aminStr != null &&
+      String(aminStr).trim() !== "" &&
+      /\d+\.\d/.test(String(aminStr).trim()));
+
+  const amin =
+    aminStr != null && String(aminStr).trim() !== ""
+      ? Number(String(aminStr).trim())
+      : null;
+  const amax =
+    amaxStr != null && String(amaxStr).trim() !== ""
+      ? Number(String(amaxStr).trim())
+      : null;
+  const hasAreaSqmChatFilter =
+    looksLikeSqmParams &&
+    ((amin != null && !Number.isNaN(amin)) || (amax != null && !Number.isNaN(amax)));
+  const hasAreaSqftFilter =
+    isSqftUnit &&
+    !looksLikeSqmParams &&
+    ((amin != null && !Number.isNaN(amin)) || (amax != null && !Number.isNaN(amax)));
+  const hasAreaMarlaFilter =
+    !looksLikeSqmParams &&
+    !isSqftUnit &&
+    ((amin != null && !Number.isNaN(amin)) || (amax != null && !Number.isNaN(amax)));
 
   // const { data: html } = await axios.get("https://api.zenrows.com/v1/", {
   //   params: {
@@ -1126,6 +1232,8 @@ export async function scrapeZameen(targetUrl, filters = {}) {
     const priceNumeric = parseZameenPrice(priceText);
 
     const areaText = card.find('span[aria-label="Area"]').text().trim();
+    const currentAreaSqft = parseAreaTextToSqft(areaText);
+    const currentAreaNorm = parseZameenArea(areaText);
     const beds = parseInt(card.find('[aria-label="Beds"]').text().replace(/\D/g, ""), 10) || 0;
     const baths = parseInt(card.find('[aria-label="Baths"]').text().replace(/\D/g, ""), 10) || 0;
 
@@ -1148,10 +1256,29 @@ export async function scrapeZameen(targetUrl, filters = {}) {
     else if (titleLower.includes("shop")) propertyType = "shop";
 
     // --- 2. FILTERING LOGIC ---
-    if (price_min && priceNumeric < Number(price_min)) return;
-    if (price_max && priceNumeric > Number(price_max)) return;
-    if (beds_in && beds !== Number(beds_in)) return;
-    if (baths_in && baths !== Number(baths_in)) return;
+    if (price_min && priceNumeric < Number(first(price_min))) return;
+    if (price_max && priceNumeric > Number(first(price_max))) return;
+    if (beds_in && beds !== Number(first(beds_in))) return;
+    if (baths_in && baths !== Number(first(baths_in))) return;
+
+    if (hasAreaSqmChatFilter) {
+      const currentSqm = currentAreaSqft * CHAT_SQFT_TO_SQM;
+      if (!currentSqm || currentSqm <= 0) return;
+      if (amin != null && !Number.isNaN(amin) && currentSqm < amin) return;
+      if (amax != null && !Number.isNaN(amax) && currentSqm > amax) return;
+    }
+    if (hasAreaSqftFilter) {
+      if (!currentAreaSqft || currentAreaSqft <= 0) return;
+      if (amin != null && !Number.isNaN(amin) && currentAreaSqft < amin) return;
+      if (amax != null && !Number.isNaN(amax) && currentAreaSqft > amax) return;
+    }
+    if (hasAreaMarlaFilter) {
+      if (!currentAreaNorm || currentAreaNorm <= 0) return;
+      if (amin != null && !Number.isNaN(amin) && currentAreaNorm < amin * ZAMEEN_MARLA_FACTOR)
+        return;
+      if (amax != null && !Number.isNaN(amax) && currentAreaNorm > amax * ZAMEEN_MARLA_FACTOR)
+        return;
+    }
 
     // --- 3. PUSH DATA ---
     properties.push({
@@ -1179,7 +1306,8 @@ export async function scrapeGraana(targetUrl, filters = {}) {
     g_bed,
     g_bathroom,
     g_minSize,
-    g_maxSize
+    g_maxSize,
+    g_sizeUnit,
   } = filters;
 
   const { data: html } = await axios.get(targetUrl, {
@@ -1222,11 +1350,12 @@ export async function scrapeGraana(targetUrl, filters = {}) {
     const bathsNode = card.find("img[src*='bath']").parent().next();
     if (bathsNode) baths = parseInt(bathsNode.text().trim()) || null;
 
-    // area
+    // area (g_minSize/g_maxSize + g_sizeUnit from router: Sqft vs Marla)
     let area = null;
     const areaNode = card.find("img[src*='area']").parent().next();
-    if (areaNode) area = areaNode.text().trim();
-    area = parseGraanaArea(area);
+    const areaRaw = areaNode ? areaNode.text().trim() : "";
+    const areaSqft = parseAreaTextToSqft(areaRaw);
+    area = parseGraanaArea(areaRaw);
 
     const typeText = card
   .find(".MuiTypography-body2New")
@@ -1263,8 +1392,21 @@ if (image) {
 
     if (g_bathroom && baths !== Number(g_bathroom)) return;
 
-    if (g_minSize && area < Number(g_minSize)) return;
-    if (g_maxSize && area > Number(g_maxSize)) return;
+    const su = String(first(g_sizeUnit) || "").toLowerCase();
+    const useSqft =
+      su === "sqft" ||
+      su === "squarefeet" ||
+      su === "square feet" ||
+      su === "squarefoot";
+    if (g_minSize || g_maxSize) {
+      if (useSqft) {
+        if (g_minSize && areaSqft < Number(first(g_minSize))) return;
+        if (g_maxSize && areaSqft > Number(first(g_maxSize))) return;
+      } else {
+        if (g_minSize && area < Number(first(g_minSize))) return;
+        if (g_maxSize && area > Number(first(g_maxSize))) return;
+      }
+    }
 
     properties.push({
       title,
@@ -1420,6 +1562,7 @@ export default async function handler(req, res) {
     baths_in,
     area_min,
     area_max,
+    area_unit,
     g_city,
     g_area,
     g_page,
@@ -1448,7 +1591,8 @@ export default async function handler(req, res) {
     beds_in,
     baths_in,
     area_min,
-    area_max
+    area_max,
+    area_unit
   });
 
   const graanaUrl = buildGraanaUrl({
@@ -1478,7 +1622,8 @@ export default async function handler(req, res) {
         beds_in,
         baths_in,
         area_min,
-        area_max
+        area_max,
+        area_unit
       }),
       scrapeGraana(graanaUrl, {
         g_minPrice,

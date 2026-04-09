@@ -1,6 +1,32 @@
 import { stripChatMarkdown } from "@/utils/stripChatMarkdown";
 
 // pages/api/chat.js
+
+/** Shown when the user asks about non–real-estate topics — no LLM call. */
+const OFF_TOPIC_ASSISTANT_REPLY =
+  "I'm your AI real estate assistant on this app. I specialise in Pakistan property — houses, flats, plots, rent and sale, budgets, areas, societies, possession, file vs plot, and practical market guidance.\n\nAsk me anything property-related (for example a city, budget in lakh or crore, marla size, or house vs plot) and I'll give you a detailed, helpful answer. For topics outside real estate, I'm not the right assistant here.";
+
+/** hello / hi / salam — always this path (even if chat history mentions property). No LLM. */
+const GREETING_ASSISTANT_REPLY =
+  "Hello! I'm your AI property assistant.\n\nI help you with Pakistan real estate — houses, flats, plots, rent or sale, budgets, marla or kanal size, and areas or societies. Just tell me what you need in simple words and I'll help you step by step.";
+
+/** "How are you?" style — no LLM. */
+const CASUAL_PLEASANTRY_REPLY =
+  "I'm well, thank you.\n\nI'm your AI property assistant here — I focus on Pakistan property: buying, renting, plots, houses, budgets, and areas. Tell me what you'd like to look for next.";
+
+/** Model returned no text but we still have a search link. */
+const PROPERTY_SEARCH_FALLBACK_TEXT =
+  "I'm your AI real estate assistant. I've prepared a property search from what you described. Use the action in the app to view matching listings.\n\nFor a fuller market brief (budget bands, trade-offs, what to verify), ask again or add your city, area, size, and budget in one message.";
+
+/** Rare: model call failed — keep tone simple, no “technical issue” wording. */
+const AI_UNAVAILABLE_ASSISTANT_REPLY =
+  "I'm your AI property assistant for Pakistan. That reply didn't come through — please send your message again.\n\nI'm here for houses, flats, plots, budgets, areas, rent or sale, and general property guidance.";
+
+const NO_API_KEY_WITH_SEARCH_REPLY =
+  "I'm your AI real estate assistant. A property search link is ready from your message, but the AI explanation layer isn't configured on the server right now — so you'll get the listing view without the long written brief.\n\nAsk your host to set OPENROUTER_API_KEY if you want detailed answers here. You can still browse the matches from the app.";
+
+const NO_API_KEY_GENERAL_REPLY =
+  "I'm your AI real estate assistant for Pakistan property. Detailed AI answers need the assistant service to be configured (OPENROUTER_API_KEY) on the server.\n\nOnce that's set up, I can give long, specific guidance on areas, budgets, sizes, and market reality. For now, please try again later or contact support.";
 // --------------- Helper: Size parsing ---------------
 function parseSizeFromText(text = "") {
   const sizeRegex =
@@ -582,6 +608,34 @@ function isPropertySearchQuery(text = "") {
   );
 }
 
+/**
+ * Broader than {@link isPropertySearchQuery}: advisory / context without a full "search" shape.
+ * Used only to decide whether to call the model; structured search + `pageLink` still require `isPropSearch` in the handler.
+ */
+function hasBroadRealEstateIntent(text = "") {
+  const t = String(text || "").toLowerCase().trim();
+  if (!t) return false;
+  if (isPropertySearchQuery(t)) return true;
+  return (
+    /\b(property|properties|real\s*estate|realty|realtor|zameen|graana|listings?\b|makaan|makkan|ghar|kothi|bangla|townhouse|duplex)\b/.test(
+      t
+    ) ||
+    /\b(possession|transfer|ballot|balloting|noc|installment|installments|file\s+plot|plot\s+file|corner\s+plot|park\s+facing)\b/.test(
+      t
+    ) ||
+    /\b(dha|bahria|society|societies|housing\s*scheme|township|developers?|high-?rise)\b/.test(
+      t
+    ) ||
+    /\b(mortgage|home\s*loan|lease|tenant|landlord|valuation|rental\s*yield|construction\s*cost)\b/.test(
+      t
+    ) ||
+    /\b(khayaban|johar|gulberg|raiwind|fdf|smart\s*city|blue\s*world)\b/.test(t) ||
+    /\b(where\s*to\s*(live|rent|buy)|which\s*area|what\s*area|recommend\s+(an?\s*)?(area|society|locality|neighbourhood|neighborhood)|good\s+society|safe\s+neighborhood)\b/.test(
+      t
+    )
+  );
+}
+
 function isNearMeQuery(text = "") {
   const t = text.toLowerCase();
   return /\bnear me|mere qareeb|around me|pass mein\b/.test(t);
@@ -1144,6 +1198,125 @@ function appendGraanaParams(searchParams, params) {
   else if (params.graanaCity) searchParams.set("g_city", params.graanaCity);
 }
 
+/** `/properties-list-all?…` from parsed `extractSearchParams` output. */
+function buildPropertiesListAllLink(params) {
+  if (!params || typeof params !== "object") return null;
+  const searchParams = new URLSearchParams();
+
+  if (params.category) searchParams.append("category", params.category);
+
+  if (params.areaSlug) {
+    searchParams.append("areaSlug", params.areaSlug);
+  } else if (params.citySlug) {
+    searchParams.append("citySlug", params.citySlug);
+  }
+
+  searchParams.append("page", "1");
+
+  if (params.area_min) searchParams.append("area_min", params.area_min);
+  if (params.area_max) searchParams.append("area_max", params.area_max);
+  if (params.minPrice) searchParams.append("price_min", String(params.minPrice));
+  if (params.maxPrice) searchParams.append("price_max", String(params.maxPrice));
+  if (params.beds) searchParams.append("beds_in", String(params.beds));
+  if (params.baths) searchParams.append("baths_in", String(params.baths));
+
+  appendGraanaParams(searchParams, params);
+
+  return `/properties-list-all?${searchParams.toString()}`;
+}
+
+/** True for a lone greeting so we can reply without calling the LLM. */
+function isPureGreetingMessage(text = "") {
+  const raw = String(text || "").trim();
+  if (!raw || raw.length > 96) return false;
+  const t = raw
+    .toLowerCase()
+    .replace(/[!.,?؟。]+$/g, "")
+    .trim();
+  if (!t) return false;
+  if (
+    /^(hi|hello|hey|hii|hay|yo|gm|gn|good morning|good afternoon|good evening|good night)\b/.test(
+      t
+    )
+  ) {
+    const rest = t.replace(
+      /^(hi|hello|hey|hii|hay|yo|gm|gn|good morning|good afternoon|good evening|good night)(\s+there|\s+team|\s+friend|\s+bro|\s+sir|\s+madam)?\s*/i,
+      ""
+    );
+    return rest.length === 0;
+  }
+  if (
+    /^(assalam|assalamu|assalaam|salam|salaam|aoa|salamual|assalamualaikum|asslam|aslam)\b/i.test(
+      t
+    )
+  ) {
+    const rest = t.replace(
+      /^(assalam|assalamu|assalaam|salam|salaam|aoa|salamual|assalamualaikum|asslam|aslam)(u?\s*alaikum|\s*walaikum\s*salam)?\s*/i,
+      ""
+    );
+    return rest.length === 0;
+  }
+  if (/^(namaste|howdy)\b/.test(t)) {
+    return t.replace(/^(namaste|howdy)\s*/i, "").length === 0;
+  }
+  return false;
+}
+
+/** Small talk only — not a property question; reply without calling the model. */
+function isCasualPleasantryOnly(text = "") {
+  const raw = String(text || "").trim();
+  if (!raw || raw.length > 160) return false;
+  const t = raw
+    .toLowerCase()
+    .replace(/[!.,?؟。،]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const oneLine = [
+    /^how\s+are\s+you(\s+doing|\s+today|\s+tonight)?$/,
+    /^how\s+r\s+u$/,
+    /^how're\s+you$/,
+    /^how\s+are\s+u$/,
+    /^how\s+is\s+it\s+going$/,
+    /^how\s+do\s+you\s+do$/,
+    /^how\s+have\s+you\s+been$/,
+    /^how've\s+you\s+been$/,
+    /^what'?s\s+up$/,
+    /^wassup$/,
+    /^sup$/,
+    /^you\s+alright$/,
+    /^you\s+ok$/,
+    /^everything\s+ok$/,
+    /^all\s+good$/,
+    /^how\s+is\s+everything$/,
+    /^how\s+are\s+things$/,
+    /^what'?s\s+new$/,
+    /^nice\s+to\s+meet\s+you$/,
+    /^pleased\s+to\s+meet\s+you$/,
+    /^aap\s+kais[ae]\s+hain$/,
+    /^aap\s+theek\s+hain$/,
+    /^kya\s+hal\s+h(ai|ain)$/,
+    /^kya\s+haal\s+h(ai|ain)$/,
+    /^kesy\s+ho$/,
+    /^kaisy\s+ho$/,
+    /^sab\s+theek$/,
+    /^sab\s+thik$/,
+    /^sb\s+theek$/,
+  ];
+
+  if (oneLine.some((re) => re.test(t))) return true;
+
+  if (/^(hi|hello|hey|hii)\s*[,!]?\s*how\s+are\s+you$/i.test(t)) return true;
+  if (
+    /^good\s+(morning|afternoon|evening)\s*[,!]?\s*how\s+are\s+you$/i.test(t)
+  )
+    return true;
+  if (/^(assalam|salam)\s+walaikum\s*[,!]?\s*how\s+are\s+you$/i.test(t))
+    return true;
+
+  return false;
+}
+
 // --------------- MAIN API HANDLER ---------------
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -1154,13 +1327,6 @@ export default async function handler(req, res) {
     const { messages } = req.body || {};
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "Messages array is required" });
-    }
-
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      return res
-        .status(500)
-        .json({ error: "OPENROUTER_API_KEY is not configured" });
     }
 
     const lastIndex = messages.length - 1;
@@ -1205,6 +1371,38 @@ export default async function handler(req, res) {
       extractText = combinedUserSearchText;
     }
 
+    const allowRealEstateAssistant =
+      isPropSearch ||
+      hasBroadRealEstateIntent(userMessageNorm) ||
+      hasBroadRealEstateIntent(combinedUserSearchText);
+
+    if (
+      isPureGreetingMessage(userMessageNorm) &&
+      !isRefinementOnlyMessage(userMessageNorm)
+    ) {
+      return res.status(200).json({
+        text: GREETING_ASSISTANT_REPLY,
+        params: null,
+        pageLink: null,
+      });
+    }
+
+    if (isCasualPleasantryOnly(userMessageNorm)) {
+      return res.status(200).json({
+        text: CASUAL_PLEASANTRY_REPLY,
+        params: null,
+        pageLink: null,
+      });
+    }
+
+    if (!allowRealEstateAssistant) {
+      return res.status(200).json({
+        text: OFF_TOPIC_ASSISTANT_REPLY,
+        params: null,
+        pageLink: null,
+      });
+    }
+
     let searchInfo = null;
     if (isPropSearch) {
       searchInfo = extractSearchParams(
@@ -1213,6 +1411,17 @@ export default async function handler(req, res) {
         nearMe,
         userMessageNorm
       );
+    }
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      const params = isPropSearch && searchInfo?.params ? searchInfo.params : null;
+      const pageLink = params ? buildPropertiesListAllLink(params) : null;
+      return res.status(200).json({
+        text: pageLink ? NO_API_KEY_WITH_SEARCH_REPLY : NO_API_KEY_GENERAL_REPLY,
+        params: pageLink ? params : null,
+        pageLink: pageLink || null,
+      });
     }
 
     const languageDirective = inferUserLanguageHint(userMessage);
@@ -1266,7 +1475,7 @@ MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + bu
 - If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep structure readable (short paragraphs + optional bullet lines).
 
 RESPONSE FORMAT (property search — ChatGPT/Cursor-level usefulness, not brochure text):
-- When the user gave **area + size + budget** (or plot/house + size + corridor + budget): write **at least 3 paragraphs** (each separated by a **blank line**). Shorter replies are only OK when the query is vague or missing key numbers.
+- **Length:** Prefer **long, substantive** answers. When the user gave **area + size + budget** (or plot/house + size + corridor + budget): write **at least 4 paragraphs** (each separated by a **blank line**), unless they asked a single yes/no fact. Aim for depth, not brevity. Shorter replies are only OK when the query is extremely vague or one line.
 - **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
 - **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
 - **Paragraph 1:** Acknowledge their ask (type, size, area, budget) with correct spellings + one **2025–2026** framing line.
@@ -1314,9 +1523,8 @@ If the user asks about:
 - Or any real-estate related guidance
 
 Then:
-- Answer clearly and professionally.
+- Answer clearly and professionally with **enough depth** (usually **3–4 paragraphs** with blank lines), unless the question is trivially short.
 - You may use short bullet points if helpful.
-- Keep it informative but concise.
 - Do NOT mention website listings in this case.
 
 --------------------------------------------------
@@ -1365,7 +1573,7 @@ ${
   f.minPrice != null || f.maxPrice != null
     ? (f.areaLabel || f.areaSlug || f.city
         ? `
-- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first). Minimum **3 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
+- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first). Minimum **4 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
         : "")
     : ""
 }
@@ -1393,8 +1601,8 @@ ${
         body: JSON.stringify({
           model: "openai/gpt-4o-mini",
           messages: openRouterMessages,
-          temperature: 0.45,
-          max_tokens: 900,
+          temperature: 0.5,
+          max_tokens: 2400,
         }),
       }
     );
@@ -1422,60 +1630,32 @@ ${
     }
 
     // --------- Link generation only for property search ---------
-    let params = null;
-    let pageLink = null;
-    let linkMessage = "";
-
     if (isPropSearch && searchInfo?.params) {
-      params = searchInfo.params;
-
-      const searchParams = new URLSearchParams();
-
-      // Zameen-compatible params for /properties-list-all → /api/searchscrape
-      if (params.category) {
-        searchParams.append("category", params.category); // e.g. Residential_Plots
-      }
-
-      if (params.areaSlug) {
-        searchParams.append("areaSlug", params.areaSlug); // e.g. Lahore_Johar_Town-93
-      } else if (params.citySlug) {
-        searchParams.append("citySlug", params.citySlug); // e.g. Lahore-1
-      }
-
-      // Default page = 1
-      searchParams.append("page", "1");
-
-      // Optional filters (hamari apni filtering ke liye)
-      if (params.area_min)
-        searchParams.append("area_min", params.area_min);
-
-      if (params.area_max)
-        searchParams.append("area_max", params.area_max);
-      if (params.minPrice)
-        searchParams.append("price_min", String(params.minPrice));
-      if (params.maxPrice)
-        searchParams.append("price_max", String(params.maxPrice));
-      if (params.beds) searchParams.append("beds_in", String(params.beds));
-      if (params.baths) searchParams.append("baths_in", String(params.baths));
-
-      appendGraanaParams(searchParams, params);
-
-      pageLink = `/properties-list-all?${searchParams.toString()}`;
+      const params = searchInfo.params;
+      const pageLink = buildPropertiesListAllLink(params);
+      const trimmedAi = (aiText || "").trim();
+      const bodyText = trimmedAi || PROPERTY_SEARCH_FALLBACK_TEXT;
 
       return res.status(200).json({
-        text: (aiText || "").trim(),
+        text: bodyText,
         params: pageLink ? params : null,
         pageLink: pageLink || null,
       });
     }
     return res.status(200).json({
-      text: aiText || "How can I help you with real estate today?",
+      text:
+        (aiText || "").trim() ||
+        "How can I help you with real estate today? I'm your AI assistant for Pakistan property — share city, area, budget, and what you want (house, flat, or plot).",
       params: null,
       pageLink: null,
     });
   } catch (err) {
     console.error("AI handler error:", err);
-    return res.status(500).json({ error: err.message || "Server error" });
+    return res.status(200).json({
+      text: AI_UNAVAILABLE_ASSISTANT_REPLY,
+      params: null,
+      pageLink: null,
+    });
   }
 }
 

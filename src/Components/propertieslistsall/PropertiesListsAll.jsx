@@ -1049,6 +1049,7 @@ import VerticalCardSkeleton from "../Skeleton/VerticalCardSkeleton";
 import VerticalCardAI from "../Cards/VerticalCardAI";
 import NoData from "@/Components/NoDataFound/NoData";
 import { translate } from "@/utils/helper";
+import PropertyListFiltersSidebar from "@/Components/propertieslistsall/PropertyListFiltersSidebar";
 
 const PaginationSkeleton = () => (
   <div
@@ -1081,6 +1082,7 @@ const PropertiesListsAll = () => {
     baths_in,
     area_min,
     area_max,
+    area_unit,
 
     // Graana
     g_purpose,
@@ -1139,6 +1141,7 @@ const PropertiesListsAll = () => {
         if (baths_in) qs.append("baths_in", baths_in);
         if (area_min) qs.append("area_min", area_min);
         if (area_max) qs.append("area_max", area_max);
+        if (area_unit) qs.append("area_unit", area_unit);
 
         // ---------- Graana (NEW FLOW) ----------
         if (g_purpose) qs.append("g_purpose", g_purpose);
@@ -1211,6 +1214,7 @@ const PropertiesListsAll = () => {
     baths_in,
     area_min,
     area_max,
+    area_unit,
 
     // Graana
     g_purpose,
@@ -1247,13 +1251,18 @@ const PropertiesListsAll = () => {
 
   const breadCrumbTitle = translate("allProperties");
 
+  const filtersDisabled =
+    !router.isReady || !category || (!citySlug && !areaSlug);
+
   return (
     <Layout>
       <Breadcrumb title={breadCrumbTitle} />
 
       <section id="all-prop-containt" className="prop-lists-all-page">
         <div className="container all-properties prop-lists-all-container">
-          <div className="prop-lists-all-main">
+          <div className="prop-lists-all-layout">
+            <PropertyListFiltersSidebar disabled={filtersDisabled} />
+            <div className="prop-lists-all-main">
             {loadingProps && (
               <div className="prop-lists-all-grid">
                 {Array.from({ length: 8 }).map((_, index) => (
@@ -1327,6 +1336,7 @@ const PropertiesListsAll = () => {
                 )}
               </div>
             )}
+          </div>
           </div>
         </div>
       </section>

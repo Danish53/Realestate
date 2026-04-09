@@ -98,6 +98,9 @@ import { Send, Bot, User, Sparkles, X, MessageCircle, Minimize2, Maximize2, Tras
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '@/utils/chatStorage';
 import { stripChatMarkdown } from '@/utils/stripChatMarkdown';
 
+const ASSISTANT_ERROR_REPLY =
+  "I'm your AI property assistant for Pakistan. That message didn't go through — please try again.\n\nAsk me about houses, flats, plots, budgets, or areas anytime.";
+
 const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -202,14 +205,20 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
         })
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
 
-      if (data.error) {
-        console.error("API Error:", data.error);
+      if (!response.ok || data.error) {
+        if (data.error) console.error("API Error:", data.error);
+        else console.error("Chat HTTP error:", response.status, response.statusText);
         const errorMessage = {
           id: Date.now() + 1,
           role: "assistant",
-          content: "Sorry, something went wrong while fetching results. Please try again.",
+          content: ASSISTANT_ERROR_REPLY,
           timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, errorMessage]);
@@ -235,6 +244,16 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             params: data.params || null
           });
         }
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            role: "assistant",
+            content: ASSISTANT_ERROR_REPLY,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
       }
 
     } catch (err) {
@@ -242,7 +261,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
       const errorMessage = {
         id: Date.now() + 1,
         role: "assistant",
-        content: "Network error occurred. Please check your connection and try again.",
+        content: ASSISTANT_ERROR_REPLY,
         timestamp: new Date().toISOString()
       };
       setMessages(prev => [...prev, errorMessage]);

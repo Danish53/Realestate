@@ -16,6 +16,7 @@ export default async function handler(req, res) {
     baths_in,
     area_min,
     area_max,
+    area_unit,
     g_city,
     g_area,
     g_minPrice,
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
       baths_in,
       area_min,
       area_max,
+      area_unit,
       page
     });
 

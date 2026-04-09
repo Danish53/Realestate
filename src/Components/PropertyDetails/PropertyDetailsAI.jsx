@@ -129,7 +129,7 @@ const PropertyDetailsAI = () => {
         <div className="prop-detail-card-header">
           <span className="prop-detail-card-accent" />
           <h3 className="prop-detail-card-title">
-            {translate ? translate("gallery") : "Gallery"}
+            {translate ? translate("Gallery") : "Gallery"}
           </h3>
         </div>
         <div className="prop-detail-card-body">
@@ -398,9 +398,9 @@ const PropertyDetailsAI = () => {
             <div className="prop-detail-hero-body">
               <div className="prop-detail-hero-top">
                 <div className="prop-detail-hero-left">
-                  <div className="prop-detail-hero-icon">
+                  {/* <div className="prop-detail-hero-icon">
                     <FiHome className="text-white text-2xl" />
-                  </div>
+                  </div> */}
                   <div>
                     <div className="prop-detail-badges">
                       {detail.propertyType && (
@@ -544,7 +544,7 @@ const PropertyDetailsAI = () => {
                 <div className="prop-detail-card-header">
                   <span className="prop-detail-card-accent" />
                   <h3 className="prop-detail-card-title">
-                    {translate ? translate("contact") : "Contact"}
+                    {translate ? translate("Contact") : "Contact"}
                   </h3>
                 </div>
                 {/* {detail?.agent?.phone && ( */}

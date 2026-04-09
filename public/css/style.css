@@ -545,6 +545,10 @@ body {
   outline: none !important;
 }
 
+input:focus-visible {
+  outline: none !important;
+}
+
 .userInput {
   display: flex;
   /* justify-content: space-between; */
@@ -21324,7 +21328,7 @@ hr {
 }
 
 #all-prop-containt {
-  margin: 40px 0;
+  /* margin: 40px 0; */
   height: fit-content;
   padding-bottom: 50px;
 }

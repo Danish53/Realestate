@@ -1,12 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { translate } from "@/utils/helper";
-import { ButtonGroup } from "react-bootstrap";
-import {
-  RiArrowDownSLine,
-  RiArrowUpSLine,
-  RiSendPlane2Line,
-} from "react-icons/ri";
+import { RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
 import LocationSearchBox from "../Location/LocationSearchBox";
 import {
   GetAllCategorieApi,
@@ -14,7 +9,6 @@ import {
 } from "@/store/actions/campaign";
 import debounce from "lodash.debounce";
 import { Autocomplete, TextField } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
 
 const FilterForm = (props) => {
   
@@ -261,17 +255,6 @@ const FilterForm = (props) => {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Apply Button */}
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={props.handleApplyfilter}
-            className="apply-filter apply-filter-btn w-full"
-          >
-            {translate("applyFilter")}
-          </button>
         </div>
       </div>
     </div>
