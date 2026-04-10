@@ -6,6 +6,7 @@ import axios from "axios";
 import { GET_PROPETRES } from "@/utils/api";
 import Meta from "@/Components/Seo/Meta";
 import dynamic from 'next/dynamic'
+import { sanitizeListingBrandText } from "@/utils/sanitizeListingBrandText";
 
 const PropertyDetailsAI = dynamic(
   () => import('@/Components/PropertyDetails/PropertyDetailsAI'),
@@ -28,14 +29,15 @@ const fetchDataFromSeo = async (slug) => {
 
 
 const index = ({ seoData, currentURL }) => {
+    const seoRow = seoData?.data && seoData.data.length > 0 ? seoData.data[0] : null;
 
     return (
         <>
             <Meta
-                title={seoData?.data && seoData.data.length > 0 && seoData.data[0].meta_title}
-                description={seoData?.data && seoData.data.length > 0 && seoData.data[0].meta_description}
-                keywords={seoData?.data && seoData.data.length > 0 && seoData.data[0].meta_keywords}
-                ogImage={seoData?.data && seoData.data.length > 0 && seoData.data[0].meta_image}
+                title={seoRow ? sanitizeListingBrandText(seoRow.meta_title) : undefined}
+                description={seoRow ? sanitizeListingBrandText(seoRow.meta_description) : undefined}
+                keywords={seoRow?.meta_keywords}
+                ogImage={seoRow?.meta_image}
                 pathName={currentURL}
             />
             <PropertyDetailsAI />

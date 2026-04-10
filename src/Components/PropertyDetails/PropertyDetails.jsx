@@ -979,6 +979,7 @@ import {
   isMobileDevice,
   formatNumberWithCommas,
 } from "@/utils/helper";
+import { sanitizePropertyListingBrands } from "@/utils/sanitizeListingBrandText";
 import { useRouter } from "next/router";
 import {
   getPropertyDetailsApi,
@@ -1091,7 +1092,7 @@ const PropertyDetails = () => {
         onSuccess: (response) => {
           const propertyData = response && response.data;
           setIsLoading(false);
-          setPropData(propertyData[0]);
+          setPropData(propertyData[0] ? sanitizePropertyListingBrands(propertyData[0]) : null);
           setSimilerData(response?.similar_properties);
           if (propertyData[0]?.is_reported) setIsReported(true);
         },

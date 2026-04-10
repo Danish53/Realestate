@@ -13,6 +13,7 @@ import NoData from "../NoDataFound/NoData";
 import withAuth from "../Layout/withAuth";
 
 import { translate, placeholderImage } from "@/utils/helper";
+import { sanitizeScrapedPropertyDetail } from "@/utils/sanitizeListingBrandText";
 
 import Map from "@/Components/GoogleMap/GoogleMap";
 import MortgageCalculator from "../MortgageCalculator/MortgageCalculator";
@@ -88,7 +89,7 @@ const PropertyDetailsAI = () => {
         }
         const data = await res.json();
 
-        setDetail(data);
+        setDetail(sanitizeScrapedPropertyDetail(data));
       } catch (err) {
         console.error("Error fetching detail:", err);
         setError(err.message || "Something went wrong");

@@ -92,7 +92,11 @@ function VerticalCardAI({ ele, category }) {
     if (ele?.area) features.push({ icon: MdSquareFoot, value: formatArea(ele.area), label: "Area" });
   }
 
-  const propertyTypeLabel = ele?.propertyType ? translate(ele.propertyType) : category ? translate(category) : null;
+  const rawTypeLabel = ele?.propertyType ? translate(ele.propertyType) : category ? translate(category) : null;
+  const trimmedTypeLabel = rawTypeLabel != null ? String(rawTypeLabel).trim() : "";
+  const propertyTypeLabel = trimmedTypeLabel
+    ? trimmedTypeLabel.charAt(0).toLocaleUpperCase() + trimmedTypeLabel.slice(1)
+    : null;
 
   function formatPrice(price) {
     if (price == null || price === "") return "";
