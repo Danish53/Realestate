@@ -101,12 +101,26 @@ import { stripChatMarkdown } from '@/utils/stripChatMarkdown';
 const ASSISTANT_ERROR_REPLY =
   "I'm your AI property assistant for Pakistan. That message didn't go through — please try again.\n\nAsk me about houses, flats, plots, budgets, or areas anytime.";
 
+/** Long replies reveal gradually after the request finishes (API unchanged). */
+const STREAM_CHARS_PER_TICK = 16;
+const STREAM_TICK_MS = 32;
+const STREAM_INSTANT_MAX_LEN = 160;
+
 const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const scrollRef = useRef(null);
+  const streamTimerRef = useRef(null);
+
+  const clearStreamTimer = () => {
+    if (streamTimerRef.current != null) {
+      clearTimeout(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
+  };
 
   // Load chat history when component mounts
   useEffect(() => {
@@ -124,12 +138,14 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
     }
   }, [ isOpen ]);
 
-  // Save messages whenever they change
+  // Save messages whenever they change (skip mid-stream to avoid noisy writes)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 && !messages.some((m) => m.streaming)) {
       saveChatHistory(messages);
     }
   }, [messages]);
+
+  useEffect(() => () => clearStreamTimer(), []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -183,7 +199,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isStreaming) return;
 
     const userMessage = {
       id: Date.now(),
@@ -226,16 +242,15 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
       }
 
       if (data.text) {
-        const assistantMessage = {
-          id: Date.now() + 1,
+        const assistantId = Date.now() + 1;
+        const fullText = data.text;
+        const base = {
+          id: assistantId,
           role: "assistant",
-          content: data.text,                 // clean AI text
-          hasProperties: !!data.pageLink,     // true if property search
-          pageLink: data.pageLink || null,    // URL from backend
-          timestamp: new Date().toISOString()
+          hasProperties: !!data.pageLink,
+          pageLink: data.pageLink || null,
+          timestamp: new Date().toISOString(),
         };
-
-        setMessages(prev => [...prev, assistantMessage]);
 
         if (onPropertyFound && data.pageLink) {
           onPropertyFound({
@@ -243,6 +258,43 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             link: data.pageLink,
             params: data.params || null
           });
+        }
+
+        if (fullText.length <= STREAM_INSTANT_MAX_LEN) {
+          setMessages((prev) => [
+            ...prev,
+            { ...base, content: fullText, streaming: false },
+          ]);
+        } else {
+          clearStreamTimer();
+          setIsStreaming(true);
+          setMessages((prev) => [
+            ...prev,
+            { ...base, content: "", streaming: true },
+          ]);
+
+          let pos = 0;
+          const step = () => {
+            pos = Math.min(fullText.length, pos + STREAM_CHARS_PER_TICK);
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId
+                  ? {
+                      ...m,
+                      content: fullText.slice(0, pos),
+                      streaming: pos < fullText.length,
+                    }
+                  : m
+              )
+            );
+            if (pos < fullText.length) {
+              streamTimerRef.current = setTimeout(step, STREAM_TICK_MS);
+            } else {
+              streamTimerRef.current = null;
+              setIsStreaming(false);
+            }
+          };
+          streamTimerRef.current = setTimeout(step, STREAM_TICK_MS);
         }
       } else {
         setMessages((prev) => [
@@ -271,6 +323,8 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
   };
 
   const handleClearChat = () => {
+    clearStreamTimer();
+    setIsStreaming(false);
     clearChatHistory();
     setMessages([{
       id: Date.now(),
@@ -281,6 +335,8 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
   };
 
   const handleNewChat = () => {
+    clearStreamTimer();
+    setIsStreaming(false);
     clearChatHistory();
     setMessages([{
       id: Date.now(),
@@ -381,12 +437,12 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           value={input}
           placeholder="Type your message..."
           onChange={(e) => setInput(e.target.value)}
-          disabled={isLoading}
+          disabled={isLoading || isStreaming}
         />
         <button
           type="submit"
           className="send-btn"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || isStreaming || !input.trim()}
           aria-label="Send message"
         >
           <Send size={18} />
