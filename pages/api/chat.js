@@ -596,6 +596,42 @@ function mapPropertyTypeToCategory(propertyType, purpose, text = "") {
 }
 
 // --------------- Query classification ---------------
+/**
+ * User is asking about societies / corridors / areas (often without "5 marla plot" wording).
+ * Fresh chats failed before when "societies" was misspelled or only area names were used.
+ */
+function isAreaOrSocietyDiscoveryQuery(text = "") {
+  const t = String(text || "").toLowerCase();
+  if (!t) return false;
+  const pkCity =
+    /\b(lahore|karachi|islamabad|rawalpindi|multan|faisalabad|peshawar|quetta|hyderabad|gujranwala|sialkot|murree|gwadar)\b/.test(
+      t
+    );
+  if (!pkCity) return false;
+
+  if (
+    /\b(societ(y|ies)|housing\s*scheme|township|locality|neighbourhood|neighboru?hood|developers?)\b/.test(
+      t
+    )
+  )
+    return true;
+
+  const corridor =
+    /\b(raiwind|multan\s+road|firozpur\s+road|ring\s+road|gt\s*road|canal\s+bank|mm\s*alam|johar|gulberg|dha|bahria|askari|eden|state\s*life|fdf|valencia|model\s*town)\b/.test(
+      t
+    );
+  const placeShape =
+    /\b(road|society|societies|phase|block|sector|avenue|boulevard)\b/.test(t);
+  const propertyLean =
+    /\b(societ|plot|house|flat|file|buy|rent|sale|invest|best|good|which|what|tell|list|compare|market|living|residential|cheap|expensive|budget|pkr|lakh|crore|marla|kanal)\b/.test(
+      t
+    );
+
+  if (corridor && placeShape && propertyLean) return true;
+
+  return false;
+}
+
 function isPropertySearchQuery(text = "") {
   const t = text.toLowerCase();
   return (
@@ -604,7 +640,8 @@ function isPropertySearchQuery(text = "") {
     ) ||
     /\bmarla|kanal|sq ft|square feet|sq yd|rent|sale|buy|purchase|invest\b/.test(
       t
-    )
+    ) ||
+    isAreaOrSocietyDiscoveryQuery(t)
   );
 }
 
@@ -620,6 +657,7 @@ function hasBroadRealEstateIntent(text = "") {
     /\b(property|properties|real\s*estate|realty|realtor|zameen|graana|listings?\b|makaan|makkan|ghar|kothi|bangla|townhouse|duplex)\b/.test(
       t
     ) ||
+    /\b(scocieties|socities|socieites)\b/.test(t) ||
     /\b(possession|transfer|ballot|balloting|noc|installment|installments|file\s+plot|plot\s+file|corner\s+plot|park\s+facing)\b/.test(
       t
     ) ||
@@ -720,17 +758,18 @@ function inferUserLanguageHint(text = "") {
   // Short English-style queries: "5marla plot raiwind road in 50lac" (spacing optional)
   const compactEnglishProperty =
     !romanUrdu &&
-    /\b(plot|plots|house|flat|road|block|phase|dha|bahria|society)\b|\d+\s*marla|marla|kanal/i.test(
+    /\b(plot|plots|house|flat|road|block|phase|dha|bahria|society|societies)\b|\d+\s*marla|marla|kanal/i.test(
       lower
-    ) && /\b(in|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
+    ) &&
+    /\b(in|on|at|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
 
   if (romanUrdu) {
-    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth** (2–4 paragraphs when area/size/budget given): **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions** (priorities / trade-offs / what to verify). No empty hospitality closings.";
+    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth** and **length**: default **long-form** (typically **6–8 paragraphs** with blank lines when area/size/budget or society/corridor topics apply). Cover **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions** (priorities / trade-offs / what to verify). Add extra paragraphs with corridor/society nuance where helpful. No empty hospitality closings.";
   }
   if (englishLean || compactEnglishProperty) {
-    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**. Use **2–4 paragraphs** (blank lines between) when they gave area/size/budget: (1) acknowledge ask without robotic \"You are looking for…\" every time — vary the opening; (2) **2025–2026** market framing + **broad PKR range** for that corridor; (3) **budget fit** + ✅/❌ or clear trade-offs; (4) **2–3 concrete suggestions** (e.g. \"I'd prioritize…\", \"If budget is tight, lean toward…\", \"Verify first:…\"). Never end with generic \"let me know / assist you further\" filler.";
+    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**, and **long-form by default** (typically **6–8 paragraphs** with blank lines for property topics — more if the ask is broad). Structure: (1) vary the opening — not robotic \"You are looking for…\"; (2) **2025–2026** market framing + **broad PKR range** for that corridor; (3) **budget fit** + ✅/❌ or clear trade-offs; (4) **2–3 concrete suggestions** (e.g. \"I'd prioritize…\", \"If budget is tight, lean toward…\", \"Verify first:…\"); (5+) deeper paragraphs (society types, verification, timelines). Never end with generic \"let me know / assist you further\" filler.";
   }
-  return "Mirror the user's language (English vs Roman Urdu); default to English if unclear.";
+  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. Prefer **long, detailed** property answers (multiple paragraphs with blank lines) unless the user asked for short.";
 }
 
 function formatPkBudgetPhrase(minP, maxP) {
@@ -774,6 +813,11 @@ function normalizePropertySearchText(text = "") {
   let t = text.replace(/\s+/g, " ").trim();
 
   const replacements = [
+    [/\bscocieties\b/gi, "societies"],
+    [/\bscociety\b/gi, "society"],
+    [/\bsocities\b/gi, "societies"],
+    [/\bsocieites\b/gi, "societies"],
+    [/\bsociteis\b/gi, "societies"],
     [/\brawind\s+road\b/gi, "raiwind road"],
     [/\brawind\b/gi, "raiwind"],
     [/\briwand\s+road\b/gi, "raiwind road"],
@@ -1317,6 +1361,37 @@ function isCasualPleasantryOnly(text = "") {
   return false;
 }
 
+/** Last user turn (UI often ends with `user`; fresh chat may be `[assistant welcome, user]`). */
+function getLastUserMessageIndex(messages) {
+  if (!Array.isArray(messages)) return -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.role === "user") return i;
+  }
+  return -1;
+}
+
+function getLastUserContentFromMessages(messages) {
+  const i = getLastUserMessageIndex(messages);
+  if (i < 0) return "";
+  return String(messages[i]?.content ?? "");
+}
+
+/**
+ * OpenRouter / OpenAI-style APIs often reject histories that start with `assistant` after `system`
+ * (e.g. welcome bubble before the first user line). Drop leading assistant-only prefix.
+ */
+function trimMessagesForLlm(messages) {
+  const out = (messages || []).filter(
+    (m) =>
+      m &&
+      (m.role === "user" || m.role === "assistant") &&
+      typeof m.content === "string"
+  );
+  let start = 0;
+  while (start < out.length && out[start].role === "assistant") start += 1;
+  return out.slice(start);
+}
+
 // --------------- MAIN API HANDLER ---------------
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -1329,8 +1404,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Messages array is required" });
     }
 
-    const lastIndex = messages.length - 1;
-    const lastUserContent = messages[lastIndex]?.content || "";
+    const lastUserIdx = getLastUserMessageIndex(messages);
+    if (lastUserIdx < 0) {
+      return res.status(400).json({ error: "No user message found" });
+    }
+
+    const lastUserContent = messages[lastUserIdx]?.content || "";
     let userMessage = lastUserContent;
     let userLocation = null;
 
@@ -1343,7 +1422,7 @@ export default async function handler(req, res) {
         if (parsed && typeof parsed === "object" && typeof parsed.text === "string") {
           userMessage = parsed.text;
           if (parsed.location) userLocation = parsed.location;
-          messages[lastIndex].content = parsed.text; // OpenRouter ko plain text
+          messages[lastUserIdx].content = parsed.text; // OpenRouter ko plain text
         }
       } catch {
         // silently ignore
@@ -1439,6 +1518,7 @@ CORE IDENTITY:
 - Never sound robotic, casual, or playful.
 - Never mention that you are an AI.
 - **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Every property-search reply with budget + area should include **at least two explicit recommendation-style sentences** (could start with \"I'd suggest…\", \"In your situation I'd prioritize…\", \"A practical path is…\").
+- **Default length:** Unless the user clearly asks for a one-line or very short answer, write **long-form** replies — rich detail, several paragraphs, and full use of the model's output budget. Do **not** stop early after a short opener; keep adding corridor context, trade-offs, and verification steps until the answer feels complete.
 
 LANGUAGE RULES:
 - Match the user's language as directed above. Do not answer in Roman Urdu if they wrote in English-only prompts.
@@ -1448,7 +1528,7 @@ LANGUAGE RULES:
 PROPERTY SEARCH BEHAVIOR
 --------------------------------------------------
 
-When the user is searching for property (buy, sell, invest, budget, city/area, plots, houses, flats, marla/kanal size, etc.):
+When the user is searching for property (buy, sell, invest, budget, city/area, plots, houses, flats, marla/kanal size, etc.), or asks **which societies / areas** along a road or in a city (even without marla or budget in the same message):
 
 STRICT RULES:
 - **Timeframe:** For "current" Pakistan market commentary use **2025–2026** only. Do **not** refer to 2024, 2023, or older years as if they were today's market.
@@ -1475,12 +1555,16 @@ MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + bu
 - If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep structure readable (short paragraphs + optional bullet lines).
 
 RESPONSE FORMAT (property search — ChatGPT/Cursor-level usefulness, not brochure text):
-- **Length:** Prefer **long, substantive** answers. When the user gave **area + size + budget** (or plot/house + size + corridor + budget): write **at least 4 paragraphs** (each separated by a **blank line**), unless they asked a single yes/no fact. Aim for depth, not brevity. Shorter replies are only OK when the query is extremely vague or one line.
+- **Length (default long):** Prefer **long, substantive** answers — aim for **roughly 600–1200+ words** of useful consultant prose when the topic allows (society guides, budgets, corridors, comparisons). Use **blank lines** between paragraphs.
+  - If they gave **area + size + budget** (or plot/house + size + corridor + budget): **at least 6–8 paragraphs** unless they asked a single yes/no fact.
+  - If they gave **area / society / road** but not full budget or size: still write **at least 5–6 paragraphs** (corridor overview, society types, possession/file angles, broad PKR bands if inferable, verification checklist, optional clarifying question).
+  - Only use a **short** reply when the user explicitly wants brief, or the question is a trivial one-liner.
 - **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
 - **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
 - **Paragraph 1:** Acknowledge their ask (type, size, area, budget) with correct spellings + one **2025–2026** framing line.
 - **Paragraph 2 (segment):** Corridor dynamics + **typical PKR band** for that size (broad range, disclaimer) + what usually drives price (possession, block, file vs plot).
 - **Paragraph 3 (budget + judgment):** Honest **budget vs band** fit + short lines starting with **✅ / ❌ / 👍 / 🔥** where useful (no `*` markdown) + **2–3 explicit suggestions** (priorities, alternatives, verification order).
+- **Paragraphs 4+:** Add **deeper** material — e.g. compare **2–3 society archetypes** in that corridor, **who each option suits**, **risks to watch**, **timeline/possession** angles, **what documents to verify**, and **how to narrow** once they share budget or marla. Do not repeat the same idea in different words; each paragraph should add new value.
 - **Mandatory:** Include **at least two sentences** that read as **recommendations** (suggestion / priority / \"if… then…\"), not just description.
 
 FORBIDDEN thin / template closings (never use these patterns):
@@ -1523,7 +1607,7 @@ If the user asks about:
 - Or any real-estate related guidance
 
 Then:
-- Answer clearly and professionally with **enough depth** (usually **3–4 paragraphs** with blank lines), unless the question is trivially short.
+- Answer clearly and professionally with **enough depth** (usually **5–7 paragraphs** with blank lines, same long-form default as property search), unless the question is trivially short or they asked for brief.
 - You may use short bullet points if helpful.
 - Do NOT mention website listings in this case.
 
@@ -1573,7 +1657,7 @@ ${
   f.minPrice != null || f.maxPrice != null
     ? (f.areaLabel || f.areaSlug || f.city
         ? `
-- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first). Minimum **4 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
+- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first), (5) extra paragraphs on society comparison, verification, and next steps. Minimum **6–8 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
         : "")
     : ""
 }
@@ -1585,7 +1669,8 @@ ${
       content: systemPrompt.trim(),
     };
 
-    const openRouterMessages = [systemInstruction, ...messages];
+    const modelConversation = trimMessagesForLlm(messages);
+    const openRouterMessages = [systemInstruction, ...modelConversation];
 
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -1601,8 +1686,8 @@ ${
         body: JSON.stringify({
           model: "openai/gpt-4o-mini",
           messages: openRouterMessages,
-          temperature: 0.5,
-          max_tokens: 2400,
+          temperature: 0.55,
+          max_tokens: 8192,
         }),
       }
     );
@@ -1651,11 +1736,26 @@ ${
     });
   } catch (err) {
     console.error("AI handler error:", err);
+    let fallbackText = AI_UNAVAILABLE_ASSISTANT_REPLY;
+    try {
+      const body = req.body || {};
+      const msgs = body.messages;
+      const lastU = getLastUserContentFromMessages(msgs);
+      const norm = normalizePropertySearchText(lastU);
+      if (
+        norm &&
+        (hasBroadRealEstateIntent(norm) || isPropertySearchQuery(norm))
+      ) {
+        fallbackText =
+          "I'm your AI property assistant for Pakistan. I couldn't finish that reply just now — please send the same message again.\n\nYour question is property-related. For **societies along Raiwind Road / southern Lahore**, compare **possession stage**, **file vs on-ground**, and **typical PKR per marla** bands for the segment you want (add buy or rent and a rough budget when you can — I can narrow the guidance).";
+      }
+    } catch {
+      // keep default
+    }
     return res.status(200).json({
-      text: AI_UNAVAILABLE_ASSISTANT_REPLY,
+      text: fallbackText,
       params: null,
       pageLink: null,
     });
   }
 }
-
