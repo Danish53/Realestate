@@ -27,6 +27,97 @@ const NO_API_KEY_WITH_SEARCH_REPLY =
 
 const NO_API_KEY_GENERAL_REPLY =
   "I'm your AI real estate assistant for Pakistan property. Detailed AI answers need the assistant service to be configured (OPENROUTER_API_KEY) on the server.\n\nOnce that's set up, I can give long, specific guidance on areas, budgets, sizes, and market reality. For now, please try again later or contact support.";
+
+/** Override via env, e.g. OPENROUTER_CHAT_MODEL=openai/gpt-4o-mini for lower cost. */
+const OPENROUTER_CHAT_MODEL =
+  process.env.OPENROUTER_CHAT_MODEL || "openai/gpt-4o";
+
+/**
+ * Completion budget per call (not total chat cost). Lower = cheaper / fits small OpenRouter balances.
+ * Set in .env e.g. OPENROUTER_MAX_COMPLETION_TOKENS=1024 if credits are tight (may truncate long replies).
+ * Hard cap 8192, floor 256 (env override minimum).
+ */
+function resolveOpenRouterMaxCompletionTokens() {
+  const raw = process.env.OPENROUTER_MAX_COMPLETION_TOKENS;
+  /* Default 2048: enough for several **complete** paragraphs in EN/Urdu without mid-sentence cutoffs. */
+  if (raw == null || String(raw).trim() === "") return 2048;
+  const n = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(n)) return 2048;
+  return Math.min(8192, Math.max(256, n));
+}
+
+/** Max user+assistant messages sent after trimming (newest kept). Saves input tokens. */
+function resolveOpenRouterMaxChatMessages() {
+  const raw = process.env.OPENROUTER_MAX_CHAT_MESSAGES;
+  if (raw == null || String(raw).trim() === "") return 12;
+  const n = parseInt(String(raw).trim(), 10);
+  if (!Number.isFinite(n)) return 12;
+  return Math.min(32, Math.max(4, n));
+}
+
+/** Second weak-reply pass doubles cost — set OPENROUTER_WEAK_REPLY_RETRY=0 to save credits. */
+const OPENROUTER_WEAK_REPLY_RETRY_ENABLED =
+  process.env.OPENROUTER_WEAK_REPLY_RETRY !== "0";
+
+function formatOpenRouterErrorMessage(data) {
+  if (!data) return "OpenRouter API error";
+  const e = data.error;
+  if (typeof e === "string") return e;
+  if (e && typeof e.message === "string") return e.message;
+  if (typeof data.message === "string") return data.message;
+  return "OpenRouter API error";
+}
+
+function extractOpenRouterAssistantText(data) {
+  const msg = data?.choices?.[0]?.message;
+  if (typeof msg?.content === "string") return msg.content;
+  if (Array.isArray(msg?.content)) {
+    return msg.content.map((part) => part?.text || "").join("");
+  }
+  return "";
+}
+
+function countParagraphsByBlankLines(text) {
+  if (!text || typeof text !== "string") return 0;
+  return text
+    .split(/\n\s*\n+/)
+    .filter((p) => p.replace(/\s+/g, " ").trim().length > 50).length;
+}
+
+function isWeakPropertySearchReply(text) {
+  const t = (text || "").trim();
+  if (!t) return true;
+  if (t.length < 550) return true;
+  if (countParagraphsByBlankLines(t) < 3) return true;
+  const low = t.toLowerCase();
+  if (
+    /\bplease let me know\b/.test(low) ||
+    /\bif you have\b/.test(low) ||
+    /\bif you've\b/.test(low) ||
+    /\bfurther details\b/.test(low) ||
+    /\bif you(?:'| a)re interested\b/.test(low) ||
+    /\blet me know\b/.test(low) ||
+    /\bdon't hesitate\b/.test(low) ||
+    /\bfeel free to\b/.test(low)
+  )
+    return true;
+  return false;
+}
+
+function buildPropertySearchWeakReplyRetryUserContent(
+  lastUserNorm,
+  filtersForAI
+) {
+  const summary =
+    buildSearchSummaryForPrompt(filtersForAI) || "property search";
+  return (
+    "Your previous reply was too short or generic for a property search. Rewrite from scratch as a senior Pakistan real-estate consultant.\n\n" +
+    `Latest user message:\n${String(lastUserNorm || "").trim()}\n\n` +
+    `Parsed intent (stay consistent): ${summary}\n\n` +
+    "Requirements: at least **4 full paragraphs** (each must end with a complete sentence — no mid-paragraph cutoffs), blank lines between; **2025–2026** framing; **broad PKR bands** for that size/corridor (ranges + disclaimer); file vs possession; verification; **≥2 recommendation sentences**. Forbidden: \"please let me know\", \"if you have a society\", \"further details\", \"View Listings\", \"browse listings\", URLs. Do not open with \"You are looking for…\"."
+  );
+}
+
 // --------------- Helper: Size parsing ---------------
 function parseSizeFromText(text = "") {
   const sizeRegex =
@@ -741,7 +832,7 @@ function inferUserLanguageHint(text = "") {
   if (!raw) return "Mirror the user's language.";
 
   if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(raw)) {
-    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural.";
+    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural. **At least 3 complete paragraphs**, blank lines between; **never stop mid-sentence**; prefer more depth when the topic needs it.";
   }
 
   const lower = raw.toLowerCase();
@@ -764,12 +855,12 @@ function inferUserLanguageHint(text = "") {
     /\b(in|on|at|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
 
   if (romanUrdu) {
-    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth** and **length**: default **long-form** (typically **6–8 paragraphs** with blank lines when area/size/budget or society/corridor topics apply). Cover **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions** (priorities / trade-offs / what to verify). Add extra paragraphs with corridor/society nuance where helpful. No empty hospitality closings.";
+    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth**. **Minimum 3 complete paragraphs** (har paragraph mukammal jumlay par khatam ho) with blank lines between; **prefer 5–7** jab topic bara ho. **Kabhi beech jumlay/paragraph ke darmiyan mat rukna** — agar jagah kam ho to pehle 3 paragraphs pooray karo. Cover **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions**. No empty hospitality closings.";
   }
   if (englishLean || compactEnglishProperty) {
-    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**, and **long-form by default** (typically **6–8 paragraphs** with blank lines for property topics — more if the ask is broad). Structure: (1) vary the opening — not robotic \"You are looking for…\"; (2) **2025–2026** market framing + **broad PKR range** for that corridor; (3) **budget fit** + ✅/❌ or clear trade-offs; (4) **2–3 concrete suggestions** (e.g. \"I'd prioritize…\", \"If budget is tight, lean toward…\", \"Verify first:…\"); (5+) deeper paragraphs (society types, verification, timelines). Never end with generic \"let me know / assist you further\" filler.";
+    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**. **At least 3 full paragraphs** (each ending with a complete sentence — never stop mid-paragraph or mid-sentence), blank lines between paragraphs; **prefer 5–7** when the topic is broad. If you must shorten, **finish the paragraph you are in**, then stop — do not trail off with half a thought. Structure: (1) vary the opening; (2) **2025–2026** framing + **broad PKR range** where relevant; (3) trade-offs + **2–3 concrete suggestions**; (4+) verification / society nuance as space allows. Never end with generic \"let me know / assist you further\" filler.";
   }
-  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. Prefer **long, detailed** property answers (multiple paragraphs with blank lines) unless the user asked for short.";
+  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. Prefer **at least 3 complete paragraphs** with blank lines for property answers unless the user asked for one line.";
 }
 
 function formatPkBudgetPhrase(minP, maxP) {
@@ -1389,7 +1480,10 @@ function trimMessagesForLlm(messages) {
   );
   let start = 0;
   while (start < out.length && out[start].role === "assistant") start += 1;
-  return out.slice(start);
+  const trimmed = out.slice(start);
+  const maxMsgs = resolveOpenRouterMaxChatMessages();
+  if (trimmed.length > maxMsgs) return trimmed.slice(-maxMsgs);
+  return trimmed;
 }
 
 // --------------- MAIN API HANDLER ---------------
@@ -1518,7 +1612,8 @@ CORE IDENTITY:
 - Never sound robotic, casual, or playful.
 - Never mention that you are an AI.
 - **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Every property-search reply with budget + area should include **at least two explicit recommendation-style sentences** (could start with \"I'd suggest…\", \"In your situation I'd prioritize…\", \"A practical path is…\").
-- **Default length:** Unless the user clearly asks for a one-line or very short answer, write **long-form** replies — rich detail, several paragraphs, and full use of the model's output budget. Do **not** stop early after a short opener; keep adding corridor context, trade-offs, and verification steps until the answer feels complete.
+- **Default length:** Unless the user clearly asks for a one-line or very short answer, write **long-form** replies — rich detail and **several complete paragraphs**. Do **not** stop early after a short opener.
+- **Complete paragraphs (critical):** Never end **mid-sentence** or **mid-paragraph**. Har paragraph ko poora likh kar khatam karo (full stop / Urdu full stop). Agar length limit ka khayal ho to **pehle 3 paragraphs mukammal** karo, phir agla paragraph shuru mat karo jab tak pehle wala poora na ho. **Minimum 3 full paragraphs** for property-related questions unless the user asked for a single yes/no or one line; **prefer 4–6+** jab sawal detail mangta ho.
 
 LANGUAGE RULES:
 - Match the user's language as directed above. Do not answer in Roman Urdu if they wrote in English-only prompts.
@@ -1555,9 +1650,9 @@ MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + bu
 - If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep structure readable (short paragraphs + optional bullet lines).
 
 RESPONSE FORMAT (property search — ChatGPT/Cursor-level usefulness, not brochure text):
-- **Length (default long):** Prefer **long, substantive** answers — aim for **roughly 600–1200+ words** of useful consultant prose when the topic allows (society guides, budgets, corridors, comparisons). Use **blank lines** between paragraphs.
-  - If they gave **area + size + budget** (or plot/house + size + corridor + budget): **at least 6–8 paragraphs** unless they asked a single yes/no fact.
-  - If they gave **area / society / road** but not full budget or size: still write **at least 5–6 paragraphs** (corridor overview, society types, possession/file angles, broad PKR bands if inferable, verification checklist, optional clarifying question).
+- **Length (default long):** Prefer **substantive** answers with **blank lines** between paragraphs. Pehle **3 pooray paragraphs** zaroor dena; phir topic ke mutabiq **4–6+** paragraphs behtar hain jab detail darkar ho.
+  - If they gave **area + size + budget** (or plot/house + size + corridor + budget): **minimum 3 complete paragraphs**; **prefer 5–8** when useful — never cut the last paragraph halfway.
+  - If they gave **area / society / road** but not full budget or size: **minimum 3 complete paragraphs**; **prefer 4–6** (corridor overview, society types, possession/file angles, broad PKR bands if inferable, verification checklist, optional clarifying question).
   - Only use a **short** reply when the user explicitly wants brief, or the question is a trivial one-liner.
 - **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
 - **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
@@ -1607,7 +1702,7 @@ If the user asks about:
 - Or any real-estate related guidance
 
 Then:
-- Answer clearly and professionally with **enough depth** (usually **5–7 paragraphs** with blank lines, same long-form default as property search), unless the question is trivially short or they asked for brief.
+- Answer clearly and professionally with **enough depth** — **at least 3 complete paragraphs** with blank lines (prefer **4–6** when the topic needs it); same rule: **no mid-sentence or mid-paragraph cutoffs**, unless the question is trivially short or they asked for brief.
 - You may use short bullet points if helpful.
 - Do NOT mention website listings in this case.
 
@@ -1657,8 +1752,18 @@ ${
   f.minPrice != null || f.maxPrice != null
     ? (f.areaLabel || f.areaSlug || f.city
         ? `
-- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first), (5) extra paragraphs on society comparison, verification, and next steps. Minimum **6–8 paragraphs**, blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler paragraphs. No "let me know / assist further" endings.`
+- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first), (5) extra material on society comparison, verification, next steps. **Minimum 3 complete paragraphs** (each fully finished); **prefer 5–8** when space allows — blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler. No "let me know / assist further" endings.`
         : "")
+    : ""
+}
+${
+  plotOnly &&
+  f.size != null &&
+  (f.areaLabel || f.areaSlug || f.city) &&
+  f.minPrice == null &&
+  f.maxPrice == null
+    ? `
+- **DEPTH REQUIRED (plot + size + corridor, no budget yet):** User gave **plot + marla/kanal + area/road/city** but no PKR range. Deliver **≥3 complete paragraphs** (blank lines between), **prefer 5–6**: 2025–2026 corridor framing; **broad PKR bands** for that plot size (disclaimer); file vs possession; verification; **≥2 explicit recommendations**; optional **one** polite budget question at the end — not a thin "let me know / if you have a society" closer. **Do not cut mid-paragraph.**`
     : ""
 }
 `;
@@ -1672,46 +1777,97 @@ ${
     const modelConversation = trimMessagesForLlm(messages);
     const openRouterMessages = [systemInstruction, ...modelConversation];
 
-    const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer":
-            process.env.FRONTEND_URL || "http://localhost:3000",
-          "X-Title": "AI Land MKT Expert",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
-          messages: openRouterMessages,
-          temperature: 0.55,
-          max_tokens: 8192,
-        }),
+    const maxCompletionTokens = resolveOpenRouterMaxCompletionTokens();
+
+    async function callOpenRouter(messagesPayload, temperature) {
+      let cap = maxCompletionTokens;
+      let lastMessage = "OpenRouter API error";
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const response = await fetch(
+          "https://openrouter.ai/api/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer":
+                process.env.FRONTEND_URL || "http://localhost:3000",
+              "X-Title": "AI Land MKT Expert",
+            },
+            body: JSON.stringify({
+              model: OPENROUTER_CHAT_MODEL,
+              messages: messagesPayload,
+              temperature,
+              max_tokens: cap,
+            }),
+          }
+        );
+        const data = await response.json();
+        if (response.ok) {
+          return data;
+        }
+        lastMessage = formatOpenRouterErrorMessage(data);
+        const retriable =
+          /fewer max_tokens|more credits|can only afford|requested up to|requires more credits|insufficient|balance too low/i.test(
+            lastMessage
+          );
+        /* Do not drop below 512 — lower caps cause mid-paragraph truncation; user should lower OPENROUTER_MAX_COMPLETION_TOKENS in .env if credits are tight. */
+        if (retriable && cap > 512) {
+          cap = Math.max(512, Math.floor(cap * 0.65));
+          continue;
+        }
+        throw new Error(lastMessage);
       }
-    );
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data?.error?.message || "OpenRouter API error");
+      throw new Error(lastMessage);
     }
 
-    // let aiText = data.choices?.[0]?.message?.content || "";
-    const msg = data?.choices?.[0]?.message;
-    let aiText = "";
-
-    if (typeof msg?.content === "string") {
-      aiText = msg.content;
-    } else if (Array.isArray(msg?.content)) {
-      aiText = msg.content.map((part) => part?.text || "").join("");
-    }
+    let data = await callOpenRouter(openRouterMessages, 0.55);
+    let aiText = extractOpenRouterAssistantText(data);
 
     if (isPropSearch && aiText) {
       aiText = sanitizeListingCtaFromAssistantText(aiText);
     }
     if (aiText) {
       aiText = stripChatMarkdown(aiText);
+    }
+
+    if (
+      OPENROUTER_WEAK_REPLY_RETRY_ENABLED &&
+      isPropSearch &&
+      searchInfo?.params &&
+      searchInfo?.filtersForAI &&
+      isWeakPropertySearchReply(aiText)
+    ) {
+      try {
+        const retryMessages = [
+          ...openRouterMessages,
+          {
+            role: "user",
+            content: buildPropertySearchWeakReplyRetryUserContent(
+              userMessageNorm,
+              searchInfo.filtersForAI
+            ),
+          },
+        ];
+        const dataRetry = await callOpenRouter(retryMessages, 0.45);
+        let aiRetry = extractOpenRouterAssistantText(dataRetry);
+        if (isPropSearch && aiRetry) {
+          aiRetry = sanitizeListingCtaFromAssistantText(aiRetry);
+        }
+        if (aiRetry) {
+          aiRetry = stripChatMarkdown(aiRetry);
+        }
+        if (aiRetry && !isWeakPropertySearchReply(aiRetry)) {
+          aiText = aiRetry;
+        } else if (
+          aiRetry &&
+          String(aiRetry).trim().length > String(aiText || "").trim().length
+        ) {
+          aiText = aiRetry;
+        }
+      } catch (_) {
+        /* keep first completion */
+      }
     }
 
     // --------- Link generation only for property search ---------
