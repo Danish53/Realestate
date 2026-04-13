@@ -30,7 +30,7 @@ const NO_API_KEY_GENERAL_REPLY =
 
 /** Override via env, e.g. OPENROUTER_CHAT_MODEL=openai/gpt-4o-mini for lower cost. */
 const OPENROUTER_CHAT_MODEL =
-  process.env.OPENROUTER_CHAT_MODEL || "openai/gpt-4o";
+  process.env.OPENROUTER_CHAT_MODEL || "openai/gpt-4o-mini";
 
 /**
  * Completion budget per call (not total chat cost). Lower = cheaper / fits small OpenRouter balances.
