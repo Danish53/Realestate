@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
 import { FiHome, FiMapPin, FiCalendar, FiSquare, FiPhoneCall } from "react-icons/fi";
 import { FaBed, FaBath, FaWhatsapp } from "react-icons/fa";
@@ -58,6 +58,39 @@ import MortgageCalculator from "../MortgageCalculator/MortgageCalculator";
  * }
  */
 
+const DEFAULT_WHATSAPP_DISPLAY = "03238450741";
+
+/** Local PK / +92 → wa.me digits (no +), e.g. 0323… → 92323… */
+function toWhatsAppIntlDigits(input) {
+  const d = String(input || "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("92")) return d;
+  if (d.startsWith("0") && d.length >= 10) return `92${d.slice(1)}`;
+  if (d.length === 10) return `92${d}`;
+  return d;
+}
+
+function buildWhatsAppPropertyHref(intlDigits, pageUrl, detail) {
+  if (!intlDigits) return "#";
+  const title = detail?.title?.trim();
+  const price = detail?.price?.trim();
+  const loc = detail?.location?.trim();
+  const lines = [
+    "Hello!",
+    "",
+    "I'm interested in this property on AI Land MKT:",
+    "",
+  ];
+  if (title) lines.push(title);
+  if (price) lines.push(`Price: ${price}`);
+  if (loc) lines.push(`Location: ${loc}`);
+  lines.push("");
+  lines.push("Listing link:");
+  lines.push(pageUrl || "—");
+  const qs = new URLSearchParams({ text: lines.join("\n") });
+  return `https://wa.me/${intlDigits}?${qs.toString()}`;
+}
+
 const PropertyDetailsAI = () => {
   const router = useRouter();
   const { slug } = router.query;
@@ -101,12 +134,35 @@ const PropertyDetailsAI = () => {
     fetchDetail();
   }, [router.isReady, slug]);
 
+  const [propertyPageUrl, setPropertyPageUrl] = useState("");
 
-  const whatsappDigits = detail?.agent?.phone
-        ? String(detail?.agent?.phone).replace(/\D/g, '')
-        : ''
+  useEffect(() => {
+    if (typeof window === "undefined" || !router.isReady) return;
+    const path = router.asPath.split("?")[0].split("#")[0];
+    setPropertyPageUrl(`${window.location.origin}${path}`);
+  }, [router.isReady, router.asPath]);
+
+  const displayWhatsapp =
+    (detail?.agent?.phone && String(detail.agent.phone).trim()) ||
+    DEFAULT_WHATSAPP_DISPLAY;
+
+  const whatsappIntlDigits = useMemo(
+    () => toWhatsAppIntlDigits(displayWhatsapp),
+    [displayWhatsapp]
+  );
+
+  const whatsappHref = useMemo(() => {
+    if (!detail || !whatsappIntlDigits) return "#";
+    return buildWhatsAppPropertyHref(
+      whatsappIntlDigits,
+      propertyPageUrl,
+      detail
+    );
+  }, [detail, propertyPageUrl, whatsappIntlDigits]);
+
   // ---------------- Helpers ----------------
 
+  
   const openLightbox = (index) => {
     setCurrentImage(index);
     setViewerIsOpen(true);
@@ -550,24 +606,24 @@ const PropertyDetailsAI = () => {
                 </div>
                 {/* {detail?.agent?.phone && ( */}
                   <div className="flex flex-col">
-                    {/* {whatsappDigits && ( */}
+                    {whatsappIntlDigits && (
                       <a
-                        href={`https://wa.me/${whatsappDigits}`}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-4 p-3 rounded-xl  hover:bg-gray-50 hover:shadow-sm transition-all group"
-                        aria-label={`${translate("whatsapp")} ${"03238450741"}`}
+                        aria-label={`${translate("whatsapp")} ${displayWhatsapp}`}
                       >
                         <div className="w-12 h-12 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-105 transition-all shrink-0">
                           <FaWhatsapp size={26} />
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="text-sm font-medium text-gray-500">{translate("whatsapp")}</span>
-                          <span className="text-gray-900 font-semibold truncate text-[15px]">{"03238450741"}</span>
+                          <span className="text-gray-900 font-semibold truncate text-[15px]">{displayWhatsapp}</span>
                         </div>
                       </a>
-                    {/* )} */}
-                    <a
+                    )}
+                    {/* <a
                       href={`tel:03238450741`}
                       className="flex items-center gap-4 p-3 rounded-xl  hover:bg-gray-50 hover:shadow-sm transition-all group"
                       aria-label={`${translate("call")} ${"03238450741"}`}
@@ -579,7 +635,7 @@ const PropertyDetailsAI = () => {
                         <span className="text-sm font-medium text-gray-500">{translate("call")}</span>
                         <span className="text-gray-900 font-semibold truncate text-[15px]">{"03238450741"}</span>
                       </div>
-                    </a>
+                    </a> */}
                   </div>
                 {/* )} */}
               </div>

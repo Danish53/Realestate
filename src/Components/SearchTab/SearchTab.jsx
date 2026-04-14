@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { ButtonGroup, Modal } from "react-bootstrap";
 import { 
   FiCalendar, 
@@ -19,7 +20,7 @@ import { translate } from "@/utils/helper";
 import LocationSearchBox from "../Location/LocationSearchBox";
 import { GrRefresh } from "react-icons/gr";
 import { useRouter } from "next/router";
-import { getfilterData } from "@/store/reducer/momentSlice";
+import { getfilterData, filterDataaa } from "@/store/reducer/momentSlice";
 import { BsPinMap } from "react-icons/bs";
 import { GetAllCategorieApi } from "@/store/actions/campaign";
 import { Autocomplete, TextField } from '@mui/material';
@@ -28,6 +29,7 @@ import { RiCloseCircleLine } from "react-icons/ri";
 
 const SearchTab = () => {
     const router = useRouter();
+    const searchBundle = useSelector(filterDataaa);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [filterD, setFilterD] = useState();
     const [formData, setFormData] = useState({
@@ -42,6 +44,18 @@ const SearchTab = () => {
     const [categoryData, setCategoryData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [clearfilterLocation, setClearFilerLocation] = useState(false);
+
+    /** Hero search box mirrors AI chat prompt when chat dispatches `getfilterData`. */
+    useEffect(() => {
+        if (!searchBundle || Array.isArray(searchBundle)) return;
+        const si = searchBundle.searchInput;
+        if (typeof si === "string" && si.trim() !== "") {
+            setSearchInput(si);
+        }
+        if (typeof searchBundle.activeTab === "number") {
+            setActiveTab(searchBundle.activeTab);
+        }
+    }, [searchBundle]);
 
     const handleHideFilterModal = () => {
         setShowFilterModal(false);

@@ -14,6 +14,7 @@ import { languageData } from "@/store/reducer/languageSlice";
 import NoData from "@/Components/NoDataFound/NoData";
 import Layout from "../Layout/Layout";
 import { useRouter } from "next/router";
+import { FiExternalLink } from "react-icons/fi";
 import VerticalCardSkeleton from "../Skeleton/VerticalCardSkeleton";
 
 const PropertyList = ({ type }) => {
@@ -31,6 +32,7 @@ const PropertyList = ({ type }) => {
     postedSince: "",
     selectedLocation: null,
     facilitiesIds: [],
+    search: "",
   });
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -44,6 +46,73 @@ const PropertyList = ({ type }) => {
   const cityName = router.query;
 
   const isFirstFilterFetch = useRef(true);
+  const chatQueryApplied = useRef(false);
+  const [chatScrapeUrl, setChatScrapeUrl] = useState(null);
+  /** Avoid first fetch before ?chat=1 filters are merged into state. */
+  const [listQueryReady, setListQueryReady] = useState(false);
+
+  /** Opened from AI chat with ?chat=1 — apply same filters as home /search DB API. */
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (type !== "all") {
+      setListQueryReady(true);
+      return;
+    }
+    if (router.query.chat !== "1") {
+      setListQueryReady(true);
+      return;
+    }
+    if (chatQueryApplied.current) return;
+    chatQueryApplied.current = true;
+    const q = router.query;
+    setFilterData((prev) => ({
+      ...prev,
+      minPrice: q.min_price != null && q.min_price !== "" ? String(q.min_price) : "",
+      maxPrice: q.max_price != null && q.max_price !== "" ? String(q.max_price) : "",
+      search: q.search != null && q.search !== "" ? String(q.search) : "",
+      propType:
+        q.property_type === "1"
+          ? 1
+          : q.property_type === "0"
+            ? 0
+            : prev.propType,
+      selectedLocation: q.city
+        ? { city: String(q.city).replace(/\+/g, " ") }
+        : prev.selectedLocation,
+    }));
+    setListQueryReady(true);
+  }, [router.isReady, router.query, type]);
+
+  useEffect(() => {
+    if (!router.isReady || router.query.chat !== "1") return;
+    const rawQ = router.query.scrape;
+    const fromUrl =
+      typeof rawQ === "string"
+        ? rawQ
+        : Array.isArray(rawQ) && rawQ[0]
+          ? rawQ[0]
+          : "";
+    if (fromUrl) {
+      try {
+        setChatScrapeUrl(decodeURIComponent(fromUrl));
+      } catch (_) {
+        setChatScrapeUrl(fromUrl);
+      }
+      return;
+    }
+    if (typeof window === "undefined") return;
+    try {
+      const u = sessionStorage.getItem("chat_scrape_listing_url");
+      setChatScrapeUrl(u || null);
+    } catch (_) {
+      setChatScrapeUrl(null);
+    }
+  }, [router.isReady, router.query.chat, router.query.scrape]);
+
+  const handleExtendedListingsClick = () => {
+    if (!chatScrapeUrl || typeof window === "undefined") return;
+    window.open(chatScrapeUrl, "_blank", "noopener,noreferrer");
+  };
 
   useEffect(() => {}, [lang]);
   useEffect(() => {}, [grid]);
@@ -70,6 +139,7 @@ const PropertyList = ({ type }) => {
           ? "0"
           : "",
       parameter_id: filterData?.facilitiesIds ? filterData?.facilitiesIds : "",
+      search: filterData?.search ? String(filterData.search) : "",
 
       onSuccess: (response) => {
         const propertyData = response.data;
@@ -90,7 +160,7 @@ const PropertyList = ({ type }) => {
 
   /** Refetch when filters change (live). First load is immediate; later changes are debounced (price typing). */
   useEffect(() => {
-    if (!router.isReady) return;
+    if (!router.isReady || !listQueryReady) return;
 
     const runFetch = () => {
       fetchProperties(0, false);
@@ -105,7 +175,7 @@ const PropertyList = ({ type }) => {
 
     const t = setTimeout(runFetch, 220);
     return () => clearTimeout(t);
-  }, [filterData, router.isReady, isLoggedIn, type, router.query?.slug]);
+  }, [filterData, router.isReady, listQueryReady, isLoggedIn, type, router.query?.slug]);
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -167,6 +237,7 @@ const PropertyList = ({ type }) => {
       postedSince: "",
       selectedLocation: null,
       facilitiesIds: [],
+      search: "",
     });
   };
   const handleLoadMore = () => {
@@ -191,8 +262,47 @@ const PropertyList = ({ type }) => {
   return (
     <Layout>
       <Breadcrumb title={breadCrumbTitle} />
+      
       <section id="all-prop-containt" className="all-properties-page">
         <div className="container all-properties">
+        {router.isReady && type === "all" && router.query.chat === "1" && (
+          <div className="mb-5 sm:mb-6">
+            <div
+              className="relative overflow-hidden rounded-2xl border border-primary-100/80 bg-gradient-to-br from-primary-50/80 via-white to-white shadow-sm shadow-primary-900/[0.06]"
+              role="status"
+            >
+              <div
+                className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl"
+                aria-hidden
+              />
+              <div className="relative p-4 sm:p-5">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
+                  AI chat
+                </p>
+                {chatScrapeUrl ? (
+                  <>
+                    <p className="mb-4 max-w-2xl text-sm leading-relaxed text-gray-600">
+                      If you want <span className="font-medium text-gray-800">more listings</span>,
+                      click the button.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleExtendedListingsClick}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    >
+                      <FiExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                      More listings
+                    </button>
+                  </>
+                ) : (
+                  <p className="mb-0 text-sm text-gray-500">
+                    More partner listings are not available for this search right now.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
           <div className="all-properties-inner">
             {/* Sidebar Filters */}
             <aside className="all-prop-sidebar">

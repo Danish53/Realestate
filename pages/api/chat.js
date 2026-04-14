@@ -39,10 +39,10 @@ const OPENROUTER_CHAT_MODEL =
  */
 function resolveOpenRouterMaxCompletionTokens() {
   const raw = process.env.OPENROUTER_MAX_COMPLETION_TOKENS;
-  /* Default 2048: enough for several **complete** paragraphs in EN/Urdu without mid-sentence cutoffs. */
-  if (raw == null || String(raw).trim() === "") return 2048;
+  /* Default 1536: slightly shorter replies than 2048; still enough for complete paragraphs. Override via env. */
+  if (raw == null || String(raw).trim() === "") return 1536;
   const n = parseInt(String(raw).trim(), 10);
-  if (!Number.isFinite(n)) return 2048;
+  if (!Number.isFinite(n)) return 1536;
   return Math.min(8192, Math.max(256, n));
 }
 
@@ -87,8 +87,8 @@ function countParagraphsByBlankLines(text) {
 function isWeakPropertySearchReply(text) {
   const t = (text || "").trim();
   if (!t) return true;
-  if (t.length < 550) return true;
-  if (countParagraphsByBlankLines(t) < 3) return true;
+  if (t.length < 380) return true;
+  if (countParagraphsByBlankLines(t) < 2) return true;
   const low = t.toLowerCase();
   if (
     /\bplease let me know\b/.test(low) ||
@@ -114,7 +114,7 @@ function buildPropertySearchWeakReplyRetryUserContent(
     "Your previous reply was too short or generic for a property search. Rewrite from scratch as a senior Pakistan real-estate consultant.\n\n" +
     `Latest user message:\n${String(lastUserNorm || "").trim()}\n\n` +
     `Parsed intent (stay consistent): ${summary}\n\n` +
-    "Requirements: at least **4 full paragraphs** (each must end with a complete sentence — no mid-paragraph cutoffs), blank lines between; **2025–2026** framing; **broad PKR bands** for that size/corridor (ranges + disclaimer); file vs possession; verification; **≥2 recommendation sentences**. Forbidden: \"please let me know\", \"if you have a society\", \"further details\", \"View Listings\", \"browse listings\", URLs. Do not open with \"You are looking for…\"."
+    "Requirements: **3 concise full paragraphs** (complete sentences only; blank lines between); **2025–2026** framing; **broad PKR bands** (ranges + disclaimer); file vs possession; **≥1–2 recommendation sentences**. Keep it a bit shorter than a long essay. Forbidden: \"please let me know\", \"if you have a society\", \"further details\", \"View Listings\", \"browse listings\", URLs. Do not open with \"You are looking for…\"."
   );
 }
 
@@ -832,7 +832,7 @@ function inferUserLanguageHint(text = "") {
   if (!raw) return "Mirror the user's language.";
 
   if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(raw)) {
-    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural. **At least 3 complete paragraphs**, blank lines between; **never stop mid-sentence**; prefer more depth when the topic needs it.";
+    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural. **Usually 2–3 concise complete paragraphs**, blank lines between (add a 4th only if truly needed); **never stop mid-sentence**.";
   }
 
   const lower = raw.toLowerCase();
@@ -855,12 +855,12 @@ function inferUserLanguageHint(text = "") {
     /\b(in|on|at|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
 
   if (romanUrdu) {
-    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth**. **Minimum 3 complete paragraphs** (har paragraph mukammal jumlay par khatam ho) with blank lines between; **prefer 5–7** jab topic bara ho. **Kabhi beech jumlay/paragraph ke darmiyan mat rukna** — agar jagah kam ho to pehle 3 paragraphs pooray karo. Cover **2025–2026** context, **broad PKR band**, **budget vs reality**, plus **2–3 clear suggestions**. No empty hospitality closings.";
+    return "User wrote in Roman Urdu — reply in professional Roman Urdu with **depth** lekin **thori chhoti length**: **2–3 pooray paragraphs** (ziyada zarurat ho to 4); blank lines between. **Beech jumlay par mat ruko.** Cover **2025–2026**, **broad PKR band**, **budget vs reality**, **1–2 clear suggestions**. No empty hospitality closings.";
   }
   if (englishLean || compactEnglishProperty) {
-    return "User wrote in English — reply like **ChatGPT/Cursor product advice**: fluent, **opinionated**, **actionable**. **At least 3 full paragraphs** (each ending with a complete sentence — never stop mid-paragraph or mid-sentence), blank lines between paragraphs; **prefer 5–7** when the topic is broad. If you must shorten, **finish the paragraph you are in**, then stop — do not trail off with half a thought. Structure: (1) vary the opening; (2) **2025–2026** framing + **broad PKR range** where relevant; (3) trade-offs + **2–3 concrete suggestions**; (4+) verification / society nuance as space allows. Never end with generic \"let me know / assist you further\" filler.";
+    return "User wrote in English — fluent, **opinionated**, **actionable**, **slightly shorter than a long essay**. **Usually 2–3 full paragraphs** (each ending with a complete sentence; blank lines between); use **4 short paragraphs** only for a very broad question. Cover: **2025–2026** framing + **broad PKR range** where relevant, trade-offs, **1–2 concrete suggestions**, brief verification note if helpful. Never end mid-sentence. Never end with generic \"let me know / assist you further\" filler.";
   }
-  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. Prefer **at least 3 complete paragraphs** with blank lines for property answers unless the user asked for one line.";
+  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. For property answers: **2–3 concise complete paragraphs** with blank lines unless the user asked for one line or a very short reply.";
 }
 
 function formatPkBudgetPhrase(minP, maxP) {
@@ -1333,31 +1333,147 @@ function appendGraanaParams(searchParams, params) {
   else if (params.graanaCity) searchParams.set("g_city", params.graanaCity);
 }
 
-/** `/properties-list-all?…` from parsed `extractSearchParams` output. */
+/**
+ * `/properties-list-all?…` from parsed `extractSearchParams` output.
+ * If the user gave no city/area, Zameen/Graana scrape still needs a location — use Lahore as a broad default
+ * so the page loads (partner listings are city-scoped, not Pakistan-wide text search).
+ */
 function buildPropertiesListAllLink(params) {
   if (!params || typeof params !== "object") return null;
+  if (!params.category) return null;
+
+  const hasZameenLoc = !!(params.areaSlug || params.citySlug);
+  const hasGraanaLoc = !!(params.graanaArea || params.graanaCity);
+
+  let usedLocationFallback = false;
+  const effective = { ...params };
+  if (!hasZameenLoc && !hasGraanaLoc) {
+    effective.citySlug = CITY_SLUGS.lahore;
+    effective.graanaCity = GRAANA_CITY_SLUGS.lahore;
+    usedLocationFallback = true;
+  }
+
   const searchParams = new URLSearchParams();
 
-  if (params.category) searchParams.append("category", params.category);
+  searchParams.append("category", effective.category);
 
-  if (params.areaSlug) {
-    searchParams.append("areaSlug", params.areaSlug);
-  } else if (params.citySlug) {
-    searchParams.append("citySlug", params.citySlug);
+  if (effective.areaSlug) {
+    searchParams.append("areaSlug", effective.areaSlug);
+  } else if (effective.citySlug) {
+    searchParams.append("citySlug", effective.citySlug);
   }
 
   searchParams.append("page", "1");
 
-  if (params.area_min) searchParams.append("area_min", params.area_min);
-  if (params.area_max) searchParams.append("area_max", params.area_max);
-  if (params.minPrice) searchParams.append("price_min", String(params.minPrice));
-  if (params.maxPrice) searchParams.append("price_max", String(params.maxPrice));
-  if (params.beds) searchParams.append("beds_in", String(params.beds));
-  if (params.baths) searchParams.append("baths_in", String(params.baths));
+  if (effective.area_min) searchParams.append("area_min", effective.area_min);
+  if (effective.area_max) searchParams.append("area_max", effective.area_max);
+  if (effective.minPrice) searchParams.append("price_min", String(effective.minPrice));
+  if (effective.maxPrice) searchParams.append("price_max", String(effective.maxPrice));
+  if (effective.beds) searchParams.append("beds_in", String(effective.beds));
+  if (effective.baths) searchParams.append("baths_in", String(effective.baths));
 
-  appendGraanaParams(searchParams, params);
+  appendGraanaParams(searchParams, effective);
 
-  return `/properties-list-all?${searchParams.toString()}`;
+  if (usedLocationFallback) searchParams.append("fallback_city", "lahore");
+
+  const qs = searchParams.toString();
+  if (!qs) return null;
+
+  return `/properties-list-all?${qs}`;
+}
+
+/** Same filters as home /search → Redux `getfilterData` bundle (SearchTab + SearchPage). */
+function buildChatSearchSyncPayload(params, userMessageNorm) {
+  if (!params || typeof params !== "object") return null;
+  const rawCity = params.city ? String(params.city).trim() : "";
+  const city =
+    rawCity.length > 0
+      ? rawCity.charAt(0).toUpperCase() + rawCity.slice(1).toLowerCase()
+      : "";
+  return {
+    filterData: {
+      propType: "",
+      minPrice: params.minPrice ?? "",
+      maxPrice: params.maxPrice ?? "",
+      postedSince: "",
+      selectedLocation: city ? { city, state: "", country: "" } : null,
+    },
+    activeTab: params.purpose === "rent" ? 1 : 0,
+    searchInput:
+      String(userMessageNorm || "").trim() ||
+      String(params.q || "").trim() ||
+      "",
+  };
+}
+
+/** `/properties/all-properties/?chat=1&…` — same intent as DB listing search. */
+function buildAllPropertiesChatLink(params, searchText, scrapePageLink) {
+  const q = new URLSearchParams();
+  q.set("chat", "1");
+  if (params.city) q.set("city", String(params.city));
+  q.set(
+    "min_price",
+    typeof params.minPrice === "number" ? String(params.minPrice) : "0"
+  );
+  if (typeof params.maxPrice === "number")
+    q.set("max_price", String(params.maxPrice));
+  q.set("property_type", params.purpose === "rent" ? "1" : "0");
+  const st = String(searchText || params.q || "").trim();
+  if (st) q.set("search", st.slice(0, 400));
+  const ext =
+    typeof scrapePageLink === "string" ? scrapePageLink.trim() : "";
+  /* Relative scrape URL survives navigation when sessionStorage is missing (new device / copied link). */
+  if (ext.startsWith("/") && ext.length > 1 && ext.length <= 1800) {
+    q.set("scrape", ext);
+  }
+  if (ext.includes("fallback_city=")) {
+    q.set("scrape_fb", "1");
+  }
+  return `/properties/all-properties/?${q.toString()}`;
+}
+
+/**
+ * Calls the same backend list as the home /search page (`get-property-list`).
+ * Returns total count (0 on failure).
+ */
+async function fetchDbListingTotal(params, searchText) {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  const apiEnd = process.env.NEXT_PUBLIC_END_POINT;
+  if (!apiBase || !apiEnd || !params) return 0;
+
+  const q = new URLSearchParams();
+  q.set("property_type", params.purpose === "rent" ? "1" : "0");
+  /* Match SearchPage / direct API: default min_price=0 so text search returns rows. */
+  q.set(
+    "min_price",
+    typeof params.minPrice === "number" ? String(params.minPrice) : "0"
+  );
+  q.set("limit", "8");
+  q.set("offset", "0");
+  if (params.city) q.set("city", String(params.city));
+  if (typeof params.maxPrice === "number")
+    q.set("max_price", String(params.maxPrice));
+  const st = String(searchText || params.q || "").trim();
+  if (st) q.set("search", st.slice(0, 300));
+
+  const url = `${apiBase}${apiEnd}get-property-list?${q.toString()}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const r = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: ctrl.signal,
+    });
+    if (!r.ok) return 0;
+    const j = await r.json();
+    if (typeof j.total === "number") return j.total;
+    if (Array.isArray(j.data)) return j.data.length;
+    return 0;
+  } catch {
+    return 0;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** True for a lone greeting so we can reply without calling the LLM. */
@@ -1589,11 +1705,44 @@ export default async function handler(req, res) {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       const params = isPropSearch && searchInfo?.params ? searchInfo.params : null;
-      const pageLink = params ? buildPropertiesListAllLink(params) : null;
+      const searchSync = params
+        ? buildChatSearchSyncPayload(params, userMessageNorm)
+        : null;
+      if (!params) {
+        return res.status(200).json({
+          text: NO_API_KEY_GENERAL_REPLY,
+          params: null,
+          pageLink: null,
+          scrapePageLink: null,
+          dbListingMatch: false,
+          searchSync: null,
+        });
+      }
+      const scrapePageLink = buildPropertiesListAllLink(params);
+      const total = await fetchDbListingTotal(params, userMessageNorm);
+      let pageLink = scrapePageLink;
+      let dbListingMatch = false;
+      if (total >= 1) {
+        pageLink = buildAllPropertiesChatLink(
+          params,
+          userMessageNorm,
+          scrapePageLink
+        );
+        dbListingMatch = true;
+      } else if (!pageLink) {
+        pageLink = buildAllPropertiesChatLink(
+          params,
+          userMessageNorm,
+          scrapePageLink
+        );
+      }
       return res.status(200).json({
-        text: pageLink ? NO_API_KEY_WITH_SEARCH_REPLY : NO_API_KEY_GENERAL_REPLY,
-        params: pageLink ? params : null,
-        pageLink: pageLink || null,
+        text: NO_API_KEY_WITH_SEARCH_REPLY,
+        params,
+        pageLink,
+        scrapePageLink: scrapePageLink || null,
+        dbListingMatch,
+        searchSync,
       });
     }
 
@@ -1611,9 +1760,9 @@ CORE IDENTITY:
 - Your tone must always be confident, professional, and helpful.
 - Never sound robotic, casual, or playful.
 - Never mention that you are an AI.
-- **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Every property-search reply with budget + area should include **at least two explicit recommendation-style sentences** (could start with \"I'd suggest…\", \"In your situation I'd prioritize…\", \"A practical path is…\").
-- **Default length:** Unless the user clearly asks for a one-line or very short answer, write **long-form** replies — rich detail and **several complete paragraphs**. Do **not** stop early after a short opener.
-- **Complete paragraphs (critical):** Never end **mid-sentence** or **mid-paragraph**. Har paragraph ko poora likh kar khatam karo (full stop / Urdu full stop). Agar length limit ka khayal ho to **pehle 3 paragraphs mukammal** karo, phir agla paragraph shuru mat karo jab tak pehle wala poora na ho. **Minimum 3 full paragraphs** for property-related questions unless the user asked for a single yes/no or one line; **prefer 4–6+** jab sawal detail mangta ho.
+- **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Property-search replies with budget + area should include **at least one–two short recommendation-style sentences** (e.g. \"I'd suggest…\", \"I'd prioritize…\").
+- **Default length (slightly shorter):** Unless the user asks for one line only, write **concise but substantive** replies — typically **2–4 complete paragraphs** with blank lines between (not a long essay). Do **not** pad with repetition; do **not** stop mid-sentence.
+- **Complete paragraphs (critical):** Never end **mid-sentence** or **mid-paragraph**. Har paragraph poora khatam karo. Property questions: **minimum 2 full paragraphs**; **usually 3**; add a **4th short** paragraph only when the question is very broad. Never cut the last sentence halfway.
 
 LANGUAGE RULES:
 - Match the user's language as directed above. Do not answer in Roman Urdu if they wrote in English-only prompts.
@@ -1649,18 +1798,17 @@ MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + bu
 - Optionally name **well-known society types** (e.g. established vs new schemes) at a **generic** level — not as guaranteed listings.
 - If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep structure readable (short paragraphs + optional bullet lines).
 
-RESPONSE FORMAT (property search — ChatGPT/Cursor-level usefulness, not brochure text):
-- **Length (default long):** Prefer **substantive** answers with **blank lines** between paragraphs. Pehle **3 pooray paragraphs** zaroor dena; phir topic ke mutabiq **4–6+** paragraphs behtar hain jab detail darkar ho.
-  - If they gave **area + size + budget** (or plot/house + size + corridor + budget): **minimum 3 complete paragraphs**; **prefer 5–8** when useful — never cut the last paragraph halfway.
-  - If they gave **area / society / road** but not full budget or size: **minimum 3 complete paragraphs**; **prefer 4–6** (corridor overview, society types, possession/file angles, broad PKR bands if inferable, verification checklist, optional clarifying question).
-  - Only use a **short** reply when the user explicitly wants brief, or the question is a trivial one-liner.
+RESPONSE FORMAT (property search — useful, not brochure; **a bit shorter than before**):
+- **Length:** **Substantive but compact** — **blank lines** between paragraphs. Aim **2–3 paragraphs** most of the time; **3–4** only when area + size + budget/corridor all need detail. Avoid long essays.
+  - If they gave **area + size + budget** (or plot/house + size + corridor + budget): **minimum 2 complete paragraphs**; **prefer 3–4** — never cut mid-sentence.
+  - If they gave **area / society / road** but not full budget or size: **minimum 2 complete paragraphs**; **prefer 3** (same angles, tighter prose).
+  - Only use a **very short** reply when the user explicitly wants brief, or the question is a trivial one-liner.
 - **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
 - **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
-- **Paragraph 1:** Acknowledge their ask (type, size, area, budget) with correct spellings + one **2025–2026** framing line.
-- **Paragraph 2 (segment):** Corridor dynamics + **typical PKR band** for that size (broad range, disclaimer) + what usually drives price (possession, block, file vs plot).
-- **Paragraph 3 (budget + judgment):** Honest **budget vs band** fit + short lines starting with **✅ / ❌ / 👍 / 🔥** where useful (no `*` markdown) + **2–3 explicit suggestions** (priorities, alternatives, verification order).
-- **Paragraphs 4+:** Add **deeper** material — e.g. compare **2–3 society archetypes** in that corridor, **who each option suits**, **risks to watch**, **timeline/possession** angles, **what documents to verify**, and **how to narrow** once they share budget or marla. Do not repeat the same idea in different words; each paragraph should add new value.
-- **Mandatory:** Include **at least two sentences** that read as **recommendations** (suggestion / priority / \"if… then…\"), not just description.
+- **Paragraph 1:** Acknowledge their ask + one **2025–2026** framing line (spellings correct).
+- **Paragraph 2:** Corridor + **typical PKR band** (broad) + key drivers (possession, file vs plot) + **✅/❌** lines where useful.
+- **Paragraph 3 (when needed):** Budget vs band, verification / next step — **keep tight**. Optional 4th paragraph **only** for complex comparisons; do not repeat ideas.
+- **Mandatory:** Include **at least one–two short recommendation-style sentences** (not fluffy filler).
 
 FORBIDDEN thin / template closings (never use these patterns):
 - "If you have any specific preferences… I can assist you further in your search"
@@ -1702,7 +1850,7 @@ If the user asks about:
 - Or any real-estate related guidance
 
 Then:
-- Answer clearly and professionally with **enough depth** — **at least 3 complete paragraphs** with blank lines (prefer **4–6** when the topic needs it); same rule: **no mid-sentence or mid-paragraph cutoffs**, unless the question is trivially short or they asked for brief.
+- Answer clearly with **enough depth but tighter length** — **2–3 complete paragraphs** with blank lines (add a 4th only if needed); **no mid-sentence cutoffs**, unless the question is trivial or they asked for brief.
 - You may use short bullet points if helpful.
 - Do NOT mention website listings in this case.
 
@@ -1752,7 +1900,7 @@ ${
   f.minPrice != null || f.maxPrice != null
     ? (f.areaLabel || f.areaSlug || f.city
         ? `
-- **DEPTH REQUIRED:** User gave budget + location — you MUST deliver: (1) 2025–2026 framing, (2) **broad PKR band** for that size in that corridor, (3) **budget vs band** + trade-offs, (4) **≥2 explicit suggestion sentences** (priorities / if-then / verify-first), (5) extra material on society comparison, verification, next steps. **Minimum 3 complete paragraphs** (each fully finished); **prefer 5–8** when space allows — blank lines between. **Vary opening** — do not default to "You are looking for…". **No** generic "amenities well-developed" filler. No "let me know / assist further" endings.`
+- **DEPTH REQUIRED:** User gave budget + location — pack into **3 compact paragraphs** where possible (blank lines between): (1) 2025–2026 framing, (2) **broad PKR band** + **budget vs band** + trade-offs, (3) **≥1–2 suggestion sentences** + brief verification / next step. **Minimum 2 complete paragraphs**. **Vary opening** — do not default to "You are looking for…". **No** generic filler. No "let me know / assist further" endings.`
         : "")
     : ""
 }
@@ -1763,7 +1911,7 @@ ${
   f.minPrice == null &&
   f.maxPrice == null
     ? `
-- **DEPTH REQUIRED (plot + size + corridor, no budget yet):** User gave **plot + marla/kanal + area/road/city** but no PKR range. Deliver **≥3 complete paragraphs** (blank lines between), **prefer 5–6**: 2025–2026 corridor framing; **broad PKR bands** for that plot size (disclaimer); file vs possession; verification; **≥2 explicit recommendations**; optional **one** polite budget question at the end — not a thin "let me know / if you have a society" closer. **Do not cut mid-paragraph.**`
+- **DEPTH REQUIRED (plot + size + corridor, no budget yet):** User gave **plot + marla/kanal + area/road/city** but no PKR range. Deliver **2–3 complete paragraphs** (blank lines between); **4th** only if needed: 2025–2026 framing; **broad PKR bands** (disclaimer); file vs possession; verification; **1–2 recommendations**; one optional budget question — not a thin closer. **Do not cut mid-paragraph.**`
     : ""
 }
 `;
@@ -1873,14 +2021,38 @@ ${
     // --------- Link generation only for property search ---------
     if (isPropSearch && searchInfo?.params) {
       const params = searchInfo.params;
-      const pageLink = buildPropertiesListAllLink(params);
+      const scrapePageLink = buildPropertiesListAllLink(params);
       const trimmedAi = (aiText || "").trim();
       const bodyText = trimmedAi || PROPERTY_SEARCH_FALLBACK_TEXT;
+      const searchSync = buildChatSearchSyncPayload(params, userMessageNorm);
+
+      const total = await fetchDbListingTotal(params, userMessageNorm);
+      let pageLink = scrapePageLink;
+      let dbListingMatch = false;
+      /* One or more DB rows → site listings (same as home search API). */
+      if (total >= 1) {
+        pageLink = buildAllPropertiesChatLink(
+          params,
+          userMessageNorm,
+          scrapePageLink
+        );
+        dbListingMatch = true;
+      } else if (!pageLink) {
+        /* Invalid /properties-list-all (no category+location) — use DB search page, not broken scrape URL. */
+        pageLink = buildAllPropertiesChatLink(
+          params,
+          userMessageNorm,
+          scrapePageLink
+        );
+      }
 
       return res.status(200).json({
         text: bodyText,
-        params: pageLink ? params : null,
-        pageLink: pageLink || null,
+        params,
+        pageLink,
+        scrapePageLink: scrapePageLink || null,
+        dbListingMatch,
+        searchSync,
       });
     }
     return res.status(200).json({
@@ -1889,6 +2061,9 @@ ${
         "How can I help you with real estate today? I'm your AI assistant for Pakistan property — share city, area, budget, and what you want (house, flat, or plot).",
       params: null,
       pageLink: null,
+      scrapePageLink: null,
+      dbListingMatch: false,
+      searchSync: null,
     });
   } catch (err) {
     console.error("AI handler error:", err);
@@ -1912,6 +2087,9 @@ ${
       text: fallbackText,
       params: null,
       pageLink: null,
+      scrapePageLink: null,
+      dbListingMatch: false,
+      searchSync: null,
     });
   }
 }

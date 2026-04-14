@@ -1101,6 +1101,8 @@ const PropertiesListsAll = () => {
     // g_page,        // ✅ NEW (Graana page)
 
     providers = "graana,zameen",
+
+    fallback_city,
   } = router.query;
 
   const [properties, setProperties] = useState([]);
@@ -1254,9 +1256,30 @@ const PropertiesListsAll = () => {
   const filtersDisabled =
     !router.isReady || !category || (!citySlug && !areaSlug);
 
+  const fallbackCityLabel =
+    typeof fallback_city === "string"
+      ? fallback_city.charAt(0).toUpperCase() + fallback_city.slice(1)
+      : Array.isArray(fallback_city) && fallback_city[0]
+        ? String(fallback_city[0]).charAt(0).toUpperCase() +
+          String(fallback_city[0]).slice(1)
+        : "";
+
   return (
     <Layout>
       <Breadcrumb title={breadCrumbTitle} />
+
+      {/* {router.isReady && fallbackCityLabel && (
+        <div className="container pt-3">
+          <div
+            className="alert alert-secondary mb-0 rounded-xl border small"
+            role="status"
+          >
+            No city was detected in your chat search. Partner listings (Zameen / Graana) are
+            shown for <strong>{fallbackCityLabel}</strong> as a broad default. Adjust filters
+            above or use the site search on that portal for other cities.
+          </div>
+        </div>
+      )} */}
 
       <section id="all-prop-containt" className="prop-lists-all-page">
         <div className="container all-properties prop-lists-all-container">

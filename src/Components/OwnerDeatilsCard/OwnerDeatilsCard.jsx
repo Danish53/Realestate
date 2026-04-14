@@ -1,12 +1,44 @@
 "use client"
 import { BadgeSvg, placeholderImage, translate } from '@/utils/helper'
 import Image from 'next/image'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { CiLocationOn } from 'react-icons/ci'
 import { FaWhatsapp } from 'react-icons/fa'
 import { FiMail, FiMessageSquare, FiPhoneCall, FiThumbsUp } from 'react-icons/fi'
 import { MdReport } from 'react-icons/md'
 import { RiMailSendLine, RiThumbUpFill } from 'react-icons/ri'
+
+/** Local PK / +92 → wa.me digits (no +), e.g. 0323… → 92323… */
+function toWhatsAppIntlDigits(input) {
+    const d = String(input || "").replace(/\D/g, "");
+    if (!d) return "";
+    if (d.startsWith("92")) return d;
+    if (d.startsWith("0") && d.length >= 10) return `92${d.slice(1)}`;
+    if (d.length === 10) return `92${d}`;
+    return d;
+}
+
+function buildWhatsAppListingHref(intlDigits, pageUrl, detail, platformLabel) {
+    if (!intlDigits) return "#";
+    const title = detail?.title?.trim();
+    const price = detail?.price != null ? String(detail.price).trim() : "";
+    const loc = (detail?.address || detail?.client_address || "").trim();
+    const label = platformLabel?.trim() || "eBroker";
+    const lines = [
+        "Hello!",
+        "",
+        `I'm interested in this property on ${label}:`,
+        "",
+    ];
+    if (title) lines.push(title);
+    if (price) lines.push(`Price: ${price}`);
+    if (loc) lines.push(`Location: ${loc}`);
+    lines.push("");
+    lines.push("Listing link:");
+    lines.push(pageUrl || "—");
+    const qs = new URLSearchParams({ text: lines.join("\n") });
+    return `https://wa.me/${intlDigits}?${qs.toString()}`;
+}
 
 const OwnerDeatilsCard = (
     {
@@ -22,11 +54,27 @@ const OwnerDeatilsCard = (
         userCurrentId,
         handleReportProperty,
         PlaceHolderImg,
-        handlecheckPremiumUserAgent
+        handlecheckPremiumUserAgent,
+        propertyPageUrl,
+        platformLabel,
     }) => {
-        const whatsappDigits = getPropData?.mobile
-        ? String(getPropData.mobile).replace(/\D/g, '')
-        : ''
+    const whatsappIntlDigits = useMemo(
+        () => toWhatsAppIntlDigits(getPropData?.mobile),
+        [getPropData?.mobile]
+    );
+
+    const whatsappHref = useMemo(() => {
+        if (!whatsappIntlDigits) return "#";
+        if (propertyPageUrl && getPropData) {
+            return buildWhatsAppListingHref(
+                whatsappIntlDigits,
+                propertyPageUrl,
+                getPropData,
+                platformLabel
+            );
+        }
+        return `https://wa.me/${whatsappIntlDigits}`;
+    }, [whatsappIntlDigits, propertyPageUrl, getPropData, platformLabel]);
 
     return (
         <div className="flex flex-col h-full bg-white">
@@ -95,10 +143,10 @@ const OwnerDeatilsCard = (
                     </div>
                 )}
 
-                {/* WhatsApp */}
-                {/* {whatsappDigits && ( */}
+                {/* WhatsApp — opens with prefilled message + listing link when propertyPageUrl is set */}
+                {whatsappIntlDigits && getPropData?.mobile && (
                     <a
-                        href={`https://wa.me/${whatsappDigits}`}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 hover:bg-gray-50 hover:shadow-sm transition-all group"
@@ -112,7 +160,7 @@ const OwnerDeatilsCard = (
                             <span className="text-gray-900 font-semibold truncate text-[15px]">{getPropData.mobile}</span>
                         </div>
                     </a>
-                {/* )} */}
+                )}
             </div>
 
             {/* Actions Footer */}

@@ -959,7 +959,7 @@
 
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai";
 import Breadcrumb from "@/Components/Breadcrumb/Breadcrumb";
 import Image from "next/image";
@@ -1058,6 +1058,18 @@ const PropertyDetails = () => {
 
   const [isMobile, setIsMobile] = useState(false);
   const isShare = router.query.share === "true";
+
+  const [propertyPageUrl, setPropertyPageUrl] = useState("");
+  useEffect(() => {
+    if (typeof window === "undefined" || !router.isReady) return;
+    const path = router.asPath.split("?")[0].split("#")[0];
+    setPropertyPageUrl(`${window.location.origin}${path}`);
+  }, [router.isReady, router.asPath]);
+
+  const platformLabel = useMemo(
+    () => SettingsData?.company_name?.trim() || "eBroker",
+    [SettingsData?.company_name]
+  );
 
   useEffect(() => {
     const checkMobile = () => {
@@ -1343,9 +1355,9 @@ const PropertyDetails = () => {
                       <div className="prop-detail-hero-body">
                         <div className="prop-detail-hero-top">
                           <div className="prop-detail-hero-left">
-                            <div className="prop-detail-hero-icon">
+                            {/* <div className="prop-detail-hero-icon">
                               <FiHome className="text-white text-2xl" />
-                            </div>
+                            </div> */}
                             <div>
                               <div className="prop-detail-badges">
                                 <span className="prop-detail-badge prop-detail-badge-primary">
@@ -1724,6 +1736,8 @@ const PropertyDetails = () => {
                             handleReportProperty={handleReportProperty}
                             PlaceHolderImg={PlaceHolderImg}
                             handlecheckPremiumUserAgent={handlecheckPremiumUserAgent}
+                            propertyPageUrl={propertyPageUrl}
+                            platformLabel={platformLabel}
                           />
                         </div>
 

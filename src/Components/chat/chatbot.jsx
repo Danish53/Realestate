@@ -97,6 +97,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, X, MessageCircle, Minimize2, Maximize2, Trash2 } from 'lucide-react';
 import { saveChatHistory, loadChatHistory, clearChatHistory } from '@/utils/chatStorage';
 import { stripChatMarkdown } from '@/utils/stripChatMarkdown';
+import { getfilterData } from '@/store/reducer/momentSlice';
 
 const ASSISTANT_ERROR_REPLY =
   "I'm your AI property assistant for Pakistan. That message didn't go through — please try again.\n\nAsk me about houses, flats, plots, budgets, or areas anytime.";
@@ -244,11 +245,32 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
       if (data.text) {
         const assistantId = Date.now() + 1;
         const fullText = data.text;
+
+        if (data.searchSync && typeof data.searchSync === "object") {
+          try {
+            getfilterData(data.searchSync);
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
+        if (data.scrapePageLink && typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("chat_scrape_listing_url", data.scrapePageLink);
+          } catch (_) {
+            /* ignore */
+          }
+        }
+
         const base = {
           id: assistantId,
           role: "assistant",
           hasProperties: !!data.pageLink,
           pageLink: data.pageLink || null,
+          dbListingMatch: !!data.dbListingMatch,
+          listingsButtonLabel: data.dbListingMatch
+            ? "View listings"
+            : "View Listings",
           timestamp: new Date().toISOString(),
         };
 
@@ -256,7 +278,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           onPropertyFound({
             data: null,
             link: data.pageLink,
-            params: data.params || null
+            params: data.params || null,
           });
         }
 
@@ -406,7 +428,7 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
                     rel="noopener noreferrer"
                     className="property-btn chat-listings-link text-[#F1592A]"
                   >
-                    View Listings
+                    {m.listingsButtonLabel || "View Listings"}
                   </a>
                 )}
                 {m.role === "assistant" ? renderAssistantText(m.content) : m.content}

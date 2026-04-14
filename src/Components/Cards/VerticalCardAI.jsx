@@ -134,6 +134,7 @@ function VerticalCardAI({ ele, category }) {
         {!imageLoaded && (
           <div className="absolute inset-0 animate-pulse bg-gray-200" />
         )}
+        <div className="image-wrapper">
         <Image
           loading="lazy"
           className={`object-cover w-full h-full transition-transform duration-500 hover:scale-105 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
@@ -144,6 +145,7 @@ function VerticalCardAI({ ele, category }) {
           onLoad={() => setImageLoaded(true)}
           onError={(e) => { e.currentTarget.src = "/images/property-placeholder.jpg"; }}
         />
+        </div>
         {/* Pill tag top-left – light grey like reference (Villa, Condo, House, General) */}
         {propertyTypeLabel && (
           <span className="absolute top-4 left-4 bg-gray-100 text-gray-800 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
