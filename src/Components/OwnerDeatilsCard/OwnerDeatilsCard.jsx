@@ -27,7 +27,7 @@ function buildWhatsAppListingHref(intlDigits, pageUrl, detail, platformLabel) {
     const lines = [
         "Hello!",
         "",
-        `I'm interested in this property on ${label}:`,
+        `I am interested in this property on ${label}:`,
         "",
     ];
     if (title) lines.push(title);

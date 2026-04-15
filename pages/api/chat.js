@@ -2,6 +2,14 @@ import { stripChatMarkdown } from "@/utils/stripChatMarkdown";
 
 // pages/api/chat.js
 
+/** Strip emoji / pictographs (e.g. ✅❌👍) so replies stay plain text. */
+function stripChatEmojis(text) {
+  if (text == null || typeof text !== "string") return "";
+  let t = text.replace(/\p{Extended_Pictographic}/gu, "");
+  t = t.replace(/\uFE0F/g, "");
+  return t.replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 /** Shown when the user asks about non–real-estate topics — no LLM call. */
 const OFF_TOPIC_ASSISTANT_REPLY =
   "I'm your AI real estate assistant on this app. I specialise in Pakistan property — houses, flats, plots, rent and sale, budgets, areas, societies, possession, file vs plot, and practical market guidance.\n\nAsk me anything property-related (for example a city, budget in lakh or crore, marla size, or house vs plot) and I'll give you a detailed, helpful answer. For topics outside real estate, I'm not the right assistant here.";
@@ -39,10 +47,10 @@ const OPENROUTER_CHAT_MODEL =
  */
 function resolveOpenRouterMaxCompletionTokens() {
   const raw = process.env.OPENROUTER_MAX_COMPLETION_TOKENS;
-  /* Default 320: ~5–6 short lines / tight paragraph; override via OPENROUTER_MAX_COMPLETION_TOKENS. */
-  if (raw == null || String(raw).trim() === "") return 320;
+  /* Default 256: ~4–5 short lines; override via OPENROUTER_MAX_COMPLETION_TOKENS. */
+  if (raw == null || String(raw).trim() === "") return 256;
   const n = parseInt(String(raw).trim(), 10);
-  if (!Number.isFinite(n)) return 320;
+  if (!Number.isFinite(n)) return 256;
   return Math.min(8192, Math.max(256, n));
 }
 
@@ -81,7 +89,7 @@ function isWeakPropertySearchReply(text) {
   const t = (text || "").trim();
   if (!t) return true;
   /* One-paragraph mode: only retry if reply is very thin or full of generic filler. */
-  if (t.length < 100) return true;
+  if (t.length < 72) return true;
   const low = t.toLowerCase();
   if (
     /\bplease let me know\b/.test(low) ||
@@ -107,7 +115,7 @@ function buildPropertySearchWeakReplyRetryUserContent(
     "Your previous reply was too short or generic for a property search. Rewrite from scratch as a senior Pakistan real-estate consultant.\n\n" +
     `Latest user message:\n${String(lastUserNorm || "").trim()}\n\n` +
     `Parsed intent (stay consistent): ${summary}\n\n` +
-    "Requirements: **exactly one short paragraph** — **5–6 short sentences max** (tight prose; no blank-line splits); **2025–2026** one phrase; **broad PKR band**; **one recommendation**. Forbidden: \"please let me know\", \"if you have a society\", \"further details\", \"View Listings\", \"browse listings\", URLs. Do not open with \"You are looking for…\". Stay useful, not thin."
+    "Requirements: **exactly 4–5 short lines** of plain text (one tight block, no blank-line paragraph splits); **2025–2026** one phrase; **broad PKR band**; **one recommendation**. **No emoji** (no checkmarks, crosses, thumbs, fire, or any symbols used as icons). Forbidden: \"please let me know\", \"if you have a society\", \"further details\", \"View Listings\", \"browse listings\", URLs. Do not open with \"You are looking for…\". Stay useful, not thin."
   );
 }
 
@@ -825,7 +833,7 @@ function inferUserLanguageHint(text = "") {
   if (!raw) return "Mirror the user's language.";
 
   if (/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(raw)) {
-    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural. **One short paragraph only** (**5–6 short sentences max** in one block); **never stop mid-sentence**.";
+    return "User wrote in Urdu/Arabic script — reply in polished Roman Urdu (professional), with English real-estate terms where natural. **Only 4–5 short lines** of plain text in one block; **no emoji or icon symbols**; **never stop mid-sentence**.";
   }
 
   const lower = raw.toLowerCase();
@@ -848,12 +856,12 @@ function inferUserLanguageHint(text = "") {
     /\b(in|on|at|under|around|near|for|sale|rent|lac|lakh|crore|pk)\b/i.test(lower);
 
   if (romanUrdu) {
-    return "User wrote in Roman Urdu — reply in professional Roman Urdu: **sirf ek chhota paragraph** (5–6 chhotay jumlay max, ek hi block). **Beech jumlay par mat ruko.** Cover **2025–2026**, **broad PKR band**, **ek clear suggestion**. No empty hospitality closings.";
+    return "User wrote in Roman Urdu — reply in professional Roman Urdu: **sirf 4–5 chhoti lines** (ek hi block, plain text). **Koi emoji / tick / cross icon mat lagao.** **2025–2026**, **broad PKR band**, **ek clear suggestion**. No empty hospitality closings.";
   }
   if (englishLean || compactEnglishProperty) {
-    return "User wrote in English — fluent, **opinionated**, **actionable**. **One short paragraph only** (**5–6 short sentences max**, single block). Cover: **2025–2026** + **broad PKR range** where relevant, **one concrete suggestion**. Never end mid-sentence. Never end with generic \"let me know / assist you further\" filler.";
+    return "User wrote in English — fluent, **opinionated**, **actionable**. **Only 4–5 short lines** of plain text (single block). **No emoji or icon symbols** (no checkmarks, crosses, etc.). Cover: **2025–2026** + **broad PKR range** where relevant, **one concrete suggestion**. Never end mid-sentence. Never end with generic \"let me know / assist you further\" filler.";
   }
-  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. For property answers: **one concise paragraph** (5–6 short sentences max) unless the user explicitly asks for a one-liner.";
+  return "Mirror the user's language (English vs Roman Urdu); default to **English** if unclear. For property answers: **4–5 short lines max**, plain text, **no emoji**, unless the user explicitly asks for a one-liner.";
 }
 
 function formatPkBudgetPhrase(minP, maxP) {
@@ -1753,9 +1761,10 @@ CORE IDENTITY:
 - Your tone must always be confident, professional, and helpful.
 - Never sound robotic, casual, or playful.
 - Never mention that you are an AI.
+- **No emoji or icon characters** anywhere in the reply (including checkmarks, crosses, smileys, decorative symbols).
 - **Advice style (ChatGPT / Cursor-like):** Give **clear suggestions and priorities** — what to check first, how to trade off possession vs price, file vs plot, established vs emerging society — not vague reassurance. Property-search replies with budget + area should include **at least one short recommendation-style sentence** (e.g. \"I'd suggest…\", \"I'd prioritize…\").
-- **Default length (property topics):** Unless the user asks for one line only, write **one short paragraph** — **maximum 5–6 short sentences** (roughly **5–6 lines** on a phone chat bubble; **single** block, no blank-line paragraph breaks). Prefer **tight** wording; skip filler. Do **not** pad with repetition; do **not** stop mid-sentence.
-- **Completeness (critical):** Never end **mid-sentence**. Finish the thought in that one paragraph.
+- **Default length (property topics):** Unless the user asks for one line only, write **only 4–5 short lines** of plain prose (like a phone chat bubble: **four or five lines maximum**, one continuous thought; **no** extra paragraphs or blank-line splits). Prefer **tight** wording; skip filler. Do **not** pad with repetition; do **not** stop mid-sentence.
+- **Completeness (critical):** Never end **mid-sentence**. Finish the thought within those **4–5 lines**.
 
 LANGUAGE RULES:
 - Match the user's language as directed above. Do not answer in Roman Urdu if they wrote in English-only prompts.
@@ -1770,12 +1779,12 @@ When the user is searching for property (buy, sell, invest, budget, city/area, p
 STRICT RULES:
 - **Timeframe:** For "current" Pakistan market commentary use **2025–2026** only. Do **not** refer to 2024, 2023, or older years as if they were today's market.
 - DO NOT use markdown heading markers (e.g. ###) or numbered section titles.
-- **Visual tips:** Start actionable lines with plain emoji: ✅ ❌ 👍 🔥 (paste the characters directly). Never type asterisks or markdown bold — the app shows plain text only.
+- **Plain text only:** Never type asterisks or markdown bold. **Never use emoji or decorative symbols** — no checkmarks, crosses, thumbs, fire, stars, bullets made of symbols, or any pictograph used as an icon. Words only.
 - DO NOT list individual blocks/phases or invent fake listing addresses or plot numbers.
 - DO NOT paste URLs or say "link below", "click here", "open the link", "View Listings", "browse listings button", or any phrase that tells the user to click a button — the app shows that action separately. Your reply must be **text-only guidance** with no call-to-action about buttons or links.
 - **Never** send the user to "listings" or the search page in words. Forbidden phrases (and close variants): "explore listings", "browse listings", "current listings", "see the listings", "check listings", "view available listings", "search listings", "to proceed", "identify suitable plots/properties that meet your criteria", "use the listings feature". The UI already provides that; your job is **consultant advice only**.
 - **Closing:** Prefer society/possession/transfer/verification angles (e.g. compare possession timelines, confirm map/NOC, understand file vs plot) or **one** clarifying question — **not** "go look at listings".
-- You **may** use short bullet lines and ✅ / ❌ when explaining **budget vs market reality** (what is often realistic vs unlikely in that corridor) — like a clear consultant brief, not a listing sheet.
+- Explain **budget vs market reality** in **plain sentences** only (no bullet icons, no emoji).
 
 PLOT / FILE vs BUILT PROPERTY:
 - If the user asked for a **plot** or **file** only: stay on plots — mention location, size, and budget fit in general terms (e.g. demand, possession timeline varies by society). Do **not** ask about bedrooms or bathrooms.
@@ -1789,10 +1798,10 @@ MARKET REALITY & BUDGET (when they gave area + size + budget, or plot/house + bu
 - Give **approximate PKR bands** in broad terms (e.g. "many segments in this corridor often trade in roughly **X–Y lakh** range; exact figures vary by society, block, and facing"). Never claim a single verified price for a specific plot ID. Avoid the word "listings" when describing market bands — use "market", "segment", "typical range".
 - If their budget is **below** the typical band for that size + location, explain **practically**: what categories often **may** still exist (e.g. file, non-possession, outer pockets, newer schemes, installments) vs what is **usually** hard at that budget (develop prime possession, top-tier blocks) — without calling any party a scam; say "verify carefully" / "due diligence".
 - Optionally name **well-known society types** (e.g. established vs new schemes) at a **generic** level — not as guaranteed listings.
-- If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep it **one short paragraph** (optional **1–2 ✅/❌** in-line if helpful, not a list essay).
+- If Roman Urdu / Urdu-script user: mix **professional Roman Urdu** with English real-estate terms; keep it **4–5 short lines**, **no emoji**.
 
-RESPONSE FORMAT (property search — useful, not brochure; **one short paragraph**):
-- **Length:** **Exactly one paragraph** — **5–6 short sentences maximum** (one block; no blank-line breaks). Prioritise: acknowledge the ask + **2025–2026** in one phrase + **broad PKR band** + **one recommendation**; add file/possession or verification only if space allows. Skip redundant clauses; avoid long essays.
+RESPONSE FORMAT (property search — useful, not brochure; **4–5 lines max**):
+- **Length:** **Hard cap: 4–5 short lines** (one block; no blank-line paragraph breaks). Prioritise: acknowledge the ask + **2025–2026** in one phrase + **broad PKR band** + **one recommendation**; add file/possession or verification only if one short clause still fits. Skip redundant clauses; **never** run longer than five lines.
 - Only use a **very short** reply when the user explicitly wants brief, or the question is a trivial one-liner.
 - **Do NOT** open every reply with the same robotic mirror: **"You are looking for…"** — rotate natural openings (e.g. direct answer, short context hook, or \"For this brief…\").
 - **Do NOT** write empty filler like **"In this price range you can typically find options in established societies where amenities are well-developed"** without adding **specific** trade-offs, numbers (broad bands), or next-step judgment — that sentence pattern is **banned** unless followed by concrete segment insight.
@@ -1838,8 +1847,7 @@ If the user asks about:
 - Or any real-estate related guidance
 
 Then:
-- Answer clearly in **one short paragraph** (5–6 short sentences max); **no mid-sentence cutoffs**, unless the question is trivial or they asked for brief.
-- At most **1–2 short ✅/❌** fragments in-line if helpful — no long lists.
+- Answer clearly in **4–5 short lines max**, plain text, **no emoji**; **no mid-sentence cutoffs**, unless the question is trivial or they asked for brief.
 - Do NOT mention website listings in this case.
 
 --------------------------------------------------
@@ -1888,7 +1896,7 @@ ${
   f.minPrice != null || f.maxPrice != null
     ? (f.areaLabel || f.areaSlug || f.city
         ? `
-- **DEPTH REQUIRED:** User gave budget + location — still **one short paragraph (5–6 sentences max)**: 2025–2026 + **broad PKR band** + **budget vs band** + **one suggestion**; verification only if one short clause fits. **Vary opening** — do not default to "You are looking for…". **No** generic filler.`
+- **DEPTH REQUIRED:** User gave budget + location — still **4–5 lines max**, no emoji: 2025–2026 + **broad PKR band** + **budget vs band** + **one suggestion**; verification only if one short clause fits. **Vary opening** — do not default to "You are looking for…". **No** generic filler.`
         : "")
     : ""
 }
@@ -1899,7 +1907,7 @@ ${
   f.minPrice == null &&
   f.maxPrice == null
     ? `
-- **DEPTH REQUIRED (plot + size + corridor, no budget yet):** User gave **plot + marla/kanal + area/road/city** but no PKR range. Deliver **one short paragraph (5–6 sentences max)**: 2025–2026 + **broad PKR band** + file vs possession + **one recommendation**; budget question only if one short sentence fits. **Do not cut mid-sentence.**`
+- **DEPTH REQUIRED (plot + size + corridor, no budget yet):** User gave **plot + marla/kanal + area/road/city** but no PKR range. Deliver **4–5 lines max**, no emoji: 2025–2026 + **broad PKR band** + file vs possession + **one recommendation**; budget question only if one short sentence fits. **Do not cut mid-sentence.**`
     : ""
 }
 `;
@@ -1964,7 +1972,7 @@ ${
       aiText = sanitizeListingCtaFromAssistantText(aiText);
     }
     if (aiText) {
-      aiText = stripChatMarkdown(aiText);
+      aiText = stripChatEmojis(stripChatMarkdown(aiText));
     }
 
     if (
@@ -1991,7 +1999,7 @@ ${
           aiRetry = sanitizeListingCtaFromAssistantText(aiRetry);
         }
         if (aiRetry) {
-          aiRetry = stripChatMarkdown(aiRetry);
+          aiRetry = stripChatEmojis(stripChatMarkdown(aiRetry));
         }
         if (aiRetry && !isWeakPropertySearchReply(aiRetry)) {
           aiText = aiRetry;

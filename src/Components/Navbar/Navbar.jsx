@@ -304,15 +304,15 @@ const Nav = () => {
             {/* Contacts (Right side) */}
             <div className="flex items-center space-x-6 z-10 relative">
               {settingData?.company_email && (
-                <a href={`mailto:${settingData?.company_email}`} className="flex items-center gap-1.5 hover:text-white transition-colors" target="_blank" rel="noreferrer">
+                <a href={`mailto:${settingData?.company_email}`} className="flex items-center gap-1.5 text-white transition-colors" target="_blank" rel="noreferrer">
                   <HiOutlineMail size={15} />
-                  <span>{settingData?.company_email}</span>
+                  <span className="text-white">{settingData?.company_email}</span>
                 </a>
               )}
               {settingData?.company_tel1 && (
-                <a href={`tel:${settingData?.company_tel1}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+                <a href={`tel:${settingData?.company_tel1}`} className="flex items-center gap-1.5 text-white transition-colors">
                   <FiPhone size={13} />
-                  <span>{settingData?.company_tel1}</span>
+                  <span className="text-white">{settingData?.company_tel1}</span>
                 </a>
               )}
             </div>

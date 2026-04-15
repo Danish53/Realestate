@@ -269,19 +269,43 @@ const PropertyList = ({ type }) => {
         {router.isReady && type === "all" && router.query.chat === "1" && (
           <div className="mb-5 sm:mb-6">
             <div
-              className="relative overflow-hidden rounded-2xl border border-primary-100/80 bg-gradient-to-br from-primary-50/80 via-white to-white shadow-sm shadow-primary-900/[0.06]"
+              className="relative overflow-hidden rounded-2xl border border-primary-100/80 bg-white animate-ai-promo-border"
               role="status"
             >
+              {/* Layer 1: stronger pastel stops — moves + fades in/out (keyframes) */}
               <div
-                className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary-200/30 blur-2xl"
+                className="pointer-events-none absolute inset-0 z-0 animate-ai-promo-bg"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(122deg, rgb(255 210 190) 0%, rgb(255 255 255) 9%, rgb(147 197 253) 20%, rgb(110 231 183) 34%, rgb(196 181 253) 48%, rgb(253 224 71) 62%, rgb(251 207 232) 76%, rgb(186 230 253) 88%, rgb(255 210 190) 100%)",
+                  backgroundSize: "380% 380%",
+                }}
                 aria-hidden
               />
-              <div className="relative p-4 sm:p-5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
+              {/* Layer 2: rose / cyan / violet — opposite rhythm so colour shift is obvious */}
+              <div
+                className="pointer-events-none absolute inset-0 z-[1] animate-ai-promo-bg-alt"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(48deg, rgb(253 186 116) 0%, rgb(165 243 252) 16%, rgb(251 207 232) 32%, rgb(167 243 208) 50%, rgb(196 181 253) 66%, rgb(254 215 170) 82%, rgb(253 186 116) 100%)",
+                  backgroundSize: "340% 340%",
+                }}
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -right-12 -top-12 z-[1] h-44 w-44 animate-ai-promo-orb rounded-full bg-gradient-to-br from-sky-300/70 via-primary-300/65 to-amber-300/60 blur-2xl"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -left-8 -bottom-4 z-[1] h-36 w-36 animate-ai-promo-orb rounded-full bg-gradient-to-tr from-fuchsia-300/65 via-violet-300/60 to-emerald-300/55 blur-2xl [animation-delay:-3.5s]"
+                aria-hidden
+              />
+              <div className="relative z-[2] rounded-xl bg-white/50 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-[2px] sm:p-5 sm:backdrop-blur-sm">
+                <p className="mb-1 text-[16px] font-semibold uppercase tracking-wide text-primary-700 drop-shadow-sm">
                 AI Property Assistant</p>
                 {chatScrapeUrl ? (
                   <>
-                    <p className="mb-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+                    <p className="mb-3 max-w-2xl text-sm font-semibold leading-relaxed text-gray-800 drop-shadow-sm">
                     Explore more properties beyond our listings with AI-powered search.
                     </p>
                     <button

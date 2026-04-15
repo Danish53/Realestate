@@ -21,9 +21,13 @@ import youtube from "../../../public/youtu.svg";
 import logofooter from "../../../public/logofooter.png"
 
 const Footer = () => {
-    const systemData = useSelector(settingsData);
-    const webdata = systemData && systemData;
+    const s = useSelector(settingsData);
     const currentYear = new Date().getFullYear();
+
+    const telHref = (num) => {
+        const raw = String(num || "").replace(/\s/g, "");
+        return raw ? `tel:${raw}` : "#";
+    };
     
     return (
         <footer className="bg-[#282F39] text-gray-300 py-16 lg:pt-20 lg:pb-0 mt-auto border-t border-gray-800">
@@ -60,22 +64,52 @@ const Footer = () => {
                         <div className="space-y-4">
                             <div className="flex items-start gap-3">
                                 <FiMapPin className="text-gray-400 mt-1 flex-shrink-0" size={16} />
-                                <p className="text-sm text-gray-400 leading-relaxed">Gulberg II, Lahore, Pakistan</p>
+                                <p className="text-sm text-gray-400 leading-relaxed">
+                                    {s?.company_address?.trim() || "—"}
+                                </p>
                             </div>
-                            
+
                             <div className="flex items-start gap-3">
                                 <FiPhone className="text-gray-400 mt-1 flex-shrink-0" size={16} />
-                                <div className="text-sm text-gray-400 leading-relaxed">
-                                    <div className="text-gray-400 text-xs">0800-(92633)</div>
-                                    <div className="text-gray-400 text-xs mt-1">Monday To Sunday 9AM To 6PM</div>
+                                <div className="text-sm text-gray-400 leading-relaxed space-y-1">
+                                    {s?.company_tel1 ? (
+                                        <Link
+                                            href={telHref(s.company_tel1)}
+                                            className="block text-xs text-gray-400 hover:text-white transition-colors"
+                                        >
+                                            {s.company_tel1}
+                                        </Link>
+                                    ) : (
+                                        <span className="text-xs text-gray-500">—</span>
+                                    )}
+                                    {s?.company_tel2 &&
+                                        String(s.company_tel2).trim() !==
+                                            String(s?.company_tel1 || "").trim() && (
+                                            <Link
+                                                href={telHref(s.company_tel2)}
+                                                className="block text-xs text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                {s.company_tel2}
+                                            </Link>
+                                        )}
+                                    {/* <div className="text-gray-500 text-xs pt-0.5">
+                                        Monday To Sunday 9AM To 6PM
+                                    </div> */}
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-start gap-3">
                                 <FiMail className="text-gray-400 mt-1 flex-shrink-0" size={16} />
-                                <Link href="mailto:info@ebroker.com" className="text-sm text-gray-400 hover:text-white transition-colors">
-                                    Email us
-                                </Link>
+                                {s?.company_email?.trim() ? (
+                                    <Link
+                                        href={`mailto:${s.company_email.trim()}`}
+                                        className="text-sm text-gray-400 hover:text-white transition-colors break-all"
+                                    >
+                                        {s.company_email.trim()}
+                                    </Link>
+                                ) : (
+                                    <span className="text-sm text-gray-500">—</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -83,7 +117,7 @@ const Footer = () => {
                     {/* Column 4: MKT Digital Account & Social */}
                     <div>
                         <h3 className="text-white text-sm font-semibold mb-3 tracking-wider uppercase">MKT Digital Account</h3>
-                        <Image src={logofooter} alt="" width={60} height={60} />
+                        <Image src={s?.web_footer_logo?.trim() || logofooter} alt="" width={60} height={60} />
                         
                         <h3 className="text-white text-sm font-semibold mb-3 tracking-wider uppercase mt-6">Get Connected</h3>
                         <div className="flex items-center gap-2">
@@ -91,7 +125,7 @@ const Footer = () => {
                             {/* <span className="text-gray-600">|</span> */}
                             <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm"><Image src={twit} alt="" width={36} height={36} /></Link>
                             {/* <span className="text-gray-600">|</span> */}
-                            <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm"><Image src={linkedin} alt="" width={36} height={36} /></Link>
+                            {/* <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm"><Image src={linkedin} alt="" width={36} height={36} /></Link> */}
                             {/* <span className="text-gray-600">|</span> */}
                             <Link href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm"><Image src={youtube} alt="" width={36} height={36} /></Link>
                             {/* <span className="text-gray-600">|</span> */}
@@ -103,7 +137,8 @@ const Footer = () => {
                 {/* Windows Activation Message */}
                 <div className="border-t border-gray-800 pt-6 pb-4 text-center">
                     <p className="text-xs text-gray-400">
-                        Copyright @ 2026 AI LANDS MKT All Rights Reserved
+                        Copyright © {currentYear}{" "}
+                        {s?.company_name?.trim() || "AI LANDS MKT"} All Rights Reserved
                     </p>
                 </div>
             </div>

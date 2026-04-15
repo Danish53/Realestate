@@ -78,7 +78,7 @@ function buildWhatsAppPropertyHref(intlDigits, pageUrl, detail) {
   const lines = [
     "Hello!",
     "",
-    "I'm interested in this property on AI Land MKT:",
+    "I am interested in this property on AI Land MKT:",
     "",
   ];
   if (title) lines.push(title);

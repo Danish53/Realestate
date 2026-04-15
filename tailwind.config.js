@@ -36,7 +36,58 @@ module.exports = {
           'xl': '1rem',
           '2xl': '1.5rem',
           '3xl': '2rem',
-        }
+        },
+        keyframes: {
+          /* Position + opacity so the wash clearly “breathes” and moves */
+          aiPromoBgShift: {
+            '0%, 100%': {
+              backgroundPosition: '0% 50%',
+              opacity: '0.52',
+            },
+            '35%': {
+              backgroundPosition: '100% 35%',
+              opacity: '0.9',
+            },
+            '70%': {
+              backgroundPosition: '45% 100%',
+              opacity: '0.58',
+            },
+          },
+          aiPromoBgShiftAlt: {
+            '0%, 100%': {
+              backgroundPosition: '100% 45%',
+              opacity: '0.38',
+            },
+            '40%': {
+              backgroundPosition: '0% 80%',
+              opacity: '0.82',
+            },
+            '75%': {
+              backgroundPosition: '90% 0%',
+              opacity: '0.48',
+            },
+          },
+          aiPromoOrbPulse: {
+            '0%, 100%': { opacity: '0.45', transform: 'scale(1)' },
+            '50%': { opacity: '0.95', transform: 'scale(1.18)' },
+          },
+          aiPromoBorderGlow: {
+            '0%, 100%': {
+              boxShadow:
+                '0 2px 5px rgba(0,0,0,0.05), 0 0 0 1px rgba(253, 186, 116, 0.45), 0 0 28px rgba(96, 165, 250, 0.2)',
+            },
+            '50%': {
+              boxShadow:
+                '0 2px 5px rgba(0,0,0,0.05), 0 0 0 1px rgba(96, 165, 250, 0.5), 0 0 32px rgba(241, 89, 42, 0.22)',
+            },
+          },
+        },
+        animation: {
+          'ai-promo-bg': 'aiPromoBgShift 11s ease-in-out infinite',
+          'ai-promo-bg-alt': 'aiPromoBgShiftAlt 14s ease-in-out infinite',
+          'ai-promo-orb': 'aiPromoOrbPulse 6.5s ease-in-out infinite',
+          'ai-promo-border': 'aiPromoBorderGlow 9s ease-in-out infinite',
+        },
       },
     },
     plugins: [],
