@@ -269,20 +269,19 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           pageLink: data.pageLink || null,
           dbListingMatch: !!data.dbListingMatch,
           listingsButtonLabel: data.dbListingMatch
-            ? "View listings"
-            : "View Listings",
+            ? "Discover Listings"
+            : "Discover Listings",
           timestamp: new Date().toISOString(),
         };
 
-        if (onPropertyFound && data.pageLink) {
-          onPropertyFound({
-            data: null,
-            link: data.pageLink,
-            params: data.params || null,
-          });
-        }
-
         if (fullText.length <= STREAM_INSTANT_MAX_LEN) {
+          if (onPropertyFound && data.pageLink) {
+            onPropertyFound({
+              data: null,
+              link: data.pageLink,
+              params: data.params || null,
+            });
+          }
           setMessages((prev) => [
             ...prev,
             { ...base, content: fullText, streaming: false },
@@ -298,22 +297,30 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
           let pos = 0;
           const step = () => {
             pos = Math.min(fullText.length, pos + STREAM_CHARS_PER_TICK);
+            const done = pos >= fullText.length;
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId
                   ? {
                       ...m,
                       content: fullText.slice(0, pos),
-                      streaming: pos < fullText.length,
+                      streaming: !done,
                     }
                   : m
               )
             );
-            if (pos < fullText.length) {
-              streamTimerRef.current = setTimeout(step, STREAM_TICK_MS);
-            } else {
+            if (done) {
               streamTimerRef.current = null;
               setIsStreaming(false);
+              if (onPropertyFound && data.pageLink) {
+                onPropertyFound({
+                  data: null,
+                  link: data.pageLink,
+                  params: data.params || null,
+                });
+              }
+            } else {
+              streamTimerRef.current = setTimeout(step, STREAM_TICK_MS);
             }
           };
           streamTimerRef.current = setTimeout(step, STREAM_TICK_MS);
@@ -421,17 +428,20 @@ const ChatBot = ({ isOpen, onClose, onPropertyFound }) => {
             </div>
             <div className="message-content">
               <div className="message-bubble">
-                {m.role === "assistant" && m.hasProperties && m.pageLink && (
+                {m.role === "assistant" ? renderAssistantText(m.content) : m.content}
+                {m.role === "assistant" &&
+                  m.hasProperties &&
+                  m.pageLink &&
+                  !m.streaming && (
                   <a
                     href={m.pageLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="property-btn chat-listings-link text-[#F1592A]"
+                    className="property-btn chat-listings-link text-[#F1592A] mt-2 inline-block"
                   >
-                    {m.listingsButtonLabel || "View Listings"}
+                    {m.listingsButtonLabel || "Discover Listings"}
                   </a>
                 )}
-                {m.role === "assistant" ? renderAssistantText(m.content) : m.content}
               </div>
 
               <span className="message-time">

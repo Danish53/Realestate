@@ -35129,7 +35129,8 @@ html[dir="rtl"] .property-gallery__see-all {
 
 .message-bubble .chat-listings-link {
   display: inline-block;
-  margin-bottom: 10px;
+  margin-top: 0;
+  margin-bottom: 0;
   font-weight: 600;
 }
 

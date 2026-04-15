@@ -16,6 +16,7 @@ import Layout from "../Layout/Layout";
 import { useRouter } from "next/router";
 import { FiExternalLink } from "react-icons/fi";
 import VerticalCardSkeleton from "../Skeleton/VerticalCardSkeleton";
+import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 
 const PropertyList = ({ type }) => {
   const router = useRouter();
@@ -277,21 +278,22 @@ const PropertyList = ({ type }) => {
               />
               <div className="relative p-4 sm:p-5">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary-600">
-                  AI chat
-                </p>
+                AI Property Assistant</p>
                 {chatScrapeUrl ? (
                   <>
-                    <p className="mb-4 max-w-2xl text-sm leading-relaxed text-gray-600">
-                      If you want <span className="font-medium text-gray-800">more listings</span>,
-                      click the button.
+                    <p className="mb-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+                    Explore more properties beyond our listings with AI-powered search.
                     </p>
                     <button
                       type="button"
                       onClick={handleExtendedListingsClick}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-500 text-white px-3 py-2.5 rounded-2xl text-sm font-semibold hover:from-primary-700 hover:to-primary-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 overflow-hidden"
                     >
-                      <FiExternalLink className="h-4 w-4 shrink-0" aria-hidden />
-                      More listings
+                      <span className="relative z-10 ">Discover More Listings</span>
+                      <div className="relative z-10 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all group-hover:translate-x-1">
+                          <BsArrowRight className="text-white" size={16} />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                     </button>
                   </>
                 ) : (
