@@ -54,7 +54,7 @@ import {
   settingsSuccess,
 } from "@/store/reducer/settingsSlice.js";
 import { getAuth, deleteUser } from "firebase/auth";
-import { usePathname } from "next/navigation";
+import FirebaseData from "@/utils/Firebase";
 import { isSupported } from "firebase/messaging";
 import { useMediaQuery, useTheme } from "@mui/material";
 
@@ -139,6 +139,7 @@ export default function VerticleLayout(props) {
   const settingData = useSelector((state) => state?.Settings?.data);
   const dispatch = useDispatch();
   const FcmToken = useSelector(Fcmtoken);
+  const { signOut } = FirebaseData();
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -190,7 +191,7 @@ export default function VerticleLayout(props) {
       }).then((result) => {
         if (result.isConfirmed) {
           logoutSuccess();
-          signOut();
+          signOut().catch(() => {});
         }
       });
     }
@@ -271,6 +272,7 @@ export default function VerticleLayout(props) {
             onSuccess: (res) => {
               // Perform the logout action
               logoutSuccess();
+              signOut().catch(() => {});
 
               toast.success(translate("logoutSuccess"));
 
@@ -278,6 +280,11 @@ export default function VerticleLayout(props) {
             },
             onError: (err) => {
               console.log(err);
+              // Still clear session locally if the API fails (network / server)
+              logoutSuccess();
+              signOut().catch(() => {});
+              toast.success(translate("logoutSuccess"));
+              router.push("/");
             },
           });
         } catch (error) {

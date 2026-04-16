@@ -15,7 +15,7 @@ import VerticalCardSkeleton from "@/Components/Skeleton/VerticalCardSkeleton.jsx
 import Link from "next/link.js";
 import VerticalCard from "@/Components/Cards/VerticleCard.jsx";
 import NoData from "@/Components/NoDataFound/NoData.jsx";
-import { categoriesCacheData, filterDataaa } from "@/store/reducer/momentSlice";
+import { categoriesCacheData, filterDataaa, getfilterData } from "@/store/reducer/momentSlice";
 import Layout from '../Layout/Layout';
 import { Autocomplete, TextField } from '@mui/material';
 import { debounce } from 'lodash';
@@ -46,6 +46,18 @@ const SearchPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const categoryData = useSelector(categoriesCacheData);
 
+    // Strip keyword from Redux for the home hero once we have bundle data (runs after persist rehydrate too).
+    // Local searchInput state above already captured the query on first render; clearing Redux must not loop (skip when already empty).
+    useEffect(() => {
+        if (!searchedData || Array.isArray(searchedData)) return;
+        const q = searchedData.searchInput;
+        if (typeof q !== "string" || q.trim() === "") return;
+        getfilterData({
+            filterData: searchedData.filterData,
+            activeTab: searchedData.activeTab,
+            searchInput: "",
+        });
+    }, [searchedData]);
 
     const fetchAllCategories = (searchTerm = "") => {
             setIsLoading(true);

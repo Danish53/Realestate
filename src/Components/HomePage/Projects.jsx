@@ -13,6 +13,7 @@ import { IoIosArrowForward } from "react-icons/io";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import ProjectCard from "../Cards/ProjectCard";
+import MobileHeadline from "../MobileHeadlines/MobileHeadline";
 import { PackageTypes } from "@/utils/checkPackages/packageTypes";
 import { useRouter } from "next/router";
 

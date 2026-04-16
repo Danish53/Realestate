@@ -45,11 +45,11 @@ const SearchTab = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [clearfilterLocation, setClearFilerLocation] = useState(false);
 
-    /** Hero search box mirrors AI chat prompt when chat dispatches `getfilterData`. */
+    /** Hero search box mirrors Redux `getfilterData` (e.g. AI chat). Empty string must sync so the field clears after search. */
     useEffect(() => {
         if (!searchBundle || Array.isArray(searchBundle)) return;
         const si = searchBundle.searchInput;
-        if (typeof si === "string" && si.trim() !== "") {
+        if (typeof si === "string") {
             setSearchInput(si);
         }
         if (typeof searchBundle.activeTab === "number") {
@@ -160,7 +160,7 @@ const SearchTab = () => {
     };
 
     const handleSearch = (e) => {
-        e.preventDefault();
+        e?.preventDefault?.();
 
         const searchData = {
             filterData: filterD,
@@ -169,6 +169,7 @@ const SearchTab = () => {
         };
         getfilterData(searchData);
         router.push(`/search`);
+        setSearchInput("");
     };
 
     const handleClearFilter = () => {
