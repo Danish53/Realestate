@@ -264,6 +264,7 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { sanitizeScrapedPropertyDetail } from "@/utils/sanitizeListingBrandText";
+import { applyDetailImagePlaceholders } from "@/utils/categoryPlaceholderImages";
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
@@ -679,13 +680,23 @@ export default async function handler(req, res) {
 
     if (provider === "graana") {
       const out = scrapeGraanaDetailFromHtml(html, urlFinal);
-      if (out.ok) return res.status(200).json(sanitizeScrapedPropertyDetail(out.data));
+      if (out.ok) {
+        // Partner gallery on `partnerGallery`; placeholders on `gallery` — remove applyDetailImagePlaceholders to restore Graana photos.
+        return res
+          .status(200)
+          .json(sanitizeScrapedPropertyDetail(applyDetailImagePlaceholders(out.data)));
+      }
       continue;
     }
 
     // default zameen
     const out = scrapeZameenDetailFromHtml(html, urlFinal, slug || null);
-    if (out.ok) return res.status(200).json(sanitizeScrapedPropertyDetail(out.data));
+    if (out.ok) {
+      // Partner gallery on `partnerGallery`; placeholders on `gallery` — remove applyDetailImagePlaceholders to restore Zameen photos.
+      return res
+        .status(200)
+        .json(sanitizeScrapedPropertyDetail(applyDetailImagePlaceholders(out.data)));
+    }
   }
 
   return res.status(404).json({

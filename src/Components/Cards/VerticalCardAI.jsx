@@ -116,7 +116,9 @@ function VerticalCardAI({ ele, category }) {
     return String(price);
   }
 
-  const imgSrc = ele?.image || "/images/property-placeholder.jpg";
+  /** Local asset (avoid missing `/images/property-placeholder.jpg` → 404 + onError loop). */
+  const FALLBACK_IMG = "/images/property-placeholder.svg";
+  const imgSrc = ele?.image || FALLBACK_IMG;
   const title = truncate(ele?.title || `${propertyTypeLabel || translate("property")} ${formatPrice(ele?.price) || ""}`, 60);
   const description = truncate(ele?.location || "", 80);
 
@@ -143,7 +145,10 @@ function VerticalCardAI({ ele, category }) {
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           onLoad={() => setImageLoaded(true)}
-          onError={(e) => { e.currentTarget.src = "/images/property-placeholder.jpg"; }}
+          onError={(e) => {
+            if (String(e.currentTarget.src || "").includes("property-placeholder.svg")) return;
+            e.currentTarget.src = FALLBACK_IMG;
+          }}
         />
         </div>
         {/* Pill tag top-left – light grey like reference (Villa, Condo, House, General) */}

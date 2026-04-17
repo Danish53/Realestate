@@ -272,6 +272,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import NodeCache from "node-cache";
 import puppeteer from "puppeteer";
+import { applyListingImagePlaceholders } from "@/utils/categoryPlaceholderImages";
 
 // async function getBothTotalPages(zameenUrl, graanaUrl) {
 //   let browser;
@@ -1660,8 +1661,15 @@ export default async function handler(req, res) {
       console.error("Graana Scrape Error:", results[1].reason);
     }
 
-    // Combine properties
-    const properties = [...zameenData.properties, ...graanaData.properties];
+    // Combine properties (still includes partner image URLs on each item before placeholder pass).
+    const combinedRaw = [...zameenData.properties, ...graanaData.properties];
+
+    /**
+     * Listing thumbnails: show category placeholders (no watermarks). Partner originals stay on
+     * `partnerListingImage`. To show Zameen/Graana images again, pass `combinedRaw` as `properties`
+     * and remove the `applyListingImagePlaceholders` call below.
+     */
+    const properties = applyListingImagePlaceholders(combinedRaw);
 
     return res.status(200).json({
       page: Number(page),
